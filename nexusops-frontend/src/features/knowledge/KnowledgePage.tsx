@@ -20,6 +20,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import {
   DocumentResponseDto,
   SearchResultDto,
@@ -30,6 +31,15 @@ import {
 const CATEGORIES = ['ALL', 'POLICY', 'SOP', 'BENEFITS', 'HARDWARE', 'SECURITY', 'GENERAL'];
 
 export const KnowledgePage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canManageKnowledge = useMemo(() => {
+    if (!user) return false;
+    return (
+      user.permissions?.includes('KNOWLEDGE_MANAGE') ||
+      user.roles?.includes('ORG_ADMIN')
+    );
+  }, [user]);
+
   const [documents, setDocuments] = useState<DocumentResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -86,6 +96,10 @@ export const KnowledgePage: React.FC = () => {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageKnowledge) {
+      setUploadError('Access Denied: You do not have permission to upload knowledge documents.');
+      return;
+    }
     if (!selectedFile) {
       setUploadError('Please select a file to upload');
       return;
@@ -152,6 +166,10 @@ export const KnowledgePage: React.FC = () => {
   };
 
   const handleReindex = async (doc: DocumentResponseDto) => {
+    if (!canManageKnowledge) {
+      setActionError('Access Denied: You do not have permission to re-index documents.');
+      return;
+    }
     try {
       await apiClient.post(`/knowledge/documents/${doc.id}/reindex`);
       setActionSuccess(`Document "${doc.title}" re-indexed successfully!`);
@@ -164,6 +182,10 @@ export const KnowledgePage: React.FC = () => {
   };
 
   const handleDelete = async (doc: DocumentResponseDto) => {
+    if (!canManageKnowledge) {
+      setActionError('Access Denied: You do not have permission to delete documents.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete "${doc.title}"? All pgvector chunks and storage objects will be purged.`)) {
       return;
     }
@@ -313,13 +335,15 @@ export const KnowledgePage: React.FC = () => {
             <Sparkles className="h-4 w-4" />
             <span>Semantic Search Lab</span>
           </button>
-          <button
-            onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
-          >
-            <Upload className="h-4 w-4" />
-            <span>Upload Document</span>
-          </button>
+          {canManageKnowledge && (
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload Document</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -419,7 +443,7 @@ export const KnowledgePage: React.FC = () => {
               ? 'No documents matched your filter criteria. Try a different search term.'
               : 'Your knowledge base is empty. Upload your first policy manual to enable AI assistance.'}
           </p>
-          {!searchQuery && (
+          {!searchQuery && canManageKnowledge && (
             <button
               onClick={() => setIsUploadModalOpen(true)}
               className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
@@ -485,20 +509,24 @@ export const KnowledgePage: React.FC = () => {
                   >
                     <Download className="h-4 w-4" />
                   </button>
-                  <button
-                    onClick={() => handleReindex(doc)}
-                    title="Re-index document vectors"
-                    className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(doc)}
-                    title="Delete document"
-                    className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {canManageKnowledge && (
+                    <>
+                      <button
+                        onClick={() => handleReindex(doc)}
+                        title="Re-index document vectors"
+                        className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(doc)}
+                        title="Delete document"
+                        className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
                 <button
                   onClick={() => {
@@ -517,7 +545,7 @@ export const KnowledgePage: React.FC = () => {
       )}
 
       {/* Upload Document Modal */}
-      {isUploadModalOpen && (
+      {isUploadModalOpen && canManageKnowledge && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">

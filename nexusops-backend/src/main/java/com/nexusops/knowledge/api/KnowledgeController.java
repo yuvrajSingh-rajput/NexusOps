@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +45,7 @@ public class KnowledgeController {
     }
 
     @PostMapping(value = "/documents/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<DocumentResponseDto>> uploadDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam("title") String title,
@@ -61,6 +63,7 @@ public class KnowledgeController {
     }
 
     @GetMapping("/documents")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<Page<DocumentResponseDto>>> listDocuments(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(value = "category", required = false) String category,
@@ -72,6 +75,7 @@ public class KnowledgeController {
     }
 
     @GetMapping("/documents/{id}")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<DocumentResponseDto>> getDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -81,6 +85,7 @@ public class KnowledgeController {
     }
 
     @GetMapping("/documents/{id}/versions")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<DocumentVersionResponseDto>>> getDocumentVersions(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -90,6 +95,7 @@ public class KnowledgeController {
     }
 
     @GetMapping("/documents/{id}/versions/{versionNumber}/download")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<InputStreamResource> downloadDocumentVersion(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id,
@@ -105,6 +111,7 @@ public class KnowledgeController {
     }
 
     @PostMapping("/documents/{id}/reindex")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<DocumentResponseDto>> reindexDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -114,6 +121,7 @@ public class KnowledgeController {
     }
 
     @DeleteMapping("/documents/{id}")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -123,6 +131,7 @@ public class KnowledgeController {
     }
 
     @PostMapping("/search")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<SearchResultDto>>> semanticSearch(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody SemanticSearchRequestDto request) {

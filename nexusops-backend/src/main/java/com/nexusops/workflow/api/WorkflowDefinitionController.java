@@ -49,7 +49,7 @@ public class WorkflowDefinitionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('WORKFLOW_MANAGE') or hasAuthority('ORG_ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('WORKFLOW_MANAGE') or hasAuthority('ORG_ADMIN_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<WorkflowDefinitionResponseDto>> createDefinition(
             @Valid @RequestBody CreateWorkflowDefinitionDto dto) {
         UUID organizationId = TenantContextHolder.getRequiredTenantId();
@@ -58,7 +58,7 @@ public class WorkflowDefinitionController {
     }
 
     @PostMapping("/{id}/versions/{versionNumber}/publish")
-    @PreAuthorize("hasAuthority('WORKFLOW_MANAGE') or hasAuthority('ORG_ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('WORKFLOW_MANAGE') or hasAuthority('ORG_ADMIN_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<WorkflowVersionResponseDto>> publishVersion(
             @PathVariable UUID id,
             @PathVariable int versionNumber) {

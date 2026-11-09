@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `INCOMPLETE_QUERY` intent to politely guide truncated prompts like "what is".
   - Enhanced RAG fallback to suggest available company policy documents when questions fall outside known policies.
   - Made request intent classification resilient to natural conversational patterns (`"request for a new laptop for me"`) and direct model selections (`"Apple MacBook Pro 16..."`) following policy inquiries.
+- **Role-Based Access Control (RBAC) & Navigation Hardening:**
+  - Added `@PreAuthorize` method security across `KnowledgeController`, `TaskController`, `ApprovalController`, `AuditLogController`, and `AnalyticsController`.
+  - Enforced permission checks in `TaskService.claimTask` so employees cannot claim operator fulfillment tasks.
+  - Updated `Sidebar.tsx` to dynamically filter operations navigation based on user permissions and roles (e.g. employees only see Requests, Knowledge, and AI; operators see Tasks; managers/finance see Approvals and Analytics; admins see all).
+  - Secured `KnowledgePage.tsx` to conditionally render upload modal button, document deletion (trash), and vector re-indexing (refresh) icons only for authorized roles (`KNOWLEDGE_MANAGE` or `ORG_ADMIN`).
+  - Secured `TasksPage.tsx`, `DepartmentsPage.tsx`, `EmployeesPage.tsx`, `WorkflowsPage.tsx`, `AuditTrailPage.tsx`, and `AnalyticsPage.tsx` with role/permission guards.
 
 ---
 

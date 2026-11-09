@@ -6,6 +6,7 @@ import com.nexusops.task.application.TaskService;
 import com.nexusops.task.application.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,7 @@ public class TaskController {
     }
 
     @GetMapping("/queue")
+    @PreAuthorize("hasAnyAuthority('TASK_QUEUE_VIEW', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<TaskResponseDto>>> getQueueTasks(
             @AuthenticationPrincipal UserPrincipal principal) {
         List<TaskResponseDto> queue = taskService.getQueueTasks(principal.getOrganizationId());
@@ -53,6 +55,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/claim")
+    @PreAuthorize("hasAnyAuthority('TASK_CLAIM', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<TaskResponseDto>> claimTask(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -61,6 +64,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/assign")
+    @PreAuthorize("hasAnyAuthority('TASK_CLAIM', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<TaskResponseDto>> assignTask(
             @PathVariable UUID id,
             @RequestParam UUID assigneeMembershipId,
@@ -70,6 +74,7 @@ public class TaskController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('TASK_UPDATE', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<TaskResponseDto>> updateTaskStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateTaskStatusDto dto,
@@ -79,6 +84,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAnyAuthority('TASK_COMPLETE', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<TaskResponseDto>> completeTask(
             @PathVariable UUID id,
             @Valid @RequestBody CompleteTaskDto dto,
@@ -88,6 +94,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/comments")
+    @PreAuthorize("hasAnyAuthority('TASK_UPDATE', 'TASK_COMPLETE', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<TaskCommentResponseDto>> addComment(
             @PathVariable UUID id,
             @Valid @RequestBody AddTaskCommentDto dto,

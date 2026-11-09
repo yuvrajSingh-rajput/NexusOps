@@ -19,6 +19,7 @@ import {
   Tag
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import {
   ApiResponse,
   TaskResponseDto,
@@ -29,6 +30,17 @@ import {
 } from '@/types/api';
 
 export const TasksPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canOperateTasks = useMemo(() => {
+    if (!user) return false;
+    return (
+      user.permissions?.includes('TASK_CLAIM') ||
+      user.permissions?.includes('TASK_COMPLETE') ||
+      user.roles?.includes('OPERATOR') ||
+      user.roles?.includes('ORG_ADMIN')
+    );
+  }, [user]);
+
   const [activeTab, setActiveTab] = useState<'QUEUE' | 'MY'>('QUEUE');
   const [tasks, setTasks] = useState<TaskResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +97,10 @@ export const TasksPage: React.FC = () => {
   };
 
   const handleClaimTask = async (taskId: string) => {
+    if (!canOperateTasks) {
+      setActionError('Access Denied: You do not have permission to claim fulfillment tasks.');
+      return;
+    }
     setActionLoading(true);
     setActionError(null);
     try {
@@ -104,6 +120,10 @@ export const TasksPage: React.FC = () => {
 
   const handleUpdateStatus = async (status: TaskStatus) => {
     if (!selectedTask) return;
+    if (!canOperateTasks) {
+      setActionError('Access Denied: You do not have permission to update task status.');
+      return;
+    }
     setActionLoading(true);
     setActionError(null);
     try {
@@ -128,6 +148,10 @@ export const TasksPage: React.FC = () => {
 
   const handleCompleteTask = async () => {
     if (!selectedTask) return;
+    if (!canOperateTasks) {
+      setActionError('Access Denied: You do not have permission to complete tasks.');
+      return;
+    }
     setActionLoading(true);
     setActionError(null);
 
@@ -368,7 +392,7 @@ export const TasksPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 pt-3 lg:pt-0">
-                {task.status === 'OPEN' && (
+                {task.status === 'OPEN' && canOperateTasks && (
                   <button
                     onClick={() => handleClaimTask(task.id)}
                     disabled={actionLoading}
@@ -459,7 +483,7 @@ export const TasksPage: React.FC = () => {
               </div>
 
               {/* Operational Fulfillment Form */}
-              {selectedTask.status !== 'COMPLETED' && (
+              {selectedTask.status !== 'COMPLETED' && canOperateTasks && (
                 <div className="space-y-4 border-t border-slate-100 pt-5">
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                     <PackageCheck className="h-4 w-4 text-indigo-600" />

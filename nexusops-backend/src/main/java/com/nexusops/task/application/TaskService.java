@@ -154,6 +154,16 @@ public class TaskService {
     public TaskResponseDto claimTask(UUID organizationId, UUID taskId, UserPrincipal principal) {
         log.info("User {} claiming task {}", principal.getMembershipId(), taskId);
 
+        boolean canClaim = principal.getAuthorities().stream().anyMatch(a ->
+                a.getAuthority().equals("ROLE_ORG_ADMIN") ||
+                a.getAuthority().equals("ORG_ADMIN_MANAGE") ||
+                a.getAuthority().equals("ROLE_OPERATOR") ||
+                a.getAuthority().equals("TASK_CLAIM")
+        );
+        if (!canClaim) {
+            throw new AccessDeniedException("You are not authorized to claim fulfillment tasks.");
+        }
+
         TaskEntity task = taskRepository.findByIdAndOrganizationId(taskId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
 
@@ -393,7 +403,13 @@ public class TaskService {
     }
 
     private void verifyTaskAccess(TaskEntity task, UserPrincipal principal) {
-        if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ORG_ADMIN") || a.getAuthority().equals("ORG_ADMIN_MANAGE") || a.getAuthority().equals("TASK_OPERATE"))) {
+        if (principal.getAuthorities().stream().anyMatch(a ->
+                a.getAuthority().equals("ROLE_ORG_ADMIN") ||
+                a.getAuthority().equals("ORG_ADMIN_MANAGE") ||
+                a.getAuthority().equals("ROLE_OPERATOR") ||
+                a.getAuthority().equals("TASK_OPERATE") ||
+                a.getAuthority().equals("TASK_UPDATE") ||
+                a.getAuthority().equals("TASK_COMPLETE"))) {
             return;
         }
         if (task.getAssigneeMembershipId() != null && task.getAssigneeMembershipId().equals(principal.getMembershipId())) {

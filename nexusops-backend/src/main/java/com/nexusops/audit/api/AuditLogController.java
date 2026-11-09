@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,7 @@ public class AuditLogController {
     }
 
     @GetMapping("/logs")
+    @PreAuthorize("hasAuthority('AUDIT_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<Page<AuditLogResponseDto>>> getAuditLogs(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(value = "aggregateType", required = false) String aggregateType,

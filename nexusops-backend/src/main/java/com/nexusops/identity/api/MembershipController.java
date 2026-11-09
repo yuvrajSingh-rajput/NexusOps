@@ -39,7 +39,7 @@ public class MembershipController {
     }
 
     @PostMapping("/invite")
-    @PreAuthorize("hasAuthority('ORG_USER_INVITE')")
+    @PreAuthorize("hasAuthority('ORG_USER_INVITE') or hasAuthority('ORG_ADMIN_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<EmployeeResponseDto>> inviteEmployee(
             @Valid @RequestBody InviteEmployeeDto dto) {
         EmployeeResponseDto response = identityService.inviteEmployee(dto);

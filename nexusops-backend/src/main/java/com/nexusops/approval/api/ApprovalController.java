@@ -7,6 +7,7 @@ import com.nexusops.shared.api.ApiResponse;
 import com.nexusops.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class ApprovalController {
     }
 
     @GetMapping("/pending")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_VIEW_PENDING', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<ApprovalInstanceResponseDto>>> getPendingApprovals(
             @AuthenticationPrincipal UserPrincipal principal) {
         List<ApprovalInstanceResponseDto> pending = approvalService.getMyPendingApprovals(
@@ -33,6 +35,7 @@ public class ApprovalController {
     }
 
     @GetMapping("/my-pending")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_VIEW_PENDING', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<ApprovalInstanceResponseDto>>> getMyPendingApprovals(
             @AuthenticationPrincipal UserPrincipal principal) {
         return getPendingApprovals(principal);
@@ -59,6 +62,7 @@ public class ApprovalController {
     }
 
     @PostMapping("/{id}/action")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<ApprovalInstanceResponseDto>> decideApproval(
             @PathVariable UUID id,
             @Valid @RequestBody ApprovalDecisionDto dto,
@@ -70,6 +74,7 @@ public class ApprovalController {
     }
 
     @PostMapping("/{id}/decide")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<ApprovalInstanceResponseDto>> decideApprovalAlias(
             @PathVariable UUID id,
             @Valid @RequestBody ApprovalDecisionDto dto,

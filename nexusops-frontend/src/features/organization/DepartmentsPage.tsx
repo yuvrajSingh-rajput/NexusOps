@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Building2, Plus, AlertCircle, FolderTree, RefreshCw, X } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, DepartmentResponseDto } from '@/types/api';
 
 export const DepartmentsPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canManageDept = useMemo(() => {
+    if (!user) return false;
+    return user.permissions?.includes('ORG_DEPT_MANAGE') || user.roles?.includes('ORG_ADMIN');
+  }, [user]);
+
   const [departments, setDepartments] = useState<DepartmentResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,13 +97,15 @@ export const DepartmentsPage: React.FC = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Department</span>
-          </button>
+          {canManageDept && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Department</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -144,13 +153,15 @@ export const DepartmentsPage: React.FC = () => {
                     <p className="text-xs text-slate-400 mt-1">
                       Create departments like Engineering, HR, Finance to structure approval workflows.
                     </p>
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Create first department
-                    </button>
+                    {canManageDept && (
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Create first department
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -188,7 +199,7 @@ export const DepartmentsPage: React.FC = () => {
       </div>
 
       {/* Create Department Modal */}
-      {isModalOpen && (
+      {isModalOpen && canManageDept && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">

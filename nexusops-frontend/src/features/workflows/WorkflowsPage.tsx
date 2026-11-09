@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   GitFork,
   Plus,
@@ -15,6 +15,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import {
   ApiResponse,
   WorkflowDefinitionResponseDto,
@@ -24,6 +25,12 @@ import {
 } from '@/types/api';
 
 export const WorkflowsPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canManageWorkflows = useMemo(() => {
+    if (!user) return false;
+    return user.permissions?.includes('WORKFLOW_MANAGE') || user.roles?.includes('ORG_ADMIN');
+  }, [user]);
+
   const [definitions, setDefinitions] = useState<WorkflowDefinitionResponseDto[]>([]);
   const [categories, setCategories] = useState<RequestCategoryResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,13 +196,15 @@ export const WorkflowsPage: React.FC = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>New Workflow</span>
-          </button>
+          {canManageWorkflows && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Workflow</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -440,7 +449,7 @@ export const WorkflowsPage: React.FC = () => {
       {/* ========================================================= */}
       {/* NEW WORKFLOW MODAL                                        */}
       {/* ========================================================= */}
-      {isModalOpen && (
+      {isModalOpen && canManageWorkflows && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">

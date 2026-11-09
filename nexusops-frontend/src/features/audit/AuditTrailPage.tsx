@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search,
   RefreshCw,
   Code,
   User,
   X,
+  ShieldAlert,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, PageResponse, AuditLogResponseDto } from '@/types/api';
 
 export const AuditTrailPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canViewAudit = useMemo(() => {
+    if (!user) return false;
+    return user.permissions?.includes('AUDIT_VIEW') || user.roles?.includes('ORG_ADMIN');
+  }, [user]);
+
   const [logs, setLogs] = useState<AuditLogResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string>('ALL');
@@ -22,8 +30,10 @@ export const AuditTrailPage: React.FC = () => {
   const [inspectLog, setInspectLog] = useState<AuditLogResponseDto | null>(null);
 
   useEffect(() => {
-    fetchAuditLogs();
-  }, [page, selectedType]);
+    if (canViewAudit) {
+      fetchAuditLogs();
+    }
+  }, [page, selectedType, canViewAudit]);
 
   const fetchAuditLogs = async () => {
     setLoading(true);
@@ -77,6 +87,20 @@ export const AuditTrailPage: React.FC = () => {
       return raw;
     }
   };
+
+  if (!canViewAudit) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center text-center px-4">
+        <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl mb-4 border border-rose-200">
+          <ShieldAlert className="h-10 w-10" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
+        <p className="text-sm text-slate-500 max-w-md mt-1">
+          The immutable system audit trail is restricted to Organization Administrators and authorized Compliance Auditors.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

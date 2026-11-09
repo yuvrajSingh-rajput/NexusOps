@@ -36,7 +36,7 @@ public class DepartmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ORG_DEPT_MANAGE')")
+    @PreAuthorize("hasAuthority('ORG_DEPT_MANAGE') or hasAuthority('ORG_ADMIN_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentResponseDto>> createDepartment(
             @Valid @RequestBody CreateDepartmentDto dto) {
         DepartmentResponseDto created = departmentService.createDepartment(dto);

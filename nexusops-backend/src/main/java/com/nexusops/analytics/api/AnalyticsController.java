@@ -5,6 +5,7 @@ import com.nexusops.analytics.application.dto.*;
 import com.nexusops.shared.api.ApiResponse;
 import com.nexusops.shared.tenant.TenantContextHolder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/analytics")
+@PreAuthorize("hasAuthority('ANALYTICS_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;

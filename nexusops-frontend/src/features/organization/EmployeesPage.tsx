@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Users, UserPlus, Search, AlertCircle, RefreshCw, X, Shield, Mail, Briefcase, Building2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, EmployeeResponseDto, DepartmentResponseDto, PageResponse } from '@/types/api';
 
 const AVAILABLE_ROLES = [
@@ -12,6 +13,12 @@ const AVAILABLE_ROLES = [
 ];
 
 export const EmployeesPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canInvite = useMemo(() => {
+    if (!user) return false;
+    return user.permissions?.includes('ORG_USER_INVITE') || user.roles?.includes('ORG_ADMIN');
+  }, [user]);
+
   const [employees, setEmployees] = useState<EmployeeResponseDto[]>([]);
   const [departments, setDepartments] = useState<DepartmentResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,13 +188,15 @@ export const EmployeesPage: React.FC = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setIsInviteModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Invite Employee</span>
-          </button>
+          {canInvite && (
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Invite Employee</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -313,7 +322,7 @@ export const EmployeesPage: React.FC = () => {
       </div>
 
       {/* Invite Employee Modal */}
-      {isInviteModalOpen && (
+      {isInviteModalOpen && canInvite && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">

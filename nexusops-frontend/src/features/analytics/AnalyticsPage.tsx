@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   RefreshCw,
   Clock,
@@ -10,8 +10,10 @@ import {
   Copy,
   Check,
   Activity,
+  ShieldAlert,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import {
   ApiResponse,
   AnalyticsOverviewDto,
@@ -22,6 +24,17 @@ import {
 } from '@/types/api';
 
 export const AnalyticsPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canViewAnalytics = useMemo(() => {
+    if (!user) return false;
+    return (
+      user.permissions?.includes('ANALYTICS_VIEW') ||
+      user.roles?.includes('ORG_ADMIN') ||
+      user.roles?.includes('MANAGER') ||
+      user.roles?.includes('FINANCE')
+    );
+  }, [user]);
+
   const [overview, setOverview] = useState<AnalyticsOverviewDto | null>(null);
   const [statusBreakdown, setStatusBreakdown] = useState<StatusCountDto[]>([]);
   const [categoryMetrics, setCategoryMetrics] = useState<CategoryMetricDto[]>([]);
@@ -35,8 +48,10 @@ export const AnalyticsPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchAllAnalytics();
-  }, []);
+    if (canViewAnalytics) {
+      fetchAllAnalytics();
+    }
+  }, [canViewAnalytics]);
 
   const fetchAllAnalytics = async () => {
     setLoading(true);
@@ -109,6 +124,20 @@ export const AnalyticsPage: React.FC = () => {
         return 'bg-slate-400';
     }
   };
+
+  if (!canViewAnalytics) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center text-center px-4">
+        <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl mb-4 border border-rose-200">
+          <ShieldAlert className="h-10 w-10" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
+        <p className="text-sm text-slate-500 max-w-md mt-1">
+          Operational metrics and bottleneck analytics are restricted to Department Managers, Finance Officers, and Organization Administrators.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

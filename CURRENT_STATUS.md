@@ -36,6 +36,21 @@
    - Enhanced [`IntentClassifier.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/IntentClassifier.java) and [`AiAssistantService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/AiAssistantService.java) with `CONVERSATION_FOLLOW_UP` (recalling and quoting previous answers when asked "what did you say" or "repeat"), `INCOMPLETE_QUERY` (guiding truncated queries like "what is"), and conversational gratitude handling ("thank you", "ok").
    - Added resilient natural language request matching and conversational hardware selection memory: phrases like *"request for a new laptop for me"* or direct hardware model selections (*"Apple MacBook Pro 16..."*) seamlessly generate actionable proposal cards with pre-populated schema parameters instead of misclassifying into policy QA.
 
+6. **Comprehensive Role-Based Access Control (RBAC) & UI Authorization Guards:**
+   - **Backend Security:** Enforced `@PreAuthorize` method security across all exposed REST endpoints:
+     - `KnowledgeController`: Added `@PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")` on document upload, deletion, and re-indexing; added `@PreAuthorize("hasAuthority('KNOWLEDGE_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")` on document reading, search, and downloads.
+     - `TaskController` & `TaskService`: Added `@PreAuthorize` guards for `TASK_CLAIM`, `TASK_COMPLETE`, `TASK_UPDATE`, `TASK_QUEUE_VIEW`; enforced caller authorization in `claimTask`.
+     - `ApprovalController`: Added `@PreAuthorize` guards for `APPROVAL_VIEW_PENDING` and `APPROVAL_EXECUTE`.
+     - `AuditLogController` & `AnalyticsController`: Added `@PreAuthorize` guards for `AUDIT_VIEW` and `ANALYTICS_VIEW`.
+     - `WorkflowDefinitionController`, `DepartmentController`, `MembershipController`: Fully secured administrative mutations.
+   - **Frontend UI & Navigation:**
+     - `Sidebar.tsx`: Dynamically filters navigation links based on user roles and permissions (e.g., standard employees only see Dashboard, My Requests, Knowledge Base, and Nexus AI Co-pilot; operators see Tasks; managers/finance see Approvals and Analytics; admins see all).
+     - `KnowledgePage.tsx`: Conditionally hides upload modal button, document deletion (trash), and vector re-indexing (refresh) icons for users lacking `KNOWLEDGE_MANAGE`.
+     - `TasksPage.tsx`: Hides task claiming and completion buttons for non-operators.
+     - `DepartmentsPage.tsx` & `EmployeesPage.tsx`: Hides "Add Department" and "Invite Employee" buttons and modals for non-administrators while preserving directory browsing.
+     - `AuditTrailPage.tsx` & `AnalyticsPage.tsx`: Displays dedicated enterprise access-restricted screens if an unauthorized user navigates directly to the route.
+   - **Verification:** Verified live via authenticated REST tests: Alice (`alice@acme.com`, Employee) receives HTTP 403 Forbidden when attempting document deletion, task claiming, or audit log viewing; Eve (`eve@acme.com`, Admin) receives HTTP 200 OK. All frontend unit and routing tests passing (2/2).
+
 ---
 
 ## Completed in Phase 11 (End-to-End Acceptance Demo, Seed Data & Final Hardening)

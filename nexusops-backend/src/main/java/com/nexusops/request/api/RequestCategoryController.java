@@ -42,7 +42,7 @@ public class RequestCategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ORG_ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('ORG_ADMIN_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
     public ResponseEntity<ApiResponse<RequestCategoryResponseDto>> createCategory(
             @Valid @RequestBody CreateRequestCategoryDto dto) {
         RequestCategoryResponseDto created = categoryService.createCategory(dto);
