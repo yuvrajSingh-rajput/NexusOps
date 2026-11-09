@@ -27,6 +27,8 @@
    - Created `RouteErrorBoundary.tsx` connected to application routing.
    - Fixed Axios double-prefixing on Knowledge base endpoints and unwrapped response objects.
    - Configured Vite proxy in `vite.config.ts` to `http://127.0.0.1:8080` to prevent Windows IPv6 connection refused errors.
+   - Fixed `apiClient` Axios default header collision with `FormData`: automatically stripped default `'Content-Type': 'application/json'` when sending `FormData` so browser/Axios attaches boundary headers (`multipart/form-data; boundary=----...`).
+   - Added explicit `HttpMediaTypeNotSupportedException` and `MaxUploadSizeExceededException` handlers in `GlobalExceptionHandler.java` with structured 415/413 error envelopes.
 
 ---
 

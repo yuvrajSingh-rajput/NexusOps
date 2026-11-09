@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed duplicated `/api/v1/` prefix and response unwrapping in `KnowledgePage.tsx`.
 - **Vite Proxy Resolution (`vite.config.ts`):**
   - Updated proxy target to `http://127.0.0.1:8080` to prevent Windows IPv6 `::1:8080` connection drops (`ECONNREFUSED`).
+- **Multipart Form Uploads (`api-client.ts` & `GlobalExceptionHandler.java`):**
+  - Removed default `'Content-Type': 'application/json'` on `FormData` payloads in Axios request interceptor, allowing browser boundary calculation.
+  - Added structured exception handling for `HttpMediaTypeNotSupportedException` and `MaxUploadSizeExceededException`.
 
 ---
 

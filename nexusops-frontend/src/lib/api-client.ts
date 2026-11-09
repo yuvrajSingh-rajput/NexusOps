@@ -3,13 +3,10 @@ import { ApiResponse } from '@/types/api';
 
 export const apiClient = axios.create({
   baseURL: '/api/v1',
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true,
 });
 
-// Request Interceptor: Attach JWT & Correlation ID
+// Request Interceptor: Attach JWT, Correlation ID, and normalize Content-Type
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('nexusops_access_token');
@@ -20,6 +17,16 @@ apiClient.interceptors.request.use(
     // Attach correlation ID if missing
     if (config.headers && !config.headers['X-Correlation-Id']) {
       config.headers['X-Correlation-Id'] = crypto.randomUUID();
+    }
+
+    // CRITICAL: If sending FormData (file uploads), remove Content-Type
+    // so Axios / browser automatically sets 'multipart/form-data; boundary=----...'
+    if (config.data instanceof FormData && config.headers) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete (config.headers as any)['Content-Type'];
+      }
     }
 
     return config;
