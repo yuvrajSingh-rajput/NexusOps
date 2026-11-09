@@ -94,3 +94,4 @@ CREATE INDEX IF NOT EXISTS idx_requests_org_status ON requests(organization_id, 
 CREATE INDEX IF NOT EXISTS idx_requests_org_dept ON requests(organization_id, department_id);
 CREATE INDEX IF NOT EXISTS idx_comments_org_request ON request_comments(organization_id, request_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_org_request ON request_attachments(organization_id, request_id);
+

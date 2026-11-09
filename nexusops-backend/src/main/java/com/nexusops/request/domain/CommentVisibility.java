@@ -4,3 +4,4 @@ public enum CommentVisibility {
     REQUESTER_VISIBLE,
     INTERNAL
 }
+

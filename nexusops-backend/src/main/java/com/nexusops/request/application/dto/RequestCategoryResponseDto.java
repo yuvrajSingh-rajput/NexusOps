@@ -15,3 +15,4 @@ public record RequestCategoryResponseDto(
         boolean active
 ) {
 }
+

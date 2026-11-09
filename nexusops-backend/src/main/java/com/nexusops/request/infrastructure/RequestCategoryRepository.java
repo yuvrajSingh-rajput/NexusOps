@@ -21,3 +21,4 @@ public interface RequestCategoryRepository extends JpaRepository<RequestCategory
 
     boolean existsByOrganizationIdAndCode(UUID organizationId, String code);
 }
+

@@ -27,3 +27,4 @@ public interface RequestRepository extends JpaRepository<RequestEntity, UUID> {
 
     long countByOrganizationIdAndStatus(UUID organizationId, RequestStatus status);
 }
+

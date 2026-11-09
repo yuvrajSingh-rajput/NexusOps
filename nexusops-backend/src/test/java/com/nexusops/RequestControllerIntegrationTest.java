@@ -90,7 +90,7 @@ class RequestControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.requestNumber", startsWith("REQ-")))
-                .andExpect(jsonPath("$.data.status").value("SUBMITTED"))
+                .andExpect(jsonPath("$.data.status").value("IN_REVIEW"))
                 .andExpect(jsonPath("$.data.priority").value("HIGH"))
                 .andExpect(jsonPath("$.data.categoryCode").value("DEVELOPER_LAPTOP"))
                 .andExpect(jsonPath("$.data.departmentName").value("Engineering"))

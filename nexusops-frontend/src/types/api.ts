@@ -157,3 +157,101 @@ export interface AddCommentDto {
   visibility: CommentVisibility;
 }
 
+// ==============================================================================
+// Workflow Engine Types
+// ==============================================================================
+
+export type NodeType = 'START' | 'END' | 'APPROVAL' | 'CONDITION' | 'TASK';
+
+export type WorkflowVersionStatus = 'DRAFT' | 'PUBLISHED' | 'RETIRED';
+
+export type WorkflowStatus =
+  | 'CREATED'
+  | 'RUNNING'
+  | 'WAITING'
+  | 'SUSPENDED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'FAILED';
+
+export type NodeInstanceStatus =
+  | 'PENDING'
+  | 'READY'
+  | 'RUNNING'
+  | 'WAITING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'SKIPPED'
+  | 'CANCELLED';
+
+export interface WorkflowNodeDto {
+  id: string;
+  nodeKey: string;
+  nodeType: NodeType;
+  title: string;
+  configuration: Record<string, any>;
+  positionX: number;
+  positionY: number;
+}
+
+export interface WorkflowTransitionDto {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  conditionExpression?: Record<string, any>;
+  priority: number;
+  isDefault: boolean;
+}
+
+export interface WorkflowDefinitionResponseDto {
+  id: string;
+  organizationId: string;
+  categoryId: string;
+  code: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  latestVersionNumber?: number;
+  latestVersionStatus?: WorkflowVersionStatus;
+  createdAt: string;
+}
+
+export interface WorkflowVersionResponseDto {
+  id: string;
+  workflowDefinitionId: string;
+  versionNumber: number;
+  status: WorkflowVersionStatus;
+  publishedAt?: string;
+  nodes: WorkflowNodeDto[];
+  transitions: WorkflowTransitionDto[];
+  createdAt: string;
+}
+
+export interface WorkflowInstanceResponseDto {
+  id: string;
+  organizationId: string;
+  workflowVersionId: string;
+  requestId: string;
+  attemptNumber: number;
+  status: WorkflowStatus;
+  currentNodeKey?: string;
+  contextData: Record<string, any>;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface NodeInstanceResponseDto {
+  id: string;
+  workflowInstanceId: string;
+  nodeId: string;
+  nodeKey: string;
+  title: string;
+  nodeType: NodeType;
+  status: NodeInstanceStatus;
+  result?: Record<string, any>;
+  enteredAt: string;
+  exitedAt?: string;
+}
+
+

@@ -20,3 +20,4 @@ public enum RequestStatus {
         return this == DRAFT || this == SUBMITTED || this == IN_REVIEW || this == WAITING_FOR_INFORMATION;
     }
 }
+

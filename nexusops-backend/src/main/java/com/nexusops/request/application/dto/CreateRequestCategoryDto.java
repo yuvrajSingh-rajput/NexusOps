@@ -21,3 +21,4 @@ public record CreateRequestCategoryDto(
         boolean requiresWorkflow
 ) {
 }
+

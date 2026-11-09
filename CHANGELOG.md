@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0-workflow-engine] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V5__workflow_schema.sql`: Full schema for graph workflow definitions, immutable version snapshots, nodes with UI canvas positions, directed transitions with typed condition expressions, durable workflow instances (`@Version` optimistic locking), and node execution audit records.
+- **Backend Architecture & Domain Services (`com.nexusops.workflow`):**
+  - `TypedConditionEvaluator`: Security-hardened JSON predicate evaluator with whitelisted operators (`EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `LESS_THAN`, `IN`, `CONTAINS`), forbidding SpEL, JavaScript, or arbitrary code execution.
+  - `WorkflowGraphValidator`: BFS reachability validation, single `START` node check, `END` node reachability, dead-end detection, and node key uniqueness.
+  - `NodeHandler` & `NodeHandlerRegistry`: Polymorphic node handlers for `START`, `END`, `APPROVAL`, `CONDITION`, and `TASK` nodes.
+  - `WorkflowEngineService`: Durable lifecycle management (`startWorkflow`, `resumeWorkflowWithSignal`, `advanceWorkflow`), state transitions, and node instance auditing.
+  - `WorkflowDefinitionService`: Tenant workflow catalogue, graph compilation, and automated reference Laptop Purchase workflow seeding ($10k and $50k thresholds).
+  - `WorkflowDefinitionController` (`/api/v1/workflows`) and `WorkflowInstanceController` (`/api/v1/workflow-instances`).
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Phase 4 contracts for workflows, nodes, transitions, instances, and statuses.
+  - `WorkflowsPage.tsx`: Workflow Studio with active version pills, interactive Graph Inspector modal displaying all nodes and transition predicates, and workflow creation modal.
+  - `RequestsPage.tsx`: Live Workflow Orchestration Audit Trail integrated into request details drawer with active node indicators and step timestamps.
+- **Automated Verification:**
+  - `WorkflowEngineIntegrationTest`: 5/5 tests covering reference workflow bootstrap, low-amount branching (< $10k), medium-amount finance escalation ($25k), manager rejection termination, and cross-tenant workflow isolation.
+  - Full backend test suite: 16/16 tests passing, including Spring Modulith architectural boundary verification.
+  - Frontend Vitest and Vite production bundle (`tsc && vite build`) passing with zero errors.
+
+---
+
 ## [0.4.0-request-engine] - 2026-11-09
 
 ### Added

@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Layers,
+  GitFork,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -32,6 +33,8 @@ import {
   RequestResponseDto,
   RequestCategoryResponseDto,
   RequestCommentResponseDto,
+  WorkflowInstanceResponseDto,
+  NodeInstanceResponseDto,
   RequestPriority,
   RequestStatus,
   CommentVisibility,
@@ -55,6 +58,9 @@ export const RequestsPage: React.FC = () => {
 
   // Selected Request for Drawer/Details
   const [selectedRequest, setSelectedRequest] = useState<RequestResponseDto | null>(null);
+  const [workflowInstance, setWorkflowInstance] = useState<WorkflowInstanceResponseDto | null>(null);
+  const [workflowNodes, setWorkflowNodes] = useState<NodeInstanceResponseDto[]>([]);
+  const [loadingWorkflow, setLoadingWorkflow] = useState(false);
   const [comments, setComments] = useState<RequestCommentResponseDto[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -128,9 +134,36 @@ export const RequestsPage: React.FC = () => {
     }
   };
 
+  const loadWorkflowInstance = async (requestId: string) => {
+    setLoadingWorkflow(true);
+    try {
+      const res = await apiClient.get<unknown, ApiResponse<WorkflowInstanceResponseDto>>(
+        `/workflow-instances/request/${requestId}`
+      );
+      if (res.data) {
+        setWorkflowInstance(res.data);
+        const nodesRes = await apiClient.get<unknown, ApiResponse<NodeInstanceResponseDto[]>>(
+          `/workflow-instances/${res.data.id}/nodes`
+        );
+        if (nodesRes.data) {
+          setWorkflowNodes(nodesRes.data);
+        }
+      } else {
+        setWorkflowInstance(null);
+        setWorkflowNodes([]);
+      }
+    } catch {
+      setWorkflowInstance(null);
+      setWorkflowNodes([]);
+    } finally {
+      setLoadingWorkflow(false);
+    }
+  };
+
   const handleSelectRequest = (req: RequestResponseDto) => {
     setSelectedRequest(req);
     loadComments(req.id);
+    loadWorkflowInstance(req.id);
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -623,6 +656,70 @@ export const RequestsPage: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-xs text-slate-400 italic">No structured attributes specified.</p>
+                )}
+              </div>
+
+              {/* Workflow Execution Lifecycle */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <GitFork className="h-4 w-4 text-indigo-600" />
+                    Workflow Orchestration Audit Trail
+                  </span>
+                  {workflowInstance && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Status: {workflowInstance.status}
+                    </span>
+                  )}
+                </h3>
+
+                {loadingWorkflow ? (
+                  <div className="p-4 text-center text-xs text-slate-400">Loading workflow state...</div>
+                ) : !workflowInstance ? (
+                  <p className="text-xs text-slate-400 italic">No automated workflow active for this request.</p>
+                ) : (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-200/80">
+                      <span>Currently at node: <strong className="font-mono text-indigo-600">{workflowInstance.currentNodeKey || 'START'}</strong></span>
+                      <span>Attempt #{workflowInstance.attemptNumber}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {workflowNodes.map((n, idx) => (
+                        <div key={n.id} className="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] bg-indigo-100 text-indigo-700">
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                                {n.title}
+                                <span className="font-mono text-[10px] text-slate-400">({n.nodeKey})</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(n.enteredAt).toLocaleTimeString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            {n.status === 'COMPLETED' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Completed
+                              </span>
+                            ) : n.status === 'WAITING' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 animate-pulse">
+                                <Clock className="h-3 w-3 text-blue-600" /> Awaiting Action
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                {n.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 

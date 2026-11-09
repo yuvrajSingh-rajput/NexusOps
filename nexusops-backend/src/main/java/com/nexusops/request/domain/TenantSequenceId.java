@@ -51,3 +51,4 @@ public class TenantSequenceId implements Serializable {
         return Objects.hash(organizationId, entityType);
     }
 }
+

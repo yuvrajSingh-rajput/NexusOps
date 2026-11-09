@@ -17,6 +17,9 @@ import com.nexusops.shared.exception.ResourceNotFoundException;
 import com.nexusops.shared.exception.ValidationException;
 import com.nexusops.shared.security.UserPrincipal;
 import com.nexusops.shared.tenant.TenantContextHolder;
+import com.nexusops.workflow.application.WorkflowEngineService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,15 @@ import java.util.*;
 @Service
 public class RequestService {
 
+    private static final Logger log = LoggerFactory.getLogger(RequestService.class);
+
     private final RequestRepository requestRepository;
     private final RequestCategoryRepository categoryRepository;
     private final RequestCommentRepository commentRepository;
     private final TenantSequenceRepository sequenceRepository;
     private final RequestCategoryService categoryService;
     private final DepartmentService departmentService;
+    private final WorkflowEngineService workflowEngineService;
     private final ObjectMapper objectMapper;
 
     public RequestService(RequestRepository requestRepository,
@@ -41,6 +47,7 @@ public class RequestService {
                           TenantSequenceRepository sequenceRepository,
                           RequestCategoryService categoryService,
                           DepartmentService departmentService,
+                          WorkflowEngineService workflowEngineService,
                           ObjectMapper objectMapper) {
         this.requestRepository = requestRepository;
         this.categoryRepository = categoryRepository;
@@ -48,6 +55,7 @@ public class RequestService {
         this.sequenceRepository = sequenceRepository;
         this.categoryService = categoryService;
         this.departmentService = departmentService;
+        this.workflowEngineService = workflowEngineService;
         this.objectMapper = objectMapper;
     }
 
@@ -111,6 +119,17 @@ public class RequestService {
         }
 
         RequestEntity saved = requestRepository.save(entity);
+
+        if (dto.autoSubmit() && category.isRequiresWorkflow()) {
+            try {
+                workflowEngineService.startWorkflow(orgId, saved.getId(), category.getId(), dto.payload());
+                saved.setStatus(RequestStatus.IN_REVIEW);
+                saved = requestRepository.save(saved);
+            } catch (Exception e) {
+                log.warn("Workflow not started for request {}: {}", saved.getId(), e.getMessage());
+            }
+        }
+
         return toDto(saved, category.getCode(), category.getName(), principal.getEmail());
     }
 
@@ -125,6 +144,17 @@ public class RequestService {
         RequestEntity saved = requestRepository.save(entity);
 
         RequestCategoryEntity cat = categoryRepository.findByOrganizationIdAndId(orgId, saved.getCategoryId()).orElse(null);
+        if (cat != null && cat.isRequiresWorkflow()) {
+            try {
+                Map<String, Object> payloadMap = parsePayloadJson(saved.getPayload());
+                workflowEngineService.startWorkflow(orgId, saved.getId(), cat.getId(), payloadMap);
+                saved.setStatus(RequestStatus.IN_REVIEW);
+                saved = requestRepository.save(saved);
+            } catch (Exception e) {
+                log.warn("Workflow not started for submitted request {}: {}", saved.getId(), e.getMessage());
+            }
+        }
+
         String catCode = cat != null ? cat.getCode() : "UNKNOWN";
         String catName = cat != null ? cat.getName() : "Unknown Category";
         return toDto(saved, catCode, catName, principal.getEmail());
@@ -288,13 +318,17 @@ public class RequestService {
         );
     }
 
-    private RequestResponseDto toDto(RequestEntity r, String categoryCode, String categoryName, String requesterEmail) {
-        Map<String, Object> payloadMap;
+    private Map<String, Object> parsePayloadJson(String json) {
+        if (json == null || json.isBlank()) return Collections.emptyMap();
         try {
-            payloadMap = objectMapper.readValue(r.getPayload(), new TypeReference<>() {});
+            return objectMapper.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<>() {});
         } catch (Exception e) {
-            payloadMap = Collections.emptyMap();
+            return Collections.emptyMap();
         }
+    }
+
+    private RequestResponseDto toDto(RequestEntity r, String categoryCode, String categoryName, String requesterEmail) {
+        Map<String, Object> payloadMap = parsePayloadJson(r.getPayload());
 
         String deptName = "Default Department";
         try {
@@ -329,3 +363,4 @@ public class RequestService {
         );
     }
 }
+

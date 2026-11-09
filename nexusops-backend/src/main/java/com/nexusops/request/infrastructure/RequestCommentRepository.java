@@ -16,3 +16,4 @@ public interface RequestCommentRepository extends JpaRepository<RequestCommentEn
     List<RequestCommentEntity> findAllByOrganizationIdAndRequestIdAndVisibilityOrderByCreatedAtAsc(
             UUID organizationId, UUID requestId, CommentVisibility visibility);
 }
+
