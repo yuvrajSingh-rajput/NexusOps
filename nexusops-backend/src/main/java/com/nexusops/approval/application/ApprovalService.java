@@ -37,6 +37,7 @@ public class ApprovalService {
     private final IdentityService identityService;
     private final RequestService requestService;
     private final WorkflowEngineService workflowEngineService;
+    private final com.nexusops.shared.events.OutboxService outboxService;
 
     public ApprovalService(ApprovalInstanceRepository approvalRepository,
                            ApprovalActionRepository actionRepository,
@@ -44,7 +45,8 @@ public class ApprovalService {
                            ApproverResolutionService approverResolutionService,
                            IdentityService identityService,
                            RequestService requestService,
-                           WorkflowEngineService workflowEngineService) {
+                           WorkflowEngineService workflowEngineService,
+                           com.nexusops.shared.events.OutboxService outboxService) {
         this.approvalRepository = approvalRepository;
         this.actionRepository = actionRepository;
         this.scheduledJobRepository = scheduledJobRepository;
@@ -52,6 +54,7 @@ public class ApprovalService {
         this.identityService = identityService;
         this.requestService = requestService;
         this.workflowEngineService = workflowEngineService;
+        this.outboxService = outboxService;
     }
 
     @EventListener
@@ -99,6 +102,14 @@ public class ApprovalService {
             );
             scheduledJobRepository.save(timeoutJob);
         }
+
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("approvalId", entity.getId().toString());
+        eventPayload.put("requestId", requestId.toString());
+        if (resolved.assignedMembershipId() != null) {
+            eventPayload.put("assigneeMembershipId", resolved.assignedMembershipId().toString());
+        }
+        outboxService.publish(organizationId, "APPROVAL_CREATED", "APPROVAL", entity.getId(), eventPayload);
 
         return entity;
     }
@@ -194,6 +205,14 @@ public class ApprovalService {
                 requestService.markWaitingForInformation(organizationId, instance.getRequestId());
             }
         }
+
+        String eventType = (dto.action() == ApprovalActionType.APPROVE) ? "APPROVAL_COMPLETED" : "APPROVAL_REJECTED";
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("approvalId", instance.getId().toString());
+        eventPayload.put("requestId", instance.getRequestId().toString());
+        eventPayload.put("actorMembershipId", principal.getMembershipId().toString());
+        eventPayload.put("action", dto.action().name());
+        outboxService.publish(organizationId, eventType, "APPROVAL", instance.getId(), eventPayload);
 
         return toDto(organizationId, instance);
     }

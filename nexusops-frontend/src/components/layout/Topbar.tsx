@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Sparkles, LogOut, Building, Check, ChevronDown } from 'lucide-react';
+import { Search, Sparkles, LogOut, Building, Check, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/authStore';
+import { NotificationPopover } from './NotificationPopover';
 
 interface TopbarProps {
   onOpenAiChat?: () => void;
@@ -110,11 +111,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat }) => {
           </span>
         </button>
 
-        {/* Notifications */}
-        <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
-        </button>
+        {/* Notifications Popover */}
+        <NotificationPopover />
 
         {/* User Profile & Menu */}
         <div className="relative" ref={dropdownRef}>

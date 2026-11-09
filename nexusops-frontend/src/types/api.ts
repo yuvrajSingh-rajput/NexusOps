@@ -489,6 +489,29 @@ export interface ChatMessageDto {
   createdAt: string;
 }
 
+export interface NotificationResponseDto {
+  id: string;
+  recipientMembershipId: string;
+  eventType: string;
+  title: string;
+  message: string;
+  linkUrl?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface AuditLogResponseDto {
+  id: string;
+  actorMembershipId?: string;
+  eventType: string;
+  aggregateType: string;
+  aggregateId: string;
+  correlationId?: string;
+  beforeState?: string;
+  afterState?: string;
+  createdAt: string;
+}
+
 
 
 

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,6 +50,7 @@ public class KnowledgeService {
     private final TextExtractionService textExtractionService;
     private final DocumentChunkerService documentChunkerService;
     private final VectorEmbeddingService vectorEmbeddingService;
+    private final com.nexusops.shared.events.OutboxService outboxService;
     private final DataSource dataSource;
     private volatile Boolean isPostgres;
 
@@ -60,6 +62,7 @@ public class KnowledgeService {
             TextExtractionService textExtractionService,
             DocumentChunkerService documentChunkerService,
             VectorEmbeddingService vectorEmbeddingService,
+            com.nexusops.shared.events.OutboxService outboxService,
             DataSource dataSource) {
         this.documentRepository = documentRepository;
         this.documentVersionRepository = documentVersionRepository;
@@ -68,6 +71,7 @@ public class KnowledgeService {
         this.textExtractionService = textExtractionService;
         this.documentChunkerService = documentChunkerService;
         this.vectorEmbeddingService = vectorEmbeddingService;
+        this.outboxService = outboxService;
         this.dataSource = dataSource;
     }
 
@@ -203,6 +207,12 @@ public class KnowledgeService {
 
             log.info("Successfully indexed document version {} with {} chunks",
                     version.getId(), chunkEntities.size());
+
+            outboxService.publish(version.getOrganizationId(), "DOCUMENT_INDEXED", "DOCUMENT", version.getDocument().getId(), Map.of(
+                    "documentId", version.getDocument().getId().toString(),
+                    "title", version.getDocument().getTitle(),
+                    "chunkCount", chunkEntities.size()
+            ));
 
         } catch (Exception e) {
             log.error("Failed to process document version {}: {}", version.getId(), e.getMessage(), e);

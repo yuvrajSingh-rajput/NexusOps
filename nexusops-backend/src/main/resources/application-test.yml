@@ -20,4 +20,7 @@ nexusops:
     refresh-token-expiration-ms: 86400000
   cors:
     allowed-origins: "*"
+  outbox:
+    relay-interval-ms: 3600000
+    relay-initial-delay-ms: 3600000
 

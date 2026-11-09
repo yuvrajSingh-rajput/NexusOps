@@ -1,71 +1,87 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 8 – Nexus AI Assistant & Governed Tool Registry Completed (Review Gate Active)  
+**Current Phase:** Phase 9 – Transactional Outbox, Event Bus, Notifications & Audit Trail Completed (Review Gate Active)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
 
 ---
 
-## Completed in Phase 8 (Nexus AI Assistant & Governed Tool Registry)
+## Completed in Phase 9 (Transactional Outbox, Kafka Event Bus, Notifications & Audit Trail)
 
 1. **Database Schema & Migrations (Flyway):**
-   - [`V9__ai_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V9__ai_schema.sql):
-     - `ai_conversations`: Scoped to `(organization_id, id)` with `user_id`, `title`, and timestamps.
-     - `ai_messages`: Append-only message log with `role: USER, ASSISTANT, SYSTEM, TOOL`, `content TEXT`, `citations JSONB`, `tool_call JSONB`.
-     - `ai_tool_executions`: Two-phase action proposal table with `tool_name`, `arguments JSONB`, `status: PROPOSED, AWAITING_CONFIRMATION, CONFIRMED, EXECUTING, SUCCEEDED, FAILED, REJECTED, EXPIRED`, `confirmation_required`, `confirmed_by_id`, `confirmed_at`, `result_summary JSONB`, and `expires_at` (15-min durable TTL).
-     - Composite foreign keys and Row-Level Security (RLS) policies on all AI tables.
+   - [`V10__outbox_and_events_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V10__outbox_and_events_schema.sql):
+     - `outbox_events`: Persisted in the exact same ACID database transaction as domain state mutations (`id`, `organization_id`, `event_type`, `event_version`, `aggregate_type`, `aggregate_id`, `correlation_id`, `payload JSONB`, `status: PENDING, PUBLISHED, FAILED`, `retry_count`, `error_message`, `created_at`, `published_at`).
+     - `processed_events`: Composite primary key `(consumer_name, event_id)` guaranteeing at-least-once consumer idempotency and eliminating duplicate processing during event replay.
+     - `notifications`: Multi-tenant notification fan-out (`id`, `organization_id`, `recipient_membership_id`, `event_type`, `title`, `message`, `link_url`, `read`, `created_at`) with composite foreign key referencing `organization_memberships(organization_id, id)`.
+     - `audit_logs`: Append-only compliance log (`id`, `organization_id`, `actor_membership_id`, `event_type`, `aggregate_type`, `aggregate_id`, `correlation_id`, `before_state JSONB`, `after_state JSONB`, `created_at`).
+     - Defense-in-depth Row-Level Security (RLS) policies on `outbox_events`, `notifications`, and `audit_logs`.
 
-2. **Backend Architecture & Governed Tool Engine (`com.nexusops.ai`):**
-   - **Domain & Infrastructure Entities:**
-     - `AiConversationEntity`, `AiMessageEntity`, `AiToolExecutionEntity`, `AiMessageRole`, `ToolExecutionStatus`.
-     - Repositories: `AiConversationRepository`, `AiMessageRepository`, `AiToolExecutionRepository`.
-   - **Governed Tool Registry ([`ToolRegistry.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/tools/ToolRegistry.java)):**
-     - `SearchMyRequestsTool`: Read-only queries against `RequestService.getMyRequests`.
-     - `GetRequestDetailsTool`: Detailed single-request lookup with tenant boundary check.
-     - `SearchPendingApprovalsTool`: Read-only queries against `ApprovalService.getMyPendingApprovals`.
-     - `SearchMyTasksTool`: Read-only queries against `TaskService.getMyTasks`.
-     - `SearchKnowledgeBaseTool`: Semantic RAG vector queries against `KnowledgeService.semanticSearch`.
-     - `CreateRequestTool`: Governed two-phase action proposal tool. Returns structured proposal cards; does NOT mutate database until confirmed.
-   - **Orchestration, RAG Grounding & Prompt-Injection Defense:**
-     - `IntentClassifier`: Classifies user input into `CONVERSATION`, `RAG_QUERY`, `READ_TOOL`, or `ACTION_PROPOSAL`.
-     - `RagContextBuilder`: Encapsulates retrieved knowledge chunks within strict untrusted XML boundary delimiters (`<untrusted_document_context>`) to defend against indirect prompt-injection attacks.
-     - `AiModelProvider`: Local Ollama integration with deterministic template synthesizer fallback when no LLM is configured.
-     - `AiAssistantService`: Main service orchestrating chats, SSE streaming, action proposal generation, and two-phase confirmation execution.
-   - **REST APIs ([`AiController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/api/AiController.java)):**
-     - `POST /api/v1/ai/chat`: Synchronous chat query returning grounded answers, citations, and action proposals.
-     - `GET /api/v1/ai/chat/stream`: Server-Sent Events (SSE) streaming chat.
-     - `GET /api/v1/ai/conversations`: Paginated list of conversations.
-     - `GET /api/v1/ai/conversations/{id}`: Detailed conversation message history.
-     - `POST /api/v1/ai/actions/{id}/confirm`: Two-phase action confirmation executing backend services.
-     - `POST /api/v1/ai/actions/{id}/cancel`: Cancellation of proposed tool execution.
+2. **Backend Architecture & Core Outbox Framework (`com.nexusops.shared.events`):**
+   - **Domain & Event Records:**
+     - `EventEnvelope<T>`: Standardized versioned event envelope with metadata (`eventId`, `eventType`, `eventVersion`, `organizationId`, `aggregateType`, `aggregateId`, `occurredAt`, `correlationId`, `payload`).
+     - `OutboxEventEntity`, `OutboxStatus`, `ProcessedEventEntity`, `ProcessedEventId`.
+     - Repositories: `OutboxEventRepository`, `ProcessedEventRepository`.
+   - **Outbox Service (`OutboxService.java`):**
+     - Guarantees zero phantom events via `@Transactional(propagation = Propagation.MANDATORY)`. Any database transaction rollback discards both business mutations and outbox records simultaneously.
+   - **Event Publisher Abstraction (`EventPublisher.java` & `KafkaEventPublisher.java`):**
+     - Integrates with Spring Kafka (`KafkaTemplate`) with fallback logging when Kafka is disabled or offline.
+   - **Outbox Relay Publisher (`OutboxRelayPublisher.java`):**
+     - Scheduled background worker polling pending outbox events, dispatching to Kafka and Spring ApplicationContext, marking events `PUBLISHED` or `FAILED` with retry tracking.
 
-3. **Backend Integration Testing ([`AiAssistantIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/AiAssistantIntegrationTest.java)):**
-   - `shouldProvideGroundedPolicyAnswerWithCitations`: Verifies RAG policy lookup and citations return.
-   - `shouldExecuteReadToolsToInspectUserRequests`: Verifies read tool execution returning personal user requests.
-   - `shouldExecuteTwoPhaseConfirmationForWriteActions`: Verifies proposing an action returns PROPOSED status card with TTL, and confirming executes `RequestService.createRequest`, advancing workflow to `MGR_APPROVAL` and generating `REQ-1001`.
-   - `shouldEnforceCrossTenantAiIsolation`: Verifies Tenant B cannot access Tenant A's conversations or confirm Tenant A's actions (returns 404).
+3. **Notifications Module (`com.nexusops.notification`):**
+   - `NotificationEntity`, `NotificationRepository`, `NotificationResponseDto`.
+   - `NotificationService`: Idempotent listener handling published outbox events (`REQUEST_SUBMITTED`, `APPROVAL_CREATED`, `APPROVAL_COMPLETED`, `TASK_CREATED`, `DOCUMENT_INDEXED`, `WORKFLOW_COMPLETED`), recording in-app notifications and dispatching asynchronous notification emails via Mailpit SMTP (`localhost:1025`).
+   - `NotificationController` (`/api/v1/notifications`): Endpoints for `/my` (paginated), `/unread-count`, `/{id}/read` (mark single), and `/read-all`.
+
+4. **Audit Module (`com.nexusops.audit`):**
+   - `AuditLogEntity`, `AuditLogRepository`, `AuditLogResponseDto`.
+   - `AuditLogService`: Idempotent listener recording append-only audit trail with actor membership, correlation ID, and state snapshots.
+   - `AuditLogController` (`/api/v1/audit`): Endpoint `/logs` with filtering by aggregate type, aggregate ID, and pagination.
+
+5. **Outbox In-Transaction Wiring Across Domain Modules:**
+   - `RequestService`: Emits `REQUEST_SUBMITTED` on submit, `REQUEST_CANCELLED` on cancel.
+   - `ApprovalService`: Emits `APPROVAL_CREATED` on pending review, `APPROVAL_COMPLETED` on approve, `APPROVAL_REJECTED` on reject.
+   - `TaskService`: Emits `TASK_CREATED` on task creation, `TASK_ASSIGNED` on assign/claim, `TASK_UPDATED` on status change, `TASK_COMPLETED` on fulfillment.
+   - `KnowledgeService`: Emits `DOCUMENT_INDEXED` on completion of embedding.
+   - `WorkflowEngineService`: Emits `WORKFLOW_COMPLETED` on reaching `END` node.
+
+6. **Backend Integration Testing ([`TransactionalOutboxIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/TransactionalOutboxIntegrationTest.java)):**
+   - `shouldAtomicallySaveRequestAndOutboxEvent`: Verifies request creation and outbox row are saved in the same transaction.
+   - `shouldRollbackOutboxEventsWhenBusinessTransactionFails`: Verifies transaction rollback results in zero phantom outbox events.
+   - `shouldRelayPendingEventsToEventBus`: Verifies relay publisher delivers events to event bus and marks rows PUBLISHED.
+   - `shouldDeduplicateEventsAtConsumerUsingProcessedEvents`: Verifies consumer idempotency ignores duplicate replay events.
+   - `shouldSurviveKafkaOutageWithoutLosingCommittedBusinessRequests`: Verifies broker failure marks outbox row FAILED without losing committed business state.
+   - `shouldEnforceTenantIsolationOnNotificationsAndAuditLogs`: Verifies Tenant B cannot view Tenant A's notifications or audit logs (returns empty).
    - **Full Backend Test Suite:**
-     - **32 tests passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
+     - **38 tests passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
      - Spring Modulith architectural boundaries test: 100% clean across all modules.
 
-4. **Frontend Implementation (`nexusops-frontend`):**
-   - **TypeScript Definitions (`src/types/api.ts`):** Added `AiMessageRole`, `ToolExecutionStatus`, `ActionProposalDto`, `ChatCitationDto`, `ChatResponseDto`, `ChatRequestDto`, `ConfirmActionDto`, `ConversationSummaryDto`, `ChatMessageDto`.
-   - **Slide-over Drawer ([`AiAssistantDrawer.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantDrawer.tsx)):**
-     - Persistent drawer accessible anywhere via topbar sparkle icon.
-     - Interactive chat stream with grounded citation pills.
-     - Two-phase action cards with "Confirm & Submit" and "Dismiss" buttons.
-     - Excerpt inspection modal on citation click.
-   - **Dedicated Workspace Studio ([`AiAssistantPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantPage.tsx)):**
-     - 3-column enterprise layout: Conversations History, Main Chat Canvas, and Governance Inspector panel.
-     - Quick prompt suggestions for policies, active requests, pending approvals, and laptop proposals.
-   - **Navigation & Routing:** Added `/ai-assistant` route in `routes.tsx` and sidebar link in `Sidebar.tsx`.
-   - **Frontend Verification:** `npm run build` (`✓ built in 9.57s`) and Vitest unit tests passed.
+7. **Frontend Implementation (`nexusops-frontend`):**
+   - **TypeScript Definitions (`src/types/api.ts`):** Added `NotificationResponseDto` and `AuditLogResponseDto`.
+   - **Notification Popover (`NotificationPopover.tsx`):**
+     - Bell icon in `Topbar.tsx` with live unread badge.
+     - Dropdown popover displaying unread count, event-specific icons, relative timestamps, single "Mark as read", and "Mark all read" controls.
+     - Click navigates directly to target resources (`/requests`, `/approvals`, `/tasks`).
+   - **Audit Trail Dashboard (`AuditTrailPage.tsx`):**
+     - Accessible via `/audit` and Sidebar navigation.
+     - Real-time search, aggregate type filter pills (`REQUEST`, `APPROVAL`, `TASK`, `DOCUMENT`, `WORKFLOW`), pagination, and JSON state snapshot inspector modal.
+   - **Verification:**
+     - Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 10.72s).
 
 ---
 
-## Next Milestone: Phase 9 – Transactional Outbox & Kafka Event Bus
+## Overall Project Milestone Status
 
-- Outbox table (`outbox_events`) written in the same DB transaction as business mutations.
-- Outbox relay publisher forwarding events to Kafka in KRaft mode.
-- Idempotent consumers with `processed_events` table deduplication.
-- Dead-letter topics and retry backoff.
+| Phase | Description | Status |
+|---|---|---|
+| **Phase 0** | Workspace Scaffolding & Monorepo Foundation | **DONE** (`phase-0`) |
+| **Phase 1** | Local Infrastructure & Docker Compose Stack | **DONE** (`phase-1`) |
+| **Phase 2** | Database Foundation, Identity & Multi-Tenancy | **DONE** (`phase-2`) |
+| **Phase 3** | Request Management & Dynamic Form Schemas | **DONE** (`phase-3`) |
+| **Phase 4** | Visual Workflow Engine (Definition & React Flow Studio) | **DONE** (`phase-4`) |
+| **Phase 5** | Durable Workflow Execution Engine | **DONE** (`phase-5`) |
+| **Phase 6** | Approval Engine & Decision Auditing | **DONE** (`phase-6`) |
+| **Phase 7** | Operations Task Management & Queues | **DONE** (`phase-7`) |
+| **Phase 8** | Nexus AI Assistant & Governed Tool Registry | **DONE** (`phase-8`) |
+| **Phase 9** | Transactional Outbox, Event Bus, Notifications & Audit | **DONE** (`phase-9`) |
+| **Phase 10** | Analytics, SLA Monitoring, Hardening & End-to-End Demo | **NEXT** |

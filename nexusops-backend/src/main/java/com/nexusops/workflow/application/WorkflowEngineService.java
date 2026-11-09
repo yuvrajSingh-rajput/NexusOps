@@ -33,6 +33,7 @@ public class WorkflowEngineService {
     private final WorkflowNodeInstanceRepository nodeInstanceRepository;
     private final NodeHandlerRegistry handlerRegistry;
     private final TypedConditionEvaluator conditionEvaluator;
+    private final com.nexusops.shared.events.OutboxService outboxService;
 
     public WorkflowEngineService(WorkflowDefinitionRepository definitionRepository,
                                  WorkflowDefinitionService definitionService,
@@ -42,7 +43,8 @@ public class WorkflowEngineService {
                                  WorkflowInstanceRepository instanceRepository,
                                  WorkflowNodeInstanceRepository nodeInstanceRepository,
                                  NodeHandlerRegistry handlerRegistry,
-                                 TypedConditionEvaluator conditionEvaluator) {
+                                 TypedConditionEvaluator conditionEvaluator,
+                                 com.nexusops.shared.events.OutboxService outboxService) {
         this.definitionRepository = definitionRepository;
         this.definitionService = definitionService;
         this.versionRepository = versionRepository;
@@ -52,6 +54,7 @@ public class WorkflowEngineService {
         this.nodeInstanceRepository = nodeInstanceRepository;
         this.handlerRegistry = handlerRegistry;
         this.conditionEvaluator = conditionEvaluator;
+        this.outboxService = outboxService;
     }
 
     @Transactional
@@ -215,6 +218,11 @@ public class WorkflowEngineService {
             if (currentNode.getNodeType() == NodeType.END) {
                 instance.setStatus(WorkflowStatus.COMPLETED);
                 instance.setCompletedAt(Instant.now());
+                outboxService.publish(instance.getOrganizationId(), "WORKFLOW_COMPLETED", "WORKFLOW", instance.getId(), Map.of(
+                        "workflowInstanceId", instance.getId().toString(),
+                        "requestId", instance.getRequestId().toString(),
+                        "status", "COMPLETED"
+                ));
                 log.info("Workflow instance {} successfully reached END node and completed", instance.getId());
                 return;
             }

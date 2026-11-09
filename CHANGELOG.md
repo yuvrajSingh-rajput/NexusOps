@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.0-outbox-kafka] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V10__outbox_and_events_schema.sql`: Schema for `outbox_events` (atomic in-transaction persistence, `PENDING/PUBLISHED/FAILED` statuses, retry counts), `processed_events` (idempotent consumer deduplication with composite PK `(consumer_name, event_id)`), `notifications` (multi-tenant notifications fan-out, composite FK to `organization_memberships`), and `audit_logs` (append-only ledger, before/after JSONB state snapshots, correlation IDs). RLS policies on all event tables.
+- **Backend Architecture & Core Outbox Framework (`com.nexusops.shared.events`):**
+  - Standardized `EventEnvelope<T>` record with strict event metadata and correlation ID tracing.
+  - `OutboxService`: In-transaction writer with `Propagation.MANDATORY` guaranteeing zero phantom events on database rollback.
+  - `EventPublisher` abstraction and `KafkaEventPublisher` integrating Spring Kafka with offline graceful degradation.
+  - `OutboxRelayPublisher`: Background worker polling pending events, delivering to Kafka broker and Spring ApplicationContext, updating status to `PUBLISHED` or `FAILED`.
+- **Notification & Audit Modules (`com.nexusops.notification` & `com.nexusops.audit`):**
+  - `NotificationService`: Idempotent listener for domain events (`REQUEST_SUBMITTED`, `APPROVAL_CREATED`, `APPROVAL_COMPLETED`, `TASK_CREATED`, `DOCUMENT_INDEXED`, `WORKFLOW_COMPLETED`), creating in-app notifications and async Mailpit SMTP emails.
+  - `NotificationController` (`/api/v1/notifications`): Endpoints for `/my`, `/unread-count`, `/{id}/read`, and `/read-all`.
+  - `AuditLogService`: Idempotent listener persisting append-only audit trail records with actor and state snapshots.
+  - `AuditLogController` (`/api/v1/audit`): Endpoint `/logs` with filtering by aggregate type, aggregate ID, and pagination.
+- **Outbox In-Transaction Wiring Across Domain Modules:**
+  - Integrated `OutboxService` into `RequestService`, `ApprovalService`, `TaskService`, `KnowledgeService`, and `WorkflowEngineService`.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added `NotificationResponseDto` and `AuditLogResponseDto`.
+  - `NotificationPopover.tsx`: Integrated bell popover in `Topbar.tsx` with dynamic unread badge, real-time 15s polling, event-specific icons, relative timestamps, single mark-as-read, and mark-all-read controls.
+  - `AuditTrailPage.tsx`: Dedicated compliance audit explorer at `/audit` with aggregate type filter pills, search, pagination, and JSON state snapshot inspector modal.
+  - Navigation: Added `/audit` in `routes.tsx` and sidebar link in `Sidebar.tsx`.
+- **Automated Verification:**
+  - `TransactionalOutboxIntegrationTest`: 6 integration tests verifying atomic outbox write, transaction rollback discarding outbox rows, relay publishing, idempotent deduplication, Kafka broker outage resilience, and cross-tenant isolation.
+  - Full backend test suite: 38/38 tests passing (`BUILD SUCCESS`), with Spring Modulith architectural verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 10.72s).
+
+---
+
 ## [0.9.0-nexus-ai] - 2026-11-09
 
 ### Added

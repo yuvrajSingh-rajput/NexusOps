@@ -39,6 +39,7 @@ public class TaskService {
     private final IdentityService identityService;
     private final RequestService requestService;
     private final WorkflowEngineService workflowEngineService;
+    private final com.nexusops.shared.events.OutboxService outboxService;
 
     public TaskService(TaskRepository taskRepository,
                        TaskCommentRepository commentRepository,
@@ -46,7 +47,8 @@ public class TaskService {
                        SequenceGeneratorService sequenceGenerator,
                        IdentityService identityService,
                        RequestService requestService,
-                       WorkflowEngineService workflowEngineService) {
+                       WorkflowEngineService workflowEngineService,
+                       com.nexusops.shared.events.OutboxService outboxService) {
         this.taskRepository = taskRepository;
         this.commentRepository = commentRepository;
         this.historyRepository = historyRepository;
@@ -54,6 +56,7 @@ public class TaskService {
         this.identityService = identityService;
         this.requestService = requestService;
         this.workflowEngineService = workflowEngineService;
+        this.outboxService = outboxService;
     }
 
     @EventListener
@@ -130,6 +133,19 @@ public class TaskService {
         );
         historyRepository.save(history);
 
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("taskId", task.getId().toString());
+        eventPayload.put("taskNumber", task.getTaskNumber());
+        eventPayload.put("title", task.getTitle());
+        eventPayload.put("status", task.getStatus().name());
+        if (requestId != null) {
+            eventPayload.put("requestId", requestId.toString());
+        }
+        if (assigneeMembershipId != null) {
+            eventPayload.put("assigneeMembershipId", assigneeMembershipId.toString());
+        }
+        outboxService.publish(organizationId, "TASK_CREATED", "TASK", task.getId(), eventPayload);
+
         log.info("Created task {} ({}) for request {}", task.getTaskNumber(), task.getId(), requestId);
         return task;
     }
@@ -163,6 +179,14 @@ public class TaskService {
                 organizationId, task.getId(), principal.getMembershipId(), "CLAIMED", oldState, newState
         );
         historyRepository.save(history);
+
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("taskId", task.getId().toString());
+        eventPayload.put("taskNumber", task.getTaskNumber());
+        eventPayload.put("title", task.getTitle());
+        eventPayload.put("assigneeMembershipId", principal.getMembershipId().toString());
+        eventPayload.put("status", task.getStatus().name());
+        outboxService.publish(organizationId, "TASK_ASSIGNED", "TASK", task.getId(), eventPayload);
 
         return toDto(organizationId, task);
     }
@@ -199,6 +223,16 @@ public class TaskService {
         );
         historyRepository.save(history);
 
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("taskId", task.getId().toString());
+        eventPayload.put("taskNumber", task.getTaskNumber());
+        eventPayload.put("title", task.getTitle());
+        if (task.getAssigneeMembershipId() != null) {
+            eventPayload.put("assigneeMembershipId", task.getAssigneeMembershipId().toString());
+        }
+        eventPayload.put("status", task.getStatus().name());
+        outboxService.publish(organizationId, "TASK_ASSIGNED", "TASK", task.getId(), eventPayload);
+
         return toDto(organizationId, task);
     }
 
@@ -226,6 +260,16 @@ public class TaskService {
                 organizationId, task.getId(), principal.getMembershipId(), "STATUS_CHANGED", oldState, newState
         );
         historyRepository.save(history);
+
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("taskId", task.getId().toString());
+        eventPayload.put("taskNumber", task.getTaskNumber());
+        eventPayload.put("title", task.getTitle());
+        if (task.getAssigneeMembershipId() != null) {
+            eventPayload.put("assigneeMembershipId", task.getAssigneeMembershipId().toString());
+        }
+        eventPayload.put("status", task.getStatus().name());
+        outboxService.publish(organizationId, "TASK_UPDATED", "TASK", task.getId(), eventPayload);
 
         return toDto(organizationId, task);
     }
@@ -286,6 +330,19 @@ public class TaskService {
                 log.warn("Could not mark request {} completed: {}", task.getRequestId(), e.getMessage());
             }
         }
+
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("taskId", task.getId().toString());
+        eventPayload.put("taskNumber", task.getTaskNumber());
+        eventPayload.put("title", task.getTitle());
+        eventPayload.put("status", "COMPLETED");
+        if (task.getRequestId() != null) {
+            eventPayload.put("requestId", task.getRequestId().toString());
+        }
+        if (task.getAssigneeMembershipId() != null) {
+            eventPayload.put("assigneeMembershipId", task.getAssigneeMembershipId().toString());
+        }
+        outboxService.publish(organizationId, "TASK_COMPLETED", "TASK", task.getId(), eventPayload);
 
         return toDto(organizationId, task);
     }

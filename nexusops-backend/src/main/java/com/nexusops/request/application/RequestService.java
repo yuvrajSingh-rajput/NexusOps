@@ -11,6 +11,7 @@ import com.nexusops.request.infrastructure.RequestCategoryRepository;
 import com.nexusops.request.infrastructure.RequestCommentRepository;
 import com.nexusops.request.infrastructure.RequestRepository;
 import com.nexusops.shared.sequence.SequenceGeneratorService;
+import com.nexusops.shared.events.OutboxService;
 import com.nexusops.shared.api.PageResponse;
 import com.nexusops.shared.exception.AccessDeniedException;
 import com.nexusops.shared.exception.ResourceNotFoundException;
@@ -39,6 +40,7 @@ public class RequestService {
     private final RequestCategoryService categoryService;
     private final DepartmentService departmentService;
     private final WorkflowEngineService workflowEngineService;
+    private final OutboxService outboxService;
     private final ObjectMapper objectMapper;
 
     public RequestService(RequestRepository requestRepository,
@@ -48,6 +50,7 @@ public class RequestService {
                           RequestCategoryService categoryService,
                           DepartmentService departmentService,
                           WorkflowEngineService workflowEngineService,
+                          OutboxService outboxService,
                           ObjectMapper objectMapper) {
         this.requestRepository = requestRepository;
         this.categoryRepository = categoryRepository;
@@ -56,6 +59,7 @@ public class RequestService {
         this.categoryService = categoryService;
         this.departmentService = departmentService;
         this.workflowEngineService = workflowEngineService;
+        this.outboxService = outboxService;
         this.objectMapper = objectMapper;
     }
 
@@ -130,6 +134,13 @@ public class RequestService {
             }
         }
 
+        Map<String, Object> eventPayload = new HashMap<>(dto.payload());
+        eventPayload.put("requestNumber", saved.getRequestNumber());
+        eventPayload.put("title", saved.getTitle());
+        eventPayload.put("requesterMembershipId", requesterMembershipId.toString());
+        eventPayload.put("email", principal.getEmail());
+        outboxService.publish(orgId, "REQUEST_SUBMITTED", "REQUEST", saved.getId(), eventPayload);
+
         return toDto(saved, category.getCode(), category.getName(), principal.getEmail());
     }
 
@@ -181,6 +192,14 @@ public class RequestService {
         }
 
         RequestEntity saved = requestRepository.save(entity);
+
+        outboxService.publish(orgId, "REQUEST_CANCELLED", "REQUEST", entity.getId(), Map.of(
+                "requestNumber", entity.getRequestNumber(),
+                "title", entity.getTitle(),
+                "requesterMembershipId", entity.getRequesterMembershipId().toString(),
+                "reason", reason != null ? reason : "User cancelled"
+        ));
+
         RequestCategoryEntity cat = categoryRepository.findByOrganizationIdAndId(orgId, saved.getCategoryId()).orElse(null);
         return toDto(saved, cat != null ? cat.getCode() : "", cat != null ? cat.getName() : "", principal.getEmail());
     }

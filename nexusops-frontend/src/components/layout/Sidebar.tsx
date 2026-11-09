@@ -11,6 +11,7 @@ import {
   Building2,
   Users,
   Sparkles,
+  History,
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/authStore';
 
@@ -28,6 +29,7 @@ const operationsNav: NavItem[] = [
   { name: 'Knowledge Base', to: '/knowledge', icon: BookOpen },
   { name: 'Workflow Studio', to: '/workflows', icon: GitFork },
   { name: 'Nexus AI Co-pilot', to: '/ai-assistant', icon: Sparkles },
+  { name: 'Audit Trail', to: '/audit', icon: History },
   { name: 'Analytics', to: '/analytics', icon: BarChart3 },
 ];
 
