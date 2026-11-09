@@ -1,9 +1,32 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 11 – End-to-End Acceptance Demo, Seed Data & Final Hardening Completed (ALL PHASES COMPLETE & ACCEPTED)  
+**Current Phase:** Phase 11 & v1.0.1 Stability Patch – Knowledge Vector Ingestion, AI Co-Pilot & UI Hardening (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
-**Milestone:** v1.0.0 Commercial Release Ready  
+**Milestone:** v1.0.1 Commercial Release Ready  
+
+---
+
+## Completed in v1.0.1 Stability Patch (Knowledge Vector Ingestion, AI Co-Pilot & UI Hardening)
+
+1. **pgvector & Hibernate 6 Type Mapping ([`PgVectorType.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/knowledge/domain/PgVectorType.java) & [`DocumentChunkEntity.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/knowledge/domain/DocumentChunkEntity.java)):**
+   - Implemented custom Hibernate `UserType<String>` mapping PostgreSQL pgvector (`Types.OTHER`) with `vector(768)` columns while allowing H2 in-memory test export.
+   - Verified automated boot-time indexing of the Acme IT Hardware & Procurement Policy into PostgreSQL pgvector chunks without warnings.
+   - All tests passing (`KnowledgeEngineIntegrationTest` 3/3, `EndToEndDemoIntegrationTest` 3/3).
+
+2. **Modern PDF Decompression ([`TextExtractionService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/knowledge/application/TextExtractionService.java)):**
+   - Added `InflaterInputStream` support to uncompress `/FlateDecode` streams in uploaded PDF documents.
+
+3. **Grounded AI RAG & Tool Query Routing ([`AiAssistantService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/AiAssistantService.java), [`SearchMyRequestsTool.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/tools/SearchMyRequestsTool.java), [`IntentClassifier.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/IntentClassifier.java)):**
+   - Calibrated RAG semantic search threshold to `0.25` for deterministic local embeddings, returning full grounded citations and policy paragraphs.
+   - Enabled administrative request query fallback so org admins querying requests see active organization requests.
+   - Expanded natural language intent matching for requests, approvals, and tasks.
+
+4. **Frontend Hardening & Network Proxy Stability:**
+   - Fixed undefined string method calls on request category badges with `getCategoryIcon` fallbacks.
+   - Created `RouteErrorBoundary.tsx` connected to application routing.
+   - Fixed Axios double-prefixing on Knowledge base endpoints and unwrapped response objects.
+   - Configured Vite proxy in `vite.config.ts` to `http://127.0.0.1:8080` to prevent Windows IPv6 connection refused errors.
 
 ---
 

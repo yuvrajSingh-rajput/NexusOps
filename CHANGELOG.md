@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-11-09 - Knowledge Vector Store, AI Co-Pilot & UI Stability Patch
+
+### Fixed
+- **Knowledge Base Vector Mapping (`PgVectorType.java` & `DocumentChunkEntity.java`):**
+  - Created custom Hibernate UserType `PgVectorType` mapping `Types.OTHER` (1111) to Java String vectors, resolving PostgreSQL schema validation with `ddl-auto: validate` and byte-array unwrap errors.
+  - Added support for both PostgreSQL `vector(768)` and in-memory H2 schema generation with graceful fallback.
+- **Modern PDF Decompression (`TextExtractionService.java`):**
+  - Implemented `InflaterInputStream` decompression for PDF `FlateDecode` zlib streams, enabling accurate text extraction and chunking of compressed PDF documents.
+- **RAG Semantic Search Sensitivity (`AiAssistantService.java`):**
+  - Calibrated default RAG search threshold from `0.40` to `0.25` for deterministic local embeddings, ensuring company hardware policies are accurately retrieved with zero hallucinations.
+- **Admin & Manager Request Discovery (`SearchMyRequestsTool.java` & `IntentClassifier.java`):**
+  - Enhanced request search tool to return organization-wide active requests for administrators and managers who have not submitted personal requests.
+  - Expanded intent classifier keywords for queries like "show requests", "list approvals", and "show tasks".
+- **Frontend Error Boundary & Search Guards:**
+  - Added `RouteErrorBoundary.tsx` connected to React Router routes for graceful UI recovery.
+  - Guarded search filter inputs across `RequestsPage.tsx`, `ApprovalsPage.tsx`, `TasksPage.tsx`, `AuditTrailPage.tsx`, and `KnowledgePage.tsx` against undefined properties.
+  - Fixed duplicated `/api/v1/` prefix and response unwrapping in `KnowledgePage.tsx`.
+- **Vite Proxy Resolution (`vite.config.ts`):**
+  - Updated proxy target to `http://127.0.0.1:8080` to prevent Windows IPv6 `::1:8080` connection drops (`ECONNREFUSED`).
+
+---
+
 ## [1.0.0] - 2026-11-09 - Commercial Release & Final Acceptance Hardening
 
 ### Added
