@@ -1,7 +1,5 @@
-package com.nexusops.request.infrastructure;
+package com.nexusops.shared.sequence;
 
-import com.nexusops.request.domain.TenantSequenceEntity;
-import com.nexusops.request.domain.TenantSequenceId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

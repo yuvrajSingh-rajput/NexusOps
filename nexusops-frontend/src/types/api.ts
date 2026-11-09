@@ -298,5 +298,71 @@ export interface ApprovalDecisionDto {
   delegateToMembershipId?: string;
 }
 
+// ==============================================================================
+// TASK MANAGEMENT & FULFILLMENT QUEUE TYPES
+// ==============================================================================
+
+export type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED' | 'CANCELLED';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface TaskCommentResponseDto {
+  id: string;
+  authorMembershipId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface TaskHistoryResponseDto {
+  id: string;
+  actorMembershipId: string;
+  actorName: string;
+  action: string;
+  oldState: Record<string, any>;
+  newState: Record<string, any>;
+  createdAt: string;
+}
+
+export interface TaskResponseDto {
+  id: string;
+  organizationId: string;
+  taskNumber: string;
+  title: string;
+  description?: string;
+  requestId?: string;
+  requestNumber?: string;
+  requestTitle?: string;
+  workflowInstanceId?: string;
+  nodeInstanceId?: string;
+  teamId?: string;
+  assigneeMembershipId?: string;
+  assigneeName: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  payload: Record<string, any>;
+  outputData: Record<string, any>;
+  dueAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  comments: TaskCommentResponseDto[];
+  history: TaskHistoryResponseDto[];
+}
+
+export interface CompleteTaskDto {
+  outputData?: Record<string, any>;
+  notes?: string;
+}
+
+export interface UpdateTaskStatusDto {
+  status: TaskStatus;
+  notes?: string;
+}
+
+export interface AddTaskCommentDto {
+  content: string;
+}
+
+
 
 

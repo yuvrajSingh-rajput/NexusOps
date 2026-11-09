@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0-task-management] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V7__task_schema.sql`: Schema for `tasks` (`@Version` optimistic locking, SLA `due_at`, `payload` JSONB, fulfillment `output_data` JSONB), `task_comments` (operational notes with internal privacy flags), and `task_history` (append-only audit trail of state transitions).
+- **Backend Architecture & Domain Services (`com.nexusops.task` & `com.nexusops.shared`):**
+  - `TenantSequenceEntity` & `SequenceGeneratorService` (`com.nexusops.shared.sequence`): Reusable thread-safe sequence generator providing unique human-readable numbers (`TASK-1001`, `REQ-1001`) with Spring Modulith boundary compliance.
+  - Event Decoupling via `TaskRequestedEvent`: Workflow engine's `TaskNodeHandler` publishes event; `TaskService` listens via `@EventListener`, auto-creating fulfillment tasks.
+  - `TaskService`: Manages task lifecycle (`createTask`, `claimTask`, `assignTask`, `updateTaskStatus`, `completeTask`, `addComment`), output data persistence, workflow resumption signal, and request completion closure.
+  - `TaskController` (`/api/v1/tasks`): Queue endpoints (`/queue`, `/my`), task retrieval (`/{id}`, `/request/{requestId}`), state transitions (`/claim`, `/assign`, `/status`, `/complete`), and comments (`/comments`).
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added task types (`TaskStatus`, `TaskPriority`, `TaskHistoryAction`, `TaskResponseDto`, `TaskCommentResponseDto`, `TaskHistoryResponseDto`, `CompleteTaskDto`, `UpdateTaskStatusDto`, `AddTaskCommentDto`).
+  - `TasksPage.tsx`: Interactive fulfillment portal with Unassigned Queue and My Tasks views, status filtering, quick-claim action, fulfillment drawer with dynamic payload viewer, complete task modal with artifact capture (serial number, carrier, tracking), and activity audit timeline.
+- **Automated Verification:**
+  - `TaskEngineIntegrationTest`: 4 integration tests verifying end-to-end procurement fulfillment journey, zero tasks created on rejection, status transitions (`IN_PROGRESS` <-> `BLOCKED`) with audit logging, and cross-tenant isolation.
+  - Full backend test suite: 25/25 tests passing (`BUILD SUCCESS`), including Spring Modulith architectural verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build`).
+
+---
+
 ## [0.6.0-approval-engine] - 2026-11-09
 
 ### Added

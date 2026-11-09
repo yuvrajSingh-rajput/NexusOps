@@ -10,7 +10,7 @@ import com.nexusops.request.domain.*;
 import com.nexusops.request.infrastructure.RequestCategoryRepository;
 import com.nexusops.request.infrastructure.RequestCommentRepository;
 import com.nexusops.request.infrastructure.RequestRepository;
-import com.nexusops.request.infrastructure.TenantSequenceRepository;
+import com.nexusops.shared.sequence.SequenceGeneratorService;
 import com.nexusops.shared.api.PageResponse;
 import com.nexusops.shared.exception.AccessDeniedException;
 import com.nexusops.shared.exception.ResourceNotFoundException;
@@ -35,7 +35,7 @@ public class RequestService {
     private final RequestRepository requestRepository;
     private final RequestCategoryRepository categoryRepository;
     private final RequestCommentRepository commentRepository;
-    private final TenantSequenceRepository sequenceRepository;
+    private final SequenceGeneratorService sequenceGenerator;
     private final RequestCategoryService categoryService;
     private final DepartmentService departmentService;
     private final WorkflowEngineService workflowEngineService;
@@ -44,7 +44,7 @@ public class RequestService {
     public RequestService(RequestRepository requestRepository,
                           RequestCategoryRepository categoryRepository,
                           RequestCommentRepository commentRepository,
-                          TenantSequenceRepository sequenceRepository,
+                          SequenceGeneratorService sequenceGenerator,
                           RequestCategoryService categoryService,
                           DepartmentService departmentService,
                           WorkflowEngineService workflowEngineService,
@@ -52,7 +52,7 @@ public class RequestService {
         this.requestRepository = requestRepository;
         this.categoryRepository = categoryRepository;
         this.commentRepository = commentRepository;
-        this.sequenceRepository = sequenceRepository;
+        this.sequenceGenerator = sequenceGenerator;
         this.categoryService = categoryService;
         this.departmentService = departmentService;
         this.workflowEngineService = workflowEngineService;
@@ -235,6 +235,15 @@ public class RequestService {
     }
 
     @Transactional
+    public void completeRequest(UUID organizationId, UUID id) {
+        RequestEntity entity = requestRepository.findByOrganizationIdAndId(organizationId, id)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: " + id));
+        entity.setStatus(RequestStatus.COMPLETED);
+        entity.setCompletedAt(java.time.Instant.now());
+        requestRepository.save(entity);
+    }
+
+    @Transactional
     public RequestCommentResponseDto addComment(UUID requestId, AddCommentDto dto, UserPrincipal principal) {
         UUID orgId = TenantContextHolder.requireTenantId();
         RequestEntity request = requestRepository.findByOrganizationIdAndId(orgId, requestId)
@@ -294,14 +303,8 @@ public class RequestService {
                 .toList();
     }
 
-    private synchronized String generateNextRequestNumber(UUID orgId) {
-        TenantSequenceId seqId = new TenantSequenceId(orgId, "REQUEST");
-        TenantSequenceEntity seq = sequenceRepository.findById(seqId)
-                .orElseGet(() -> sequenceRepository.save(new TenantSequenceEntity(seqId, 1000L)));
-
-        Long nextVal = seq.incrementAndGet();
-        sequenceRepository.save(seq);
-        return "REQ-" + nextVal;
+    private String generateNextRequestNumber(UUID orgId) {
+        return sequenceGenerator.generateNextSequenceNumber(orgId, "REQUEST", "REQ");
     }
 
     private void verifyRequestOwnershipOrAdmin(RequestEntity entity, UserPrincipal principal) {

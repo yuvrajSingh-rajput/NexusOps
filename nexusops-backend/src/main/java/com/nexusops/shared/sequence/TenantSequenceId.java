@@ -1,6 +1,8 @@
-package com.nexusops.request.domain;
+package com.nexusops.shared.sequence;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
@@ -14,8 +16,7 @@ public class TenantSequenceId implements Serializable {
     @Column(name = "entity_type", nullable = false, length = 30)
     private String entityType;
 
-    public TenantSequenceId() {
-    }
+    public TenantSequenceId() {}
 
     public TenantSequenceId(UUID organizationId, String entityType) {
         this.organizationId = organizationId;
@@ -41,9 +42,9 @@ public class TenantSequenceId implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TenantSequenceId that = (TenantSequenceId) o;
-        return Objects.equals(organizationId, that.organizationId) && Objects.equals(entityType, that.entityType);
+        if (!(o instanceof TenantSequenceId that)) return false;
+        return Objects.equals(organizationId, that.organizationId) &&
+               Objects.equals(entityType, that.entityType);
     }
 
     @Override

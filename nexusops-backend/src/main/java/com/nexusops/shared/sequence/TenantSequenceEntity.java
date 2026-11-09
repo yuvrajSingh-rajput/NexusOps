@@ -1,6 +1,9 @@
-package com.nexusops.request.domain;
+package com.nexusops.shared.sequence;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "tenant_sequences")
@@ -12,8 +15,7 @@ public class TenantSequenceEntity {
     @Column(name = "current_val", nullable = false)
     private Long currentVal = 1000L;
 
-    public TenantSequenceEntity() {
-    }
+    public TenantSequenceEntity() {}
 
     public TenantSequenceEntity(TenantSequenceId id, Long currentVal) {
         this.id = id;
@@ -37,7 +39,7 @@ public class TenantSequenceEntity {
     }
 
     public Long incrementAndGet() {
-        this.currentVal = this.currentVal + 1;
+        this.currentVal += 1;
         return this.currentVal;
     }
 }
