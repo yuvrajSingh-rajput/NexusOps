@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0-nexus-ai] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V9__ai_schema.sql`: Schema for `ai_conversations` (scoped by organization and user), `ai_messages` (append-only role log, grounded citations JSONB, tool calls JSONB), and `ai_tool_executions` (two-phase action proposal registry with 15-minute durable TTL, arguments JSONB, result summary JSONB, error codes, and confirmation tracking). Row-Level Security (RLS) policies and composite foreign keys on all AI tables.
+- **Backend Architecture & Governed AI Engine (`com.nexusops.ai`):**
+  - `ToolRegistry` & Governed Tools: `SearchMyRequestsTool`, `GetRequestDetailsTool`, `SearchPendingApprovalsTool`, `SearchMyTasksTool`, `SearchKnowledgeBaseTool`, and `CreateRequestTool`. Identity is strictly server-derived from `SecurityContextHolder`; AI arguments never override tenant or user IDs.
+  - Two-Phase Confirmation Engine: Write actions (e.g. creating requests) produce a structured `ActionProposalDto` card in `PROPOSED` state. Mutations only execute via `/api/v1/ai/actions/{id}/confirm` invoked by the authenticated user.
+  - Prompt-Injection Defense (`RagContextBuilder`): Retrieved knowledge context is isolated within untrusted XML tags (`<untrusted_document_context>`), ensuring the LLM treats document content as reference data, never operational instructions.
+  - Zero-Cloud Degradation (`AiModelProvider`): Integrates with local Ollama or external APIs, with automatic fallback to deterministic rule routing and template synthesis when no LLM is configured.
+  - `AiController` (`/api/v1/ai`): Endpoints for `/chat` (synchronous), `/chat/stream` (SSE), `/conversations`, `/conversations/{id}`, `/actions/{id}/confirm`, and `/actions/{id}/cancel`.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added AI types (`AiMessageRole`, `ToolExecutionStatus`, `ActionProposalDto`, `ChatCitationDto`, `ChatResponseDto`, `ChatRequestDto`, `ConfirmActionDto`, `ConversationSummaryDto`, `ChatMessageDto`).
+  - `AiAssistantDrawer.tsx`: Persistent slide-over co-pilot drawer accessible from anywhere in the application via Topbar sparkle icon. Supports streaming chat, grounded citation badges with excerpt inspection modal, and two-phase action proposal cards with Confirm/Dismiss controls.
+  - `AiAssistantPage.tsx`: Dedicated full-workspace studio with 3-column layout (conversation history, interactive chat canvas with suggested query cards, and AI Governance & Security Inspector panel).
+  - Navigation: Added `/ai-assistant` route in `routes.tsx` and sidebar link in `Sidebar.tsx`.
+- **Automated Verification:**
+  - `AiAssistantIntegrationTest`: 4 integration tests verifying grounded policy lookup with citations, read tools for personal requests, two-phase confirmation creating requests in the database and triggering workflows, and cross-tenant isolation (HTTP 404).
+  - Full backend test suite: 32/32 tests passing (`BUILD SUCCESS`), including Spring Modulith architectural boundary verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 9.57s).
+
+---
+
 ## [0.8.0-knowledge-base] - 2026-11-09
 
 ### Added

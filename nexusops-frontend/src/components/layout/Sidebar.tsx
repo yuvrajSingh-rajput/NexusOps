@@ -27,6 +27,7 @@ const operationsNav: NavItem[] = [
   { name: 'Tasks & Queues', to: '/tasks', icon: ListTodo },
   { name: 'Knowledge Base', to: '/knowledge', icon: BookOpen },
   { name: 'Workflow Studio', to: '/workflows', icon: GitFork },
+  { name: 'Nexus AI Co-pilot', to: '/ai-assistant', icon: Sparkles },
   { name: 'Analytics', to: '/analytics', icon: BarChart3 },
 ];
 

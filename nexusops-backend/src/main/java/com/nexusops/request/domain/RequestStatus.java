@@ -1,5 +1,8 @@
 package com.nexusops.request.domain;
 
+import org.springframework.modulith.NamedInterface;
+
+@NamedInterface
 public enum RequestStatus {
     DRAFT,
     SUBMITTED,

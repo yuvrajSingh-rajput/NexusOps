@@ -419,6 +419,77 @@ export interface SemanticSearchRequestDto {
   minScore?: number;
 }
 
+// ----------------------------------------------------------------------------
+// Nexus AI Assistant & Governed Tool Registry Types
+// ----------------------------------------------------------------------------
+
+export type AiMessageRole = 'USER' | 'ASSISTANT' | 'SYSTEM' | 'TOOL';
+
+export type ToolExecutionStatus =
+  | 'PROPOSED'
+  | 'AWAITING_CONFIRMATION'
+  | 'CONFIRMED'
+  | 'EXECUTING'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'REJECTED'
+  | 'EXPIRED';
+
+export interface ActionProposalDto {
+  actionId: string;
+  toolName: string;
+  title: string;
+  description: string;
+  parameters: Record<string, any>;
+  expiresAt: string;
+  status: ToolExecutionStatus;
+}
+
+export interface ChatCitationDto {
+  documentId: string;
+  documentTitle: string;
+  pageNumber?: number;
+  similarityScore: number;
+  snippet: string;
+}
+
+export interface ChatResponseDto {
+  conversationId: string;
+  messageId: string;
+  reply: string;
+  citations: ChatCitationDto[];
+  proposal?: ActionProposalDto | null;
+  toolUsed?: string | null;
+}
+
+export interface ChatRequestDto {
+  conversationId?: string | null;
+  message: string;
+}
+
+export interface ConfirmActionDto {
+  confirm: boolean;
+  notes?: string;
+}
+
+export interface ConversationSummaryDto {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+}
+
+export interface ChatMessageDto {
+  id: string;
+  role: AiMessageRole;
+  content: string;
+  citations: ChatCitationDto[];
+  proposal?: ActionProposalDto | null;
+  createdAt: string;
+}
+
+
 
 
 

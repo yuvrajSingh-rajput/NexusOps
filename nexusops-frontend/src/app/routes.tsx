@@ -11,6 +11,7 @@ import { KnowledgePage } from '@/features/knowledge/KnowledgePage';
 import { WorkflowsPage } from '@/features/workflows/WorkflowsPage';
 import { DepartmentsPage } from '@/features/organization/DepartmentsPage';
 import { EmployeesPage } from '@/features/organization/EmployeesPage';
+import { AiAssistantPage } from '@/features/ai-assistant/AiAssistantPage';
 
 export const routes: RouteObject[] = [
   // Public Authentication Routes
@@ -37,6 +38,7 @@ export const routes: RouteObject[] = [
           { path: 'tasks', element: <TasksPage /> },
           { path: 'knowledge', element: <KnowledgePage /> },
           { path: 'workflows', element: <WorkflowsPage /> },
+          { path: 'ai-assistant', element: <AiAssistantPage /> },
           { path: 'departments', element: <DepartmentsPage /> },
           { path: 'employees', element: <EmployeesPage /> },
           { path: 'analytics', element: <DashboardPage /> },
