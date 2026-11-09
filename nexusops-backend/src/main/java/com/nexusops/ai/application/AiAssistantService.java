@@ -116,8 +116,22 @@ public class AiAssistantService {
         messageRepository.save(userMsg);
         conversation.addMessage(userMsg);
 
-        // 3. Classify Intent
-        IntentClassifier.Intent intent = intentClassifier.classify(dto.message());
+        // Find previous assistant message for conversational context
+        String previousAssistantContext = null;
+        if (dto.conversationId() != null) {
+            List<AiMessageEntity> prevMessages = messageRepository.findByOrganizationIdAndConversationIdOrderByCreatedAtAsc(
+                    organizationId, conversation.getId());
+            for (int k = prevMessages.size() - 1; k >= 0; k--) {
+                AiMessageEntity m = prevMessages.get(k);
+                if (m.getRole() == AiMessageRole.ASSISTANT && !m.getId().equals(userMsg.getId())) {
+                    previousAssistantContext = m.getContent();
+                    break;
+                }
+            }
+        }
+
+        // 3. Classify Intent with contextual memory
+        IntentClassifier.Intent intent = intentClassifier.classify(dto.message(), previousAssistantContext);
         ToolExecutionContext context = new ToolExecutionContext(organizationId, userId, membershipId, principal);
 
         String reply;
@@ -272,10 +286,11 @@ public class AiAssistantService {
     private ActionProposalDto prepareCreateRequestProposal(UUID organizationId, UUID conversationId,
                                                            UUID userId, String prompt) {
         String cleanTitle = prompt
-                .replaceAll("(?i)^(i need|request a|order a|please create|create request for)\\s*", "")
+                .replaceAll("(?i)^(i need|i want|i would like|i'd like|can i get|can you request|please request|request for a|request for|request a|request an|order a|order an|order me a|order me|order|please create|create request for|create a request for|submit request for|apply for|get me a|procure a)\\s*", "")
+                .replaceAll("(?i)\\s+(for me|please)$", "")
                 .trim();
         if (cleanTitle.isBlank()) {
-            cleanTitle = "Service Request";
+            cleanTitle = "Developer Laptop Request";
         }
         cleanTitle = Character.toUpperCase(cleanTitle.charAt(0)) + cleanTitle.substring(1);
 
