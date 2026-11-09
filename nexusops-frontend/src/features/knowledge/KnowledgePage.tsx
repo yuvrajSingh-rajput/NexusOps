@@ -106,9 +106,7 @@ export const KnowledgePage: React.FC = () => {
       formData.append('accessScope', uploadAccessScope);
       formData.append('file', selectedFile);
 
-      const res: any = await apiClient.post('/knowledge/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res: any = await apiClient.post('/knowledge/documents/upload', formData);
 
       if (res?.success || res?.id || res?.data) {
         setIsUploadModalOpen(false);

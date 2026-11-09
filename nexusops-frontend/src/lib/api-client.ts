@@ -31,12 +31,20 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError<ApiResponse<unknown>>) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('nexusops_access_token');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login?expired=true';
+      }
+    }
     if (error.response?.data?.error) {
       return Promise.reject(error.response.data.error);
     }
     return Promise.reject({
-      code: 'NETWORK_ERROR',
-      message: error.message || 'Unable to connect to the server.',
+      code: error.response?.status === 403 ? 'FORBIDDEN' : 'NETWORK_ERROR',
+      message: error.response?.status === 403
+        ? 'Session expired or permission denied. Please log in again.'
+        : (error.message || 'Unable to connect to the server.'),
     });
   }
 );
