@@ -104,7 +104,8 @@ export type CommentVisibility = 'INTERNAL' | 'REQUESTER_VISIBLE';
 
 export interface RequestCategoryResponseDto {
   id: string;
-  key: string;
+  code?: string;
+  key?: string;
   name: string;
   description?: string;
   icon?: string;
@@ -117,7 +118,8 @@ export interface RequestResponseDto {
   id: string;
   requestNumber: string;
   categoryId: string;
-  categoryKey: string;
+  categoryCode?: string;
+  categoryKey?: string;
   categoryName: string;
   requesterMembershipId: string;
   requesterName: string;

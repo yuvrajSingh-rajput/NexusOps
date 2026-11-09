@@ -49,9 +49,9 @@ export const AuditTrailPage: React.FC = () => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      log.eventType.toLowerCase().includes(q) ||
-      log.aggregateType.toLowerCase().includes(q) ||
-      log.aggregateId.toLowerCase().includes(q) ||
+      (log.eventType || '').toLowerCase().includes(q) ||
+      (log.aggregateType || '').toLowerCase().includes(q) ||
+      (log.aggregateId || '').toLowerCase().includes(q) ||
       (log.correlationId && log.correlationId.toLowerCase().includes(q))
     );
   });

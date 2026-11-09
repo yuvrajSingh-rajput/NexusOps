@@ -40,10 +40,18 @@ import {
   CommentVisibility,
 } from '@/types/api';
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  laptop: <Laptop className="h-6 w-6 text-indigo-600" />,
-  key: <Key className="h-6 w-6 text-emerald-600" />,
-  receipt: <Receipt className="h-6 w-6 text-amber-600" />,
+const getCategoryIcon = (code?: string, size: 'sm' | 'lg' = 'sm') => {
+  const normalized = (code || '').toLowerCase();
+  if (normalized.includes('laptop') || normalized.includes('hardware')) {
+    return <Laptop className={size === 'lg' ? "h-6 w-6 text-indigo-600" : "h-3.5 w-3.5 text-indigo-600"} />;
+  }
+  if (normalized.includes('software') || normalized.includes('access') || normalized.includes('key')) {
+    return <Key className={size === 'lg' ? "h-6 w-6 text-emerald-600" : "h-3.5 w-3.5 text-emerald-600"} />;
+  }
+  if (normalized.includes('expense') || normalized.includes('reimbursement') || normalized.includes('receipt')) {
+    return <Receipt className={size === 'lg' ? "h-6 w-6 text-amber-600" : "h-3.5 w-3.5 text-amber-600"} />;
+  }
+  return <FileText className={size === 'lg' ? "h-6 w-6 text-slate-500" : "h-3.5 w-3.5 text-slate-500"} />;
 };
 
 export const RequestsPage: React.FC = () => {
@@ -301,11 +309,12 @@ export const RequestsPage: React.FC = () => {
 
   const filteredRequests = useMemo(() => {
     return requests.filter((r) => {
+      const q = (searchQuery || '').toLowerCase();
       const matchesSearch =
-        r.requestNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.categoryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.requesterName.toLowerCase().includes(searchQuery.toLowerCase());
+        (r.requestNumber || '').toLowerCase().includes(q) ||
+        (r.title || '').toLowerCase().includes(q) ||
+        (r.categoryName || '').toLowerCase().includes(q) ||
+        (r.requesterName || '').toLowerCase().includes(q);
       return matchesSearch;
     });
   }, [requests, searchQuery]);
@@ -541,7 +550,7 @@ export const RequestsPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                        {CATEGORY_ICONS[req.categoryKey.toLowerCase()] || <FileText className="h-3.5 w-3.5" />}
+                        {getCategoryIcon(req.categoryCode || req.categoryKey, 'sm')}
                         {req.categoryName}
                       </span>
                     </td>
@@ -647,7 +656,7 @@ export const RequestsPage: React.FC = () => {
                           {k.replace(/([A-Z])/g, ' $1')}
                         </span>
                         <span className="text-sm font-semibold text-slate-800 mt-0.5 block">
-                          {typeof v === 'number' && k.toLowerCase().includes('amount')
+                          {typeof v === 'number' && k?.toLowerCase().includes('amount')
                             ? `$${v.toLocaleString()}`
                             : String(v)}
                         </span>
@@ -860,7 +869,7 @@ export const RequestsPage: React.FC = () => {
                     >
                       <div>
                         <div className="p-3 bg-slate-100 group-hover:bg-white rounded-lg w-fit transition-colors mb-3">
-                          {CATEGORY_ICONS[cat.key.toLowerCase()] || <FileText className="h-6 w-6 text-indigo-600" />}
+                          {getCategoryIcon(cat.code || cat.key, 'lg')}
                         </div>
                         <h3 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
                           {cat.name}

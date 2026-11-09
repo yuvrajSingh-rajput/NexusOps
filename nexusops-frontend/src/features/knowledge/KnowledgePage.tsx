@@ -219,9 +219,9 @@ export const KnowledgePage: React.FC = () => {
     if (!searchQuery.trim()) return documents;
     const q = searchQuery.toLowerCase();
     return documents.filter(d =>
-      d.title.toLowerCase().includes(q) ||
+      (d.title || '').toLowerCase().includes(q) ||
       (d.description && d.description.toLowerCase().includes(q)) ||
-      d.latestFileName.toLowerCase().includes(q)
+      (d.latestFileName && d.latestFileName.toLowerCase().includes(q))
     );
   }, [documents, searchQuery]);
 

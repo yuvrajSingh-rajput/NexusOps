@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -35,7 +37,8 @@ public class AiToolExecutionEntity {
     @Column(name = "tool_name", nullable = false, length = 100)
     private String toolName;
 
-    @Column(name = "arguments", nullable = false, columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "arguments", nullable = false, columnDefinition = "jsonb")
     private String arguments;
 
     @Enumerated(EnumType.STRING)
@@ -51,7 +54,8 @@ public class AiToolExecutionEntity {
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 
-    @Column(name = "result_summary", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "result_summary", columnDefinition = "jsonb")
     private String resultSummary;
 
     @Column(name = "error_code", length = 50)

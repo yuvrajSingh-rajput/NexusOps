@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { RouteErrorBoundary } from '@/components/common/RouteErrorBoundary';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterOrgPage } from '@/features/auth/RegisterOrgPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
@@ -20,16 +21,19 @@ export const routes: RouteObject[] = [
   {
     path: '/login',
     element: <LoginPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/register',
     element: <RegisterOrgPage />,
+    errorElement: <RouteErrorBoundary />,
   },
 
   // Protected Enterprise Workspace Routes
   {
     path: '/',
     element: <ProtectedRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         element: <MainLayout />,

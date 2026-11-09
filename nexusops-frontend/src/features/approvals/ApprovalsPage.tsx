@@ -113,11 +113,11 @@ export const ApprovalsPage: React.FC = () => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
-        a.requestNumber.toLowerCase().includes(q) ||
-        a.requestTitle.toLowerCase().includes(q) ||
-        a.requesterName.toLowerCase().includes(q) ||
-        a.departmentName.toLowerCase().includes(q) ||
-        a.approverRoleName.toLowerCase().includes(q)
+        (a.requestNumber || '').toLowerCase().includes(q) ||
+        (a.requestTitle || '').toLowerCase().includes(q) ||
+        (a.requesterName || '').toLowerCase().includes(q) ||
+        (a.departmentName || '').toLowerCase().includes(q) ||
+        (a.approverRoleName || '').toLowerCase().includes(q)
       );
     });
   }, [approvals, filterTab, searchQuery]);

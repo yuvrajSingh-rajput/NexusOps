@@ -182,11 +182,11 @@ export const TasksPage: React.FC = () => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
-        t.taskNumber.toLowerCase().includes(q) ||
-        t.title.toLowerCase().includes(q) ||
+        (t.taskNumber || '').toLowerCase().includes(q) ||
+        (t.title || '').toLowerCase().includes(q) ||
         (t.requestNumber && t.requestNumber.toLowerCase().includes(q)) ||
         (t.requestTitle && t.requestTitle.toLowerCase().includes(q)) ||
-        t.assigneeName.toLowerCase().includes(q)
+        (t.assigneeName && t.assigneeName.toLowerCase().includes(q))
       );
     });
   }, [tasks, statusFilter, searchQuery]);
