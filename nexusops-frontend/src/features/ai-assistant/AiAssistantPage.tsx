@@ -18,6 +18,7 @@ import {
   Lock
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { MarkdownRenderer } from '@/components/common/MarkdownRenderer';
 import {
   ApiResponse,
   ChatResponseDto,
@@ -322,13 +323,17 @@ export const AiAssistantPage: React.FC = () => {
               </div>
 
               <div
-                className={`rounded-2xl p-4 text-xs shadow-xs leading-relaxed whitespace-pre-wrap ${
+                className={`rounded-2xl p-4 text-xs shadow-xs leading-relaxed ${
                   msg.role === 'USER'
-                    ? 'bg-indigo-600 text-white rounded-br-none max-w-xl'
+                    ? 'bg-indigo-600 text-white rounded-br-none max-w-xl whitespace-pre-wrap'
                     : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-none w-full'
                 }`}
               >
-                {msg.content}
+                {msg.role === 'USER' ? (
+                  msg.content
+                ) : (
+                  <MarkdownRenderer content={msg.content} />
+                )}
 
                 {/* Grounded Citations */}
                 {msg.citations && msg.citations.length > 0 && (

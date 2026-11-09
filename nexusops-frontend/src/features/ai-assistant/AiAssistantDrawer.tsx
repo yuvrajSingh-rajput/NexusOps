@@ -16,6 +16,7 @@ import {
   Plus
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { MarkdownRenderer } from '@/components/common/MarkdownRenderer';
 import {
   ApiResponse,
   ChatResponseDto,
@@ -258,13 +259,17 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
             </div>
 
             <div
-              className={`max-w-[88%] rounded-2xl p-3.5 text-xs shadow-xs leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[88%] rounded-2xl p-3.5 text-xs shadow-xs leading-relaxed ${
                 msg.role === 'USER'
-                  ? 'bg-indigo-600 text-white rounded-br-none'
+                  ? 'bg-indigo-600 text-white rounded-br-none whitespace-pre-wrap'
                   : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-none'
               }`}
             >
-              {msg.content}
+              {msg.role === 'USER' ? (
+                msg.content
+              ) : (
+                <MarkdownRenderer content={msg.content} />
+              )}
 
               {/* Citations section */}
               {msg.citations && msg.citations.length > 0 && (

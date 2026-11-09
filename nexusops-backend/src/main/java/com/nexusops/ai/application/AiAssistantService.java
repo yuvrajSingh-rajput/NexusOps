@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -175,6 +176,34 @@ public class AiAssistantService {
                     reply = "Unable to access department analytics report tool.";
                 }
             }
+            case CONVERSATION_FOLLOW_UP -> {
+                // Look up previous messages in the current conversation
+                List<AiMessageEntity> history = messageRepository.findByOrganizationIdAndConversationIdOrderByCreatedAtAsc(
+                        organizationId, conversation.getId());
+                AiMessageEntity previousAssistantMsg = null;
+                for (int j = history.size() - 1; j >= 0; j--) {
+                    AiMessageEntity msg = history.get(j);
+                    if (msg.getRole() == AiMessageRole.ASSISTANT && !msg.getId().equals(userMsg.getId())) {
+                        previousAssistantMsg = msg;
+                        break;
+                    }
+                }
+
+                if (previousAssistantMsg != null && previousAssistantMsg.getContent() != null) {
+                    reply = "Here is what I explained previously in this conversation:\n\n" +
+                            "> " + previousAssistantMsg.getContent().replace("\n", "\n> ") + "\n\n" +
+                            "Let me know if you would like me to clarify or look up anything specific!";
+                } else {
+                    reply = "I haven't explained anything in this conversation yet. Feel free to ask me about your organization's policies, request statuses, or pending approvals!";
+                }
+            }
+            case INCOMPLETE_QUERY -> {
+                reply = "It looks like your question was cut short! What policy or topic would you like to know about? For example:\n\n" +
+                        "- **Leave Policy:** *\"What is our annual and sick leave policy?\"*\n" +
+                        "- **Hardware Budget:** *\"What is our developer laptop refresh policy?\"*\n" +
+                        "- **Expense Reimbursement:** *\"What is the meal and travel reimbursement limit?\"*\n" +
+                        "- **Operational Queues:** *\"Show my submitted requests\"* or *\"Show pending approvals\"*.";
+            }
             case POLICY_QA -> {
                 // Grounded RAG Semantic Search
                 citations = knowledgeService.semanticSearch(organizationId, dto.message(), 5, 0.25);
@@ -182,17 +211,37 @@ public class AiAssistantService {
                     String systemPrompt = ragContextBuilder.buildPromptContext(citations, dto.message());
                     reply = aiModelProvider.generateAnswer(systemPrompt, dto.message(), citations);
                 } else {
-                    reply = "I cannot find an answer in your company's policy documents. Please contact HR or IT for assistance.";
+                    // Try fallback with broader similarity threshold
+                    List<SearchResultDto> broadMatches = knowledgeService.semanticSearch(organizationId, dto.message(), 3, 0.15);
+                    if (!broadMatches.isEmpty()) {
+                        String systemPrompt = ragContextBuilder.buildPromptContext(broadMatches, dto.message());
+                        reply = aiModelProvider.generateAnswer(systemPrompt, dto.message(), broadMatches);
+                        citations = broadMatches;
+                    } else {
+                        reply = "I could not find specific policy documentation matching your inquiry: **\"" + dto.message() + "\"**.\n\n" +
+                                "Here are the policy topics available in your organization's knowledge base:\n" +
+                                "- **IT Hardware & Procurement:** Equipment standards, approval tiers ($10k/$50k), and refresh cycles.\n" +
+                                "- **Leave & Absence:** Annual, sick, and parental leave policies.\n" +
+                                "- **Employee Benefits & Expenses:** Health benefits and expense reimbursement rules.\n\n" +
+                                "Please ask a question related to these topics, or contact HR / IT directly.";
+                    }
                 }
             }
             case CONVERSATION -> {
-                reply = "Hello! I am **Nexus AI**, your enterprise operations co-pilot.\n\n" +
-                        "Here is what I can assist you with:\n" +
-                        "- **Policy Inquiries (RAG):** Ask questions about hardware budgets, leaves, or reimbursement rules.\n" +
-                        "- **Track Requests:** Ask *\"What is the status of my requests?\"*\n" +
-                        "- **Approvals & Tasks:** Ask *\"Show my pending approvals\"* or *\"Show my tasks\"*.\n" +
-                        "- **Analytics & Reports:** Ask *\"Generate department report for Engineering\"* or *\"Show operational metrics\"*.\n" +
-                        "- **Create Requests:** Ask *\"I need a new developer laptop\"* to prepare a submission card.";
+                String clean = dto.message().toLowerCase(Locale.ROOT).trim();
+                if (clean.startsWith("thank") || clean.contains("thanks") || clean.equals("thx")) {
+                    reply = "You're very welcome! Let me know if you need any other policy details, operational request tracking, or approval assistance.";
+                } else if (clean.equals("ok") || clean.equals("okay") || clean.equals("cool") || clean.equals("got it") || clean.equals("understood") || clean.equals("great")) {
+                    reply = "Understood! I'm here whenever you need help with company policies, workflow requests, or tasks.";
+                } else {
+                    reply = "Hello! I am **Nexus AI**, your enterprise operations co-pilot.\n\n" +
+                            "Here is what I can assist you with:\n" +
+                            "- **Policy Inquiries (RAG):** Ask questions about hardware budgets, leaves, or reimbursement rules.\n" +
+                            "- **Track Requests:** Ask *\"What is the status of my requests?\"*\n" +
+                            "- **Approvals & Tasks:** Ask *\"Show my pending approvals\"* or *\"Show my tasks\"*.\n" +
+                            "- **Analytics & Reports:** Ask *\"Generate department report for Engineering\"* or *\"Show operational metrics\"*.\n" +
+                            "- **Create Requests:** Ask *\"I need a new developer laptop\"* to prepare a submission card.";
+                }
             }
             default -> {
                 reply = "How can I help you navigate NexusOps today?";

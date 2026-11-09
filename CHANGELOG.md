@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multipart Form Uploads (`api-client.ts` & `GlobalExceptionHandler.java`):**
   - Removed default `'Content-Type': 'application/json'` on `FormData` payloads in Axios request interceptor, allowing browser boundary calculation.
   - Added structured exception handling for `HttpMediaTypeNotSupportedException` and `MaxUploadSizeExceededException`.
+- **Rich Markdown Formatting & Conversational AI Chat (`MarkdownRenderer.tsx`, `IntentClassifier.java`, `AiAssistantService.java`):**
+  - Built zero-dependency `MarkdownRenderer` component styling headings, metadata bars, lists, bold text, code blocks, and blockquotes.
+  - Added `CONVERSATION_FOLLOW_UP` intent to resolve queries like "what did you say" or "what did you explain" by quoting prior assistant answers from conversation history.
+  - Added `INCOMPLETE_QUERY` intent to politely guide truncated prompts like "what is".
+  - Enhanced RAG fallback to suggest available company policy documents when questions fall outside known policies.
 
 ---
 

@@ -53,8 +53,8 @@ public class AiModelProvider {
         }
 
         SearchResultDto topMatch = citations.get(0);
-        return String.format("Based on %s:\n\n%s\n\n(Citation: %s, Relevance: %.1f%%)",
-                topMatch.documentTitle(), topMatch.content(), topMatch.citation(), topMatch.similarityScore() * 100);
+        return String.format("**Source:** %s\n\n%s",
+                topMatch.documentTitle(), topMatch.content());
     }
 
     private String callOllama(String systemPrompt, String userMessage) {

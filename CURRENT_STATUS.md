@@ -30,6 +30,11 @@
    - Fixed `apiClient` Axios default header collision with `FormData`: automatically stripped default `'Content-Type': 'application/json'` when sending `FormData` so browser/Axios attaches boundary headers (`multipart/form-data; boundary=----...`).
    - Added explicit `HttpMediaTypeNotSupportedException` and `MaxUploadSizeExceededException` handlers in `GlobalExceptionHandler.java` with structured 415/413 error envelopes.
 
+5. **Rich Markdown Formatting & Conversational AI Chat Memory:**
+   - Implemented zero-dependency, secure [`MarkdownRenderer.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/components/common/MarkdownRenderer.tsx) rendering headings, metadata banners, styled bullet/number lists, bold/italic, code blocks, tables, and blockquotes.
+   - Upgraded both [`AiAssistantPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantPage.tsx) and [`AiAssistantDrawer.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantDrawer.tsx) to render assistant responses with rich typography.
+   - Enhanced [`IntentClassifier.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/IntentClassifier.java) and [`AiAssistantService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/AiAssistantService.java) with `CONVERSATION_FOLLOW_UP` (recalling and quoting previous answers when asked "what did you say" or "repeat"), `INCOMPLETE_QUERY` (guiding truncated queries like "what is"), and conversational gratitude handling ("thank you", "ok").
+
 ---
 
 ## Completed in Phase 11 (End-to-End Acceptance Demo, Seed Data & Final Hardening)
