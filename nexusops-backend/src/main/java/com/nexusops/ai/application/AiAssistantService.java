@@ -177,7 +177,7 @@ public class AiAssistantService {
             }
             case POLICY_QA -> {
                 // Grounded RAG Semantic Search
-                citations = knowledgeService.semanticSearch(organizationId, dto.message(), 5, 0.40);
+                citations = knowledgeService.semanticSearch(organizationId, dto.message(), 5, 0.25);
                 if (!citations.isEmpty()) {
                     String systemPrompt = ragContextBuilder.buildPromptContext(citations, dto.message());
                     reply = aiModelProvider.generateAnswer(systemPrompt, dto.message(), citations);

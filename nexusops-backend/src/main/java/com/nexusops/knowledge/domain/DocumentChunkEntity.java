@@ -10,8 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -44,8 +43,8 @@ public class DocumentChunkEntity {
     @Column(name = "token_count", nullable = false)
     private int tokenCount = 0;
 
-    @JdbcTypeCode(SqlTypes.OTHER)
-    @Column(name = "embedding", nullable = false, columnDefinition = "vector(768)")
+    @Type(PgVectorType.class)
+    @Column(name = "embedding", nullable = false, columnDefinition = "text")
     private String embedding;
 
     @Column(name = "created_at", nullable = false, updatable = false)

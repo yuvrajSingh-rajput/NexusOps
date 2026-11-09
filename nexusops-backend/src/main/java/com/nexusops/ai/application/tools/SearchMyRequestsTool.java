@@ -47,6 +47,20 @@ public class SearchMyRequestsTool implements NexusAiTool {
             );
 
             if (page.content().isEmpty()) {
+                if (context.hasPermission("REQUEST_VIEW_ALL")) {
+                    PageResponse<RequestResponseDto> allPage = requestService.getAllRequests(
+                            PageRequest.of(0, 5),
+                            context.principal()
+                    );
+                    if (!allPage.content().isEmpty()) {
+                        String allSummary = allPage.content().stream()
+                                .map(r -> String.format("- %s: %s (Status: %s, Priority: %s, Requester: %s)",
+                                        r.requestNumber(), r.title(), r.status(), r.priority(), r.requesterEmail()))
+                                .collect(Collectors.joining("\n"));
+                        return ToolExecutionResult.success(allPage.content(),
+                                "You have not submitted any personal requests yet, but as an administrator, here are recent organization requests:\n" + allSummary);
+                    }
+                }
                 return ToolExecutionResult.success(page.content(), "You have no active or submitted requests.");
             }
 

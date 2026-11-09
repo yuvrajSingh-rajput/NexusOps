@@ -33,19 +33,21 @@ public class IntentClassifier {
 
         // 2. Tool Intent: Search Requests
         if (lower.contains("my request") || lower.contains("my submitted") || lower.contains("track request")
-                || (lower.contains("status") && lower.contains("request") && !lower.contains("how"))) {
+                || (lower.contains("status") && lower.contains("request") && !lower.contains("how"))
+                || lower.contains("show request") || lower.contains("show all request") || lower.contains("list request")
+                || lower.contains("view request") || lower.contains("get request")) {
             return Intent.SEARCH_REQUESTS;
         }
 
         // 2. Tool Intent: Search Approvals
         if (lower.contains("pending approval") || lower.contains("to approve") || lower.contains("my approvals")
-                || lower.contains("waiting for my approval")) {
+                || lower.contains("waiting for my approval") || lower.contains("show approval") || lower.contains("list approval")) {
             return Intent.SEARCH_APPROVALS;
         }
 
         // 3. Tool Intent: Search Tasks
         if (lower.contains("my task") || lower.contains("assigned task") || lower.contains("tasks for me")
-                || lower.contains("fulfillment task")) {
+                || lower.contains("fulfillment task") || lower.contains("show task") || lower.contains("list task")) {
             return Intent.SEARCH_TASKS;
         }
 
