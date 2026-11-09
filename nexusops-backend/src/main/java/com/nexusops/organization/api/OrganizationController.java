@@ -24,3 +24,4 @@ public class OrganizationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
+

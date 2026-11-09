@@ -19,3 +19,4 @@ public interface RoleRepository extends JpaRepository<RoleEntity, UUID> {
     @Query("SELECT r FROM RoleEntity r LEFT JOIN FETCH r.permissions WHERE r.organizationId = :orgId")
     List<RoleEntity> findAllByOrganizationId(@Param("orgId") UUID orgId);
 }
+

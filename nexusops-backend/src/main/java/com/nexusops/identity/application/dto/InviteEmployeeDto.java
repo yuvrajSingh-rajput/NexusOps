@@ -22,3 +22,4 @@ public record InviteEmployeeDto(
         Set<String> roleCodes
 ) {
 }
+

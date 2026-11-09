@@ -133,3 +133,4 @@ public class RoleEntity {
         return Objects.hashCode(id);
     }
 }
+

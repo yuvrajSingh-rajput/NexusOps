@@ -241,3 +241,4 @@ export const RegisterOrgPage: React.FC = () => {
     </div>
   );
 };
+

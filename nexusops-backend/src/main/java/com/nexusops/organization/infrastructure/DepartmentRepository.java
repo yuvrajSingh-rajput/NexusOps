@@ -23,3 +23,4 @@ public interface DepartmentRepository extends JpaRepository<DepartmentEntity, UU
 
     boolean existsByOrganizationIdAndCode(UUID organizationId, String code);
 }
+

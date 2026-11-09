@@ -124,3 +124,4 @@ public class DepartmentEntity {
         return Objects.hashCode(id);
     }
 }
+

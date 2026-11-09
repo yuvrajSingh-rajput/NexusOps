@@ -1,50 +1,68 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 2 – Identity & Organization Completed (Review Gate Active)  
+**Current Phase:** Phase 3 – Request Management & Submission Engine Completed (Review Gate Active)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
 
 ---
 
-## Completed in Phase 2 (Identity, Organization & Security)
-1. **Database Migrations (Flyway):**
-   - `V2__identity_and_organization_schema.sql`: Full schema for `organizations`, `users`, `departments`, `organization_memberships`, `roles`, `permissions`, `role_permissions`, `membership_roles`, `teams`, `team_memberships`, and `refresh_tokens`.
-   - Enforced composite foreign keys `(organization_id, id)` and unique constraints `(organization_id, code)` across all tenant tables.
-   - `V3__seed_system_roles_and_permissions.sql`: Global permissions seeded across Requests, Approvals, Tasks, Workflows, Knowledge, AI, Analytics, and Organization Admin.
-2. **Backend Domain & Application Services:**
-   - Entities & Repositories: `UserEntity`, `OrganizationEntity`, `DepartmentEntity`, `OrganizationMembershipEntity`, `RoleEntity`, `PermissionEntity`, `RefreshTokenEntity`, `TeamEntity`.
-   - Authentication & Security (`shared.security`):
-     - `JwtTokenProvider`: Issues and validates HS512 JWT access tokens (15m expiry) with user ID, active tenant ID, roles, and permissions. Generates and hashes 256-bit cryptographically secure refresh tokens (7-day expiry).
-     - `JwtAuthenticationFilter`: Validates bearer tokens, populates Spring Security `Authentication`, and sets `TenantContextHolder` and MDC `tenantId` per request.
-     - `SecurityConfig`: Stateless session management, method-level security (`@EnableMethodSecurity`), and BCrypt password hashing.
-     - `AuthService`: Self-service organization registration (`/auth/register-org`), login with HttpOnly refresh cookies (`/auth/login`), refresh token rotation with token reuse detection (`/auth/refresh`), profile inspection (`/auth/me`), tenant context switching (`/auth/switch-org`), and tenant system role bootstrap.
-     - `DepartmentService` & `DepartmentController`: Department CRUD, tree hierarchy verification, and duplicate code prevention scoped to the authenticated tenant.
-     - `IdentityService` & `MembershipController`: Employee directory queries, paginated member listing, and member invitations (`/memberships/invite`) with department and RBAC role assignments.
-3. **Multi-Tenant & Modular Architecture Verification:**
-   - Spring Modulith architectural verification test (`NexusOpsModulithTest`): 100% passing with 0 module dependency violations.
-   - Cross-Tenant Isolation Integration Test (`AuthControllerIntegrationTest`):
-     - Verified Tenant B cannot access Tenant A's departments via direct IDOR attacks (returns HTTP 404).
-     - Verified departmental list queries and membership directory queries are strictly isolated between organizations.
-     - Verified refresh token replay attack detection immediately revokes active refresh tokens.
-   - **Backend test results:** `Tests run: 7, Failures: 0, Errors: 0, Skipped: 0` (BUILD SUCCESS).
+## Completed in Phase 3 (Request Management & Dynamic Submission Engine)
+
+1. **Database Schema & Migrations (Flyway):**
+   - [`V4__request_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V4__request_schema.sql):
+     - `tenant_sequences`: Atomic tenant-scoped counters (`(organization_id, sequence_name)`) for thread-safe sequential human-readable numbers (`REQ-1001`, `REQ-1002`, `TASK-1001`) with zero race conditions.
+     - `request_categories`: Configurable request categories with JSON Schema (`payload_schema` JSONB), icons, and workflow requirement flags.
+     - `requests`: Core table capturing requests with composite foreign keys `(organization_id, requester_membership_id)`, department snapshots, priority, lifecycle status, dynamic payload JSONB, schema snapshot JSONB, and `@Version` optimistic locking.
+     - `request_comments`: Threaded comments with visibility separation (`INTERNAL` vs `REQUESTER_VISIBLE`).
+     - `request_attachments`: MinIO storage metadata references, file checksums, and mime-type descriptors.
+     - Composite unique indexes and tenant foreign key constraints strictly enforced.
+
+2. **Backend Architecture & Domain Services (`com.nexusops.request`):**
+   - **Domain Model:**
+     - Entities: `RequestEntity`, `RequestCategoryEntity`, `RequestCommentEntity`, `TenantSequenceEntity`.
+     - Enums: `RequestStatus` (DRAFT, SUBMITTED, IN_REVIEW, WAITING_FOR_INFORMATION, APPROVED, IN_PROGRESS, ON_HOLD, COMPLETED, REJECTED, CANCELLED), `RequestPriority` (LOW, MEDIUM, HIGH, URGENT), `CommentVisibility` (INTERNAL, REQUESTER_VISIBLE).
+   - **Application Services:**
+     - `RequestCategoryService`: Category CRUD with JSON Schema validation for form fields, and automated bootstrapping of standard enterprise categories (`DEVELOPER_LAPTOP`, `SOFTWARE_ACCESS`, `EXPENSE_REIMBURSEMENT`).
+     - `RequestService`: Atomic `REQ-1001` generation, dynamic JSON Schema validation, lifecycle transitions, requester department snapshotting, cancellation guardrails, IDOR protection, and internal vs requester-visible comments.
+   - **Module Boundary & Modulith Integration:**
+     - Added `@NamedInterface` package annotations to expose application services cleanly across modules.
+     - Enhanced `JwtTokenProvider` and `UserPrincipal` with verified `membershipId` claim, avoiding database queries on security context operations.
+   - **REST Controllers & API Contracts:**
+     - `RequestCategoryController` (`/api/v1/request-categories`): Active category listing and category definition.
+     - `RequestController` (`/api/v1/requests`): Paginated request search with status, priority, and text filters; request submission; request inspection (`/requests/{id}`); request cancellation (`/requests/{id}/cancel`); and request activity/comments (`/requests/{id}/comments`).
+
+3. **Multi-Tenant & Security Integration Testing:**
+   - [`RequestControllerIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/RequestControllerIntegrationTest.java):
+     - Verified category auto-seeding for new organizations.
+     - Verified thread-safe sequential numbering (`REQ-1001`, `REQ-1002`).
+     - Verified dynamic payload schema validation (fails with HTTP 422 if required schema fields are missing).
+     - Verified comment visibility scoping (internal comments hidden from general requesters).
+     - Verified cross-tenant IDOR defense (Tenant B cannot read or cancel Tenant A's requests; direct queries return HTTP 404).
+   - **Backend Test Suite Results:**
+     - `NexusOpsModulithTest`: 1 passed (0 architectural violations)
+     - `AuthControllerIntegrationTest`: 5 passed
+     - `RequestControllerIntegrationTest`: 4 passed
+     - `SystemHealthControllerTest`: 1 passed
+     - **Total:** 11 passed, 0 failures, 0 errors (`BUILD SUCCESS`).
+
 4. **Frontend Implementation (`nexusops-frontend`):**
-   - Authentication Store (`authStore.ts`): Zustand store managing JWT token in `localStorage`, user profile, and active organization context.
-   - Route Protection (`ProtectedRoute.tsx`): Automatically guards workspace routes and redirects unauthenticated users to `/login`.
-   - Authentication Screens:
-     - `LoginPage.tsx`: Enterprise login form with work email, password, error handling, and redirection.
-     - `RegisterOrgPage.tsx`: Self-service workspace registration (Company Name, slug auto-generation, Admin credentials).
-   - Organization Management Screens:
-     - `DepartmentsPage.tsx`: Department hierarchy directory with hierarchy levels, code badges, and modal to establish new business units (`POST /departments`).
-     - `EmployeesPage.tsx`: Member directory table with search filtering, status indicators, and modal to invite team members (`POST /memberships/invite`) with role checklists.
-   - Navigation & Shell Updates:
-     - `Sidebar.tsx`: Added "Organization" section for Departments and Employees; dynamic active tenant footer.
-     - `Topbar.tsx`: Organization switcher dropdown for multi-org users, user avatar, roles badge, and sign-out action.
-   - **Frontend test & build results:**
-     - Vitest: 2/2 tests passing (login redirection & authenticated dashboard tests).
-     - Production bundle: `tsc && vite build` built cleanly with 0 TypeScript errors.
+   - **TypeScript Contracts (`src/types/api.ts`):** Added `RequestResponseDto`, `RequestCategoryResponseDto`, `RequestCommentResponseDto`, `CreateRequestDto`, `AddCommentDto`, `RequestPriority`, `RequestStatus`, `CommentVisibility`.
+   - **Operations Requests Screen ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
+     - Status tab filters (`All`, `Submitted`, `In Review`, `Approved`, `In Progress`, `Completed`, `Cancelled`) and real-time search.
+     - Interactive Request Table with priority badges, status indicators, and department snapshots.
+     - **Two-Step New Request Wizard:**
+       - Step 1: Category selection cards with custom icons and descriptions.
+       - Step 2: Dynamic form dynamically generated from the category's `payloadSchema` JSON (supports text, number, enum select dropdowns, and required-field validation).
+     - **Request Detail Drawer:**
+       - Comprehensive request details, requester metadata, and structured payload attribute cards.
+       - Cancellation action with confirmation for pending requests.
+       - Comment and activity timeline with toggle for `INTERNAL` notes (operators and approvers only) vs `REQUESTER_VISIBLE` updates.
+   - **Frontend Test & Build Results:**
+     - Vitest: 2/2 tests passed.
+     - Production bundle: `tsc && vite build` completed cleanly with zero TypeScript errors.
 
 ---
 
-## Active Phase Gate: Phase 2 Review
-- Phase 2 (Identity & Organization) is 100% implemented, verified, and passing tests across both backend and frontend.
-- Ready for Project Owner review before advancing to **Phase 3: Request Management & Submission Engine**.
+## Active Phase Gate: Phase 3 Review
+- Phase 3 (Request Management & Submission Engine) is 100% complete and verified against all criteria in `AGENTS.md`.
+- Next Phase: **Phase 4 – Workflow Engine (Definition, Graph Validation, Execution Engine, Optimistic Concurrency)**.

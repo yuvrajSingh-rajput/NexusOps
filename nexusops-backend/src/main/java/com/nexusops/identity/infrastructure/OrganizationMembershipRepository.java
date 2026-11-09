@@ -28,3 +28,4 @@ public interface OrganizationMembershipRepository extends JpaRepository<Organiza
            countQuery = "SELECT COUNT(m) FROM OrganizationMembershipEntity m WHERE m.organizationId = :orgId")
     Page<OrganizationMembershipEntity> findAllByOrganizationId(@Param("orgId") UUID orgId, Pageable pageable);
 }
+

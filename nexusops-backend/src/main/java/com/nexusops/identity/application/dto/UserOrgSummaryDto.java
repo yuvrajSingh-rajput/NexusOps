@@ -9,3 +9,4 @@ public record UserOrgSummaryDto(
         boolean isCurrent
 ) {
 }
+

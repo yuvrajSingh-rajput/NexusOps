@@ -85,3 +85,75 @@ export interface EmployeeResponseDto {
   status: string;
   roles: string[];
 }
+
+export type RequestPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export type RequestStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'IN_REVIEW'
+  | 'WAITING_FOR_INFORMATION'
+  | 'APPROVED'
+  | 'IN_PROGRESS'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
+export type CommentVisibility = 'INTERNAL' | 'REQUESTER_VISIBLE';
+
+export interface RequestCategoryResponseDto {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  requiresWorkflow: boolean;
+  payloadSchema: Record<string, any>;
+  active: boolean;
+}
+
+export interface RequestResponseDto {
+  id: string;
+  requestNumber: string;
+  categoryId: string;
+  categoryKey: string;
+  categoryName: string;
+  requesterMembershipId: string;
+  requesterName: string;
+  requesterEmail: string;
+  departmentCode?: string;
+  departmentName?: string;
+  title: string;
+  description?: string;
+  priority: RequestPriority;
+  status: RequestStatus;
+  payload: Record<string, any>;
+  submittedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface RequestCommentResponseDto {
+  id: string;
+  authorMembershipId: string;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+  visibility: CommentVisibility;
+  createdAt: string;
+}
+
+export interface CreateRequestDto {
+  categoryId: string;
+  title: string;
+  description?: string;
+  priority: RequestPriority;
+  payload: Record<string, any>;
+}
+
+export interface AddCommentDto {
+  content: string;
+  visibility: CommentVisibility;
+}
+

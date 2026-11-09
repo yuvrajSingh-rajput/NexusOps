@@ -14,3 +14,4 @@ public record CreateDepartmentDto(
         UUID headMembershipId
 ) {
 }
+

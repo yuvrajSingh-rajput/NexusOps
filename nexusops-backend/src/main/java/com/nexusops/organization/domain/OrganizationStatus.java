@@ -5,3 +5,4 @@ public enum OrganizationStatus {
     SUSPENDED,
     TRIAL
 }
+

@@ -137,3 +137,4 @@ public class UserEntity {
         return Objects.hashCode(id);
     }
 }
+

@@ -26,3 +26,4 @@ public record RegisterOrgRequestDto(
         String adminLastName
 ) {
 }
+

@@ -119,3 +119,4 @@ public class RefreshTokenEntity {
         return Objects.hashCode(id);
     }
 }
+

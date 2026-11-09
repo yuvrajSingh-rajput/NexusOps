@@ -12,3 +12,4 @@ public record LoginRequestDto(
         String password
 ) {
 }
+

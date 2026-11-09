@@ -43,3 +43,4 @@ INSERT INTO permissions (id, code, category, description) VALUES
     (gen_random_uuid(), 'ORG_DEPT_MANAGE', 'ORGANIZATION', 'Manage organization departments and teams'),
     (gen_random_uuid(), 'ORG_USER_INVITE', 'ORGANIZATION', 'Invite new employees and manage memberships')
 ON CONFLICT (code) DO NOTHING;
+

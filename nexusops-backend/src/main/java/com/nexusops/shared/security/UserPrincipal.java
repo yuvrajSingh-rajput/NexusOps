@@ -10,12 +10,14 @@ public class UserPrincipal implements UserDetails {
 
     private final UUID userId;
     private final UUID organizationId;
+    private final UUID membershipId;
     private final String email;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserPrincipal(UUID userId, UUID organizationId, String email, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(UUID userId, UUID organizationId, UUID membershipId, String email, Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.organizationId = organizationId;
+        this.membershipId = membershipId;
         this.email = email;
         this.authorities = authorities;
     }
@@ -26,6 +28,10 @@ public class UserPrincipal implements UserDetails {
 
     public UUID getOrganizationId() {
         return organizationId;
+    }
+
+    public UUID getMembershipId() {
+        return membershipId;
     }
 
     public String getEmail() {

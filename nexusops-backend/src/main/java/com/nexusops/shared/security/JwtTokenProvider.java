@@ -31,11 +31,11 @@ public class JwtTokenProvider {
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     }
 
-    public String generateAccessToken(UUID userId, UUID organizationId, String email, Set<String> roles, Set<String> permissions) {
+    public String generateAccessToken(UUID userId, UUID organizationId, UUID membershipId, String email, Set<String> roles, Set<String> permissions) {
         Instant now = Instant.now();
         Instant expiry = now.plusMillis(accessTokenExpirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claim("org_id", organizationId.toString())
                 .claim("email", email)
@@ -43,8 +43,13 @@ public class JwtTokenProvider {
                 .claim("permissions", new ArrayList<>(permissions))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+
+        if (membershipId != null) {
+            builder.claim("membership_id", membershipId.toString());
+        }
+
+        return builder.compact();
     }
 
     public boolean validateToken(String token) {
@@ -94,3 +99,4 @@ public class JwtTokenProvider {
         return refreshTokenExpirationMs;
     }
 }
+

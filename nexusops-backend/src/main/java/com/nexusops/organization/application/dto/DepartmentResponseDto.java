@@ -12,3 +12,4 @@ public record DepartmentResponseDto(
         UUID headMembershipId
 ) {
 }
+

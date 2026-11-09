@@ -99,3 +99,4 @@ public class TeamEntity {
         return Objects.hashCode(id);
     }
 }
+

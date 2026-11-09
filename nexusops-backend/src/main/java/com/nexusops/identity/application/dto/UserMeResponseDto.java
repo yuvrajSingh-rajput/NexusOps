@@ -16,3 +16,4 @@ public record UserMeResponseDto(
         List<UserOrgSummaryDto> availableOrganizations
 ) {
 }
+

@@ -8,3 +8,4 @@ public record SwitchOrgRequestDto(
         UUID targetOrganizationId
 ) {
 }
+

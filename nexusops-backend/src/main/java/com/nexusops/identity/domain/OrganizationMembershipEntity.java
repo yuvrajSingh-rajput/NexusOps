@@ -158,3 +158,4 @@ public class OrganizationMembershipEntity {
         return Objects.hashCode(id);
     }
 }
+

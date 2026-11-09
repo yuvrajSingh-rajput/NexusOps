@@ -14,3 +14,4 @@ public record AuthResponseDto(
         Set<String> permissions
 ) {
 }
+

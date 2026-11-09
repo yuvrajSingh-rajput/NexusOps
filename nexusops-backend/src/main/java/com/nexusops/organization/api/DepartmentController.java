@@ -43,3 +43,4 @@ public class DepartmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
     }
 }
+

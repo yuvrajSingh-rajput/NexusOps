@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0-request-engine] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V4__request_schema.sql`: Added `tenant_sequences` for thread-safe sequential numbering, `request_categories` with `payload_schema` JSONB, `requests` with composite foreign keys `(organization_id, requester_membership_id)` and optimistic locking (`@Version`), `request_comments` with visibility partitioning (`INTERNAL` vs `REQUESTER_VISIBLE`), and `request_attachments`.
+- **Backend Architecture & Domain Services (`com.nexusops.request`):**
+  - `TenantSequenceEntity` and `TenantSequenceRepository`: Atomic sequence increment per tenant to generate `REQ-1001`, `REQ-1002`, `TASK-1001` with zero concurrency conflicts.
+  - `RequestCategoryEntity` and `RequestCategoryService`: Category management and dynamic JSON schema field validation. Auto-bootstraps standard categories (`DEVELOPER_LAPTOP`, `SOFTWARE_ACCESS`, `EXPENSE_REIMBURSEMENT`).
+  - `RequestEntity`, `RequestCommentEntity`, and `RequestService`: Full request submission engine, schema snapshotting, lifecycle transitions, department snapshotting, cancellation guardrails, IDOR protection, and activity comments.
+  - `RequestCategoryController` (`/api/v1/request-categories`) and `RequestController` (`/api/v1/requests`, `/api/v1/requests/{id}`, `/api/v1/requests/{id}/cancel`, `/api/v1/requests/{id}/comments`).
+  - Module boundary exposure via `@NamedInterface` annotations for Modulith verification.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Phase 3 contracts for requests, categories, comments, priorities, and statuses.
+  - `RequestsPage.tsx`: Interactive Operations Requests portal featuring status filter tabs, search, priority indicators, two-step dynamic form wizard powered by category JSON Schema, request detail drawer with payload attributes, cancellation workflow, and comments timeline.
+- **Automated Verification:**
+  - `RequestControllerIntegrationTest`: 4/4 integration tests verifying sequential numbers, category auto-seeding, dynamic payload validation, comment visibility, and multi-tenant isolation.
+  - Modulith verification: 100% clean module dependencies.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build`).
+
+---
+
 ## [0.3.0-identity-org] - 2026-11-09
 
 ### Added

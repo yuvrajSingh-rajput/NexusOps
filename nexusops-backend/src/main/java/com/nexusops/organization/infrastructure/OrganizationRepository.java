@@ -12,3 +12,4 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
     Optional<OrganizationEntity> findBySlug(String slug);
     boolean existsBySlug(String slug);
 }
+

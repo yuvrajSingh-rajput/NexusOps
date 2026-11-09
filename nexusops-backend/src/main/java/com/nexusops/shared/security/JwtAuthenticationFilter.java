@@ -55,7 +55,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 permissions.forEach(perm -> authorities.add(new SimpleGrantedAuthority(perm)));
             }
 
-            UserPrincipal principal = new UserPrincipal(userId, organizationId, email, authorities);
+            String membershipIdStr = claims.get("membership_id", String.class);
+            UUID membershipId = membershipIdStr != null ? UUID.fromString(membershipIdStr) : null;
+
+            UserPrincipal principal = new UserPrincipal(userId, organizationId, membershipId, email, authorities);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -78,3 +81,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
+

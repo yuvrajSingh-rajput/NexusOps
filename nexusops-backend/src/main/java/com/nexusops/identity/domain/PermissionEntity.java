@@ -75,3 +75,4 @@ public class PermissionEntity {
         return Objects.hashCode(code);
     }
 }
+

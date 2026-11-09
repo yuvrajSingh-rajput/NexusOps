@@ -98,3 +98,4 @@ public class OrganizationEntity {
         return Objects.hashCode(id);
     }
 }
+

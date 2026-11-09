@@ -211,6 +211,7 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(),
                 organizationId,
+                membership.getId(),
                 user.getEmail(),
                 roleCodes,
                 permissionCodes
