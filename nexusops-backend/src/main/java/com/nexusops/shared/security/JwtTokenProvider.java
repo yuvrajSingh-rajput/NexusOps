@@ -73,6 +73,11 @@ public class JwtTokenProvider {
         return UUID.fromString(getClaims(token).get("org_id", String.class));
     }
 
+    public UUID getMembershipId(String token) {
+        String mId = getClaims(token).get("membership_id", String.class);
+        return mId != null ? UUID.fromString(mId) : null;
+    }
+
     public String generateRawRefreshToken() {
         byte[] randomBytes = new byte[32];
         new SecureRandom().nextBytes(randomBytes);

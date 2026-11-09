@@ -2,7 +2,7 @@
 
 **Project:** NexusOps – Intelligent Enterprise Operations Platform  
 **Target Architecture:** Java 21 / Spring Boot 3.3.x Modular Monolith + React 18 / Vite / TS  
-**Current Phase:** Phase 0 (Design Only – Under Review)  
+**Current Phase:** All Phases Completed & Verified (Commercial Release v1.0.0)  
 
 ---
 
@@ -10,19 +10,18 @@
 
 | Phase | Title | Focus Area | Status |
 | :---: | :--- | :--- | :---: |
-| **0** | **Design & Architecture** | PRD, Architecture, ERD, Schema, State Machines, API, Events | **COMPLETED (Pending Review)** |
-| **1** | **Foundation** | Docker Compose, Backend skeleton, Modulith test, Frontend shell | Up Next |
-| **2** | **Identity & Organization** | Auth, JWT, Org/Dept hierarchy, Composite FKs, RLS, RBAC | Scheduled |
-| **3** | **Request Management** | Dynamic schemas, Request intake, Attachments, Comments, MinIO | Scheduled |
-| **4** | **Workflow Engine** | Node handlers, Typed condition evaluator, Durable execution | Scheduled |
-| **5** | **Approvals** | Approver resolution, Inbox, Optimistic locking (409), Escalations | Scheduled |
-| **6** | **Tasks** | Queue dispatching, Operator fulfillment, Complete lifecycle E2E | Scheduled |
-| **7** | **Events & Notifications** | Transactional Outbox, Kafka KRaft, Mailpit SMTP, In-app alerts | Scheduled |
-| **8** | **Knowledge & RAG** | MinIO upload, Async Tika chunking, pgvector index, Scoped search | Scheduled |
-| **9** | **Nexus AI** | Spring AI, Governed tools, Two-phase confirm flow, SSE streaming | Scheduled |
-| **10**| **Analytics & Audit** | SQL KPIs, Role dashboards, Append-only audit trail with diffs | Scheduled |
-| **11**| **Visual Workflow Designer** | React Flow canvas, Backend graph validation, Version publish | Scheduled |
-| **12**| **Hardening & Demo** | E2E Playwright tests, Seed demo scenarios, Final documentation | Scheduled |
+| **0** | **Design & Architecture** | PRD, Architecture, ERD, Schema, State Machines, API, Events | **COMPLETED** (`phase-0`) |
+| **1** | **Foundation** | Docker Compose, Backend skeleton, Modulith test, Frontend shell | **COMPLETED** (`phase-1`) |
+| **2** | **Identity & Organization** | Auth, JWT, Org/Dept hierarchy, Composite FKs, RLS, RBAC | **COMPLETED** (`phase-2`) |
+| **3** | **Request Management** | Dynamic schemas, Request intake, Attachments, Comments, MinIO | **COMPLETED** (`phase-3`) |
+| **4** | **Workflow Engine & Visual Designer** | React Flow canvas, Node handlers, Typed condition evaluator, Durable execution | **COMPLETED** (`phase-4`, `phase-5`) |
+| **5** | **Approvals** | Approver resolution, Inbox, Optimistic locking (409), Escalations | **COMPLETED** (`phase-6`) |
+| **6** | **Tasks** | Queue dispatching, Operator fulfillment, Complete lifecycle E2E | **COMPLETED** (`phase-7`) |
+| **7** | **Events & Notifications** | Transactional Outbox, Kafka KRaft, Mailpit SMTP, In-app alerts | **COMPLETED** (`phase-9`) |
+| **8** | **Knowledge & RAG** | MinIO upload, Chunking, pgvector index, Scoped search | **COMPLETED** (`phase-8`) |
+| **9** | **Nexus AI** | Spring AI, Governed tools, Two-phase confirm flow, SSE streaming | **COMPLETED** (`phase-8`) |
+| **10**| **Operational Analytics & Audit** | SQL KPIs, Role dashboards, Append-only audit trail with diffs | **COMPLETED** (`phase-10`) |
+| **11**| **End-to-End Acceptance Demo & Hardening** | Master acceptance test suite, Demo data seeder, 1-Click quick login, Full documentation | **COMPLETED** (`phase-11`, `v1.0.0`) |
 
 ---
 

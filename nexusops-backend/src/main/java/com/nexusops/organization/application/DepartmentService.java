@@ -68,6 +68,15 @@ public class DepartmentService {
         return toDto(saved);
     }
 
+    @Transactional
+    public void setDepartmentHead(UUID departmentId, UUID headMembershipId) {
+        UUID tenantId = TenantContextHolder.getRequiredTenantId();
+        DepartmentEntity entity = departmentRepository.findByOrganizationIdAndId(tenantId, departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Department", departmentId));
+        entity.setHeadMembershipId(headMembershipId);
+        departmentRepository.save(entity);
+    }
+
     @Transactional(readOnly = true)
     public Optional<UUID> getDepartmentHeadMembershipId(UUID organizationId, UUID departmentId) {
         return departmentRepository.findByOrganizationIdAndId(organizationId, departmentId)

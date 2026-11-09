@@ -23,4 +23,7 @@ nexusops:
   outbox:
     relay-interval-ms: 3600000
     relay-initial-delay-ms: 3600000
+  seed:
+    demo-data: false
+
 

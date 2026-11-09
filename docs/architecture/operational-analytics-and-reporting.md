@@ -56,3 +56,4 @@ When executives or managers ask Nexus AI:
 | `GET` | `/by-category` | Throughput by request category | `List<CategoryMetricDto>` |
 | `GET` | `/by-department` | Queue volume and pending approvals | `List<DepartmentMetricDto>` |
 | `GET` | `/department-report` | Executive summary and department metrics | `DepartmentReportDto` |
+

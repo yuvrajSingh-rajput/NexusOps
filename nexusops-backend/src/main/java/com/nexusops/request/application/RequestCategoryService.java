@@ -49,6 +49,18 @@ public class RequestCategoryService {
         return toDto(getEntityById(id));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<RequestCategoryResponseDto> getCategoryByCode(String code) {
+        UUID orgId = TenantContextHolder.requireTenantId();
+        return getCategoryByCode(orgId, code);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RequestCategoryResponseDto> getCategoryByCode(UUID orgId, String code) {
+        return categoryRepository.findByOrganizationIdAndCode(orgId, code.trim().toUpperCase())
+                .map(this::toDto);
+    }
+
     @Transactional
     public RequestCategoryResponseDto createCategory(CreateRequestCategoryDto dto) {
         UUID orgId = TenantContextHolder.requireTenantId();

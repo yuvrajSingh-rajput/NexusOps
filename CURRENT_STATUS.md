@@ -1,70 +1,61 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 10 – Operational Analytics, SLA Monitoring & Department Reporting Completed (Review Gate Active)  
+**Current Phase:** Phase 11 – End-to-End Acceptance Demo, Seed Data & Final Hardening Completed (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
+**Milestone:** v1.0.0 Commercial Release Ready  
 
 ---
 
-## Completed in Phase 10 (Operational Analytics, SLA Monitoring & Department Reporting)
+## Completed in Phase 11 (End-to-End Acceptance Demo, Seed Data & Final Hardening)
 
-1. **Backend Analytics Engine (`com.nexusops.analytics`):**
-   - **Infrastructure & SQL Repositories ([`AnalyticsRepository.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/infrastructure/AnalyticsRepository.java)):**
-     - Fast read-only aggregations via `NamedParameterJdbcTemplate` strictly scoped to `organization_id`.
-     - `getRequestCountsByStatus`: ANSI SQL `COUNT(*)` grouped by `status`.
-     - `countPendingApprovals`: Live count of active review instances.
-     - `countOpenTasks`: Queue load across `OPEN`, `IN_PROGRESS`, `BLOCKED`.
-     - `getTaskSlaMetrics`: Accurate SLA compliance numerator and denominator.
-     - `getCompletedRequestDurationsHours`: In-memory `java.time.Duration` cycle time calculation avoiding database dialect discrepancies.
-     - `getCategoryMetrics`: Volume, completion counts, and turnaround hours grouped by request categories.
-     - `getDepartmentMetrics`: Department queue loads, pending approval bottlenecks, and completion throughput.
-     - `getDepartmentStatusBreakdown`: Targeted status distribution for specific department codes.
-   - **Application DTOs (`com.nexusops.analytics.application.dto`):**
-     - `AnalyticsOverviewDto`, `StatusCountDto`, `CategoryMetricDto`, `DepartmentMetricDto`, `DepartmentReportDto`.
-     - Annotated with Spring Modulith `@NamedInterface("dto")`.
-   - **Application Service ([`AnalyticsService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/application/AnalyticsService.java)):**
-     - Synthesizes overview KPIs, completion percentages, average turnaround hours, and formatted executive summaries.
-     - Annotated with Spring Modulith `@NamedInterface("application")`.
-   - **REST APIs ([`AnalyticsController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/api/AnalyticsController.java)):**
-     - `GET /api/v1/analytics/overview`: High-level operational metrics.
-     - `GET /api/v1/analytics/by-status`: Request status distribution.
-     - `GET /api/v1/analytics/by-category`: Category throughput metrics.
-     - `GET /api/v1/analytics/by-department`: Department queues and bottlenecks.
-     - `GET /api/v1/analytics/department-report`: Executive decision briefing card.
+1. **Automated Demo Data Seeder ([`DemoDataSeeder.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/platform/application/DemoDataSeeder.java)):**
+   - Automatically provisions complete commercial demo topologies on boot if the database is unseeded:
+     - **Tenant 1: Acme Corporation (`acme-corp`)**:
+       - **Personas (Standard Password: `Password123!`):**
+         - `eve@acme.com`: Eve Vance (Organization Administrator)
+         - `bob@acme.com`: Bob Martinez (Engineering Manager & Dept Head)
+         - `alice@acme.com`: Alice Chen (Software Engineer, reports to Bob)
+         - `carol@acme.com`: Carol Davis (Finance Manager & Dept Head)
+         - `dave@acme.com`: Dave Wilson (IT Operations Specialist & Dept Head)
+       - **Departments:** Engineering (`ENG`), Finance (`FIN`), IT Operations (`IT`), Human Resources (`HR`).
+       - **Categories:** Developer Laptop (`DEVELOPER_LAPTOP`), Software Access (`SOFTWARE_ACCESS`), Expense Reimbursement (`EXPENSE_REIMBURSEMENT`).
+       - **Published Workflow:** `WF_DEVELOPER_LAPTOP` (Start $\to$ Manager Approval $\to$ Condition $> \$10,000$ $\to$ Finance Approval $\to$ IT Task Fulfillment $\to$ End).
+       - **Grounded Knowledge Base:** Pre-indexes "Acme Corporation - Global IT Hardware & Procurement Policy (2026)" into pgvector with 768-dimensional embeddings.
+       - **Baseline Request:** Pre-populates an initial baseline request for instant operational analytics dashboards.
+     - **Tenant 2: Globex Corporation (`globex-corp`)**:
+       - Isolated tenant for rigorous cross-tenant security verification.
+       - Personas: `homer@globex.com` (Admin), `frank@globex.com` (Employee).
+   - In-memory multipart file support ([`ByteArrayMultipartFile.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/platform/application/ByteArrayMultipartFile.java)).
 
-2. **Nexus AI Integration ([`GenerateDepartmentReportTool.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/tools/GenerateDepartmentReportTool.java)):**
-   - Governed tool registered in `ToolRegistry.java`.
-   - `IntentClassifier` detects `DEPARTMENT_REPORT` intent.
-   - AI strictly narrates pre-computed SQL aggregations (Zero Raw SQL executed by AI!).
+2. **Master End-to-End Acceptance Test Suite ([`EndToEndDemoIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/EndToEndDemoIntegrationTest.java)):**
+   - `executeFullCommercialLifecycleAcceptanceDemo`:
+     - Evaluator logs in as Alice (`alice@acme.com`) $\to$ submits \$25,000 laptop purchase request.
+     - Evaluator logs in as Bob (`bob@acme.com`) $\to$ inspects pending review inbox $\to$ approves request.
+     - Evaluator logs in as Carol (`carol@acme.com`) $\to$ conditional branch triggers finance threshold review ($> \$10,000$) $\to$ approves request.
+     - Evaluator logs in as Dave (`dave@acme.com`) $\to$ claims IT procurement fulfillment task $\to$ completes task with serial tracking.
+     - Request transitions to `COMPLETED`.
+     - Evaluator logs in as Eve (`eve@acme.com`) $\to$ reviews tamper-evident append-only audit trail and live operational analytics KPIs.
+   - `executeNexusAiAcceptanceCapabilities`:
+     - RAG policy QA returning grounded citations with document title and page/section reference.
+     - Governed AI tool execution synthesizing executive department reports from pre-computed SQL aggregations.
+   - `verifyCrossTenantIsolationStrictness`:
+     - Frank (`frank@globex.com`) forbidden from accessing Acme requests (HTTP 404 IDOR defense).
+     - Frank sees 0 pending approvals and 0 open tasks.
+     - Frank queries Nexus AI $\to$ 0 Acme documents returned.
+   - **Backend Verification:** **46/46 tests passed (0 failures, 0 errors, 100% clean Spring Modulith architecture).**
 
-3. **Backend Integration Testing ([`AnalyticsIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/AnalyticsIntegrationTest.java)):**
-   - `shouldComputeOverviewMetricsAccurately`: Overview KPIs calculation with active, completed, and pending counts.
-   - `shouldProvideStatusAndCategoryBreakdowns`: Status counts and category volume aggregations.
-   - `shouldProvideDepartmentMetricsAndExecutiveReport`: Department throughput and bottleneck metrics.
-   - `shouldEnforceTenantIsolationOnAnalytics`: Tenant B sees 0 metrics from Tenant A (strict multi-tenant isolation).
-   - `shouldAllowNexusAiToGenerateDepartmentReport`: Nexus AI executes `generateDepartmentReport` tool with pre-computed SQL metrics.
-   - **Full Backend Test Suite:**
-     - **43 tests passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
-     - Spring Modulith architectural boundaries test: 100% clean across all modules.
+3. **Frontend Evaluator Polish & 1-Click Persona Switcher:**
+   - [`LoginPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/auth/LoginPage.tsx): Added an interactive 1-Click Evaluator Personas grid with role badges, allowing evaluators to switch seamlessly between Alice, Bob, Carol, Dave, Eve, and Frank with single-click authentication.
+   - Production bundle compiled (`tsc && vite build` in 9.49s).
+   - Vitest suite passing (2/2 tests passed).
 
-4. **Frontend Implementation (`nexusops-frontend`):**
-   - **TypeScript Definitions (`src/types/api.ts`):** Added `AnalyticsOverviewDto`, `StatusCountDto`, `CategoryMetricDto`, `DepartmentMetricDto`, `DepartmentReportDto`.
-   - **Live Operations Dashboard ([`DashboardPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/dashboard/DashboardPage.tsx)):**
-     - Connected to `/api/v1/analytics/overview` with real live stats for Active Requests, Pending Approvals, Open Tasks, and SLA Adherence.
-   - **Operational Analytics Studio ([`AnalyticsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/analytics/AnalyticsPage.tsx)):**
-     - KPI summary cards (Total Volume, Approval Turnaround, Fulfillment Turnaround, SLA Adherence).
-     - Segmented status distribution progress meter.
-     - Category throughput and completion rate bars.
-     - Department bottleneck and pending review queue matrix.
-     - Interactive Executive Briefing & Department Report Generator card with department picker and clipboard copy button.
-   - **Navigation & Routing:**
-     - Wired `/analytics` route in `routes.tsx` and sidebar link in `Sidebar.tsx`.
-   - **Verification:**
-     - Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 10.72s).
+4. **Comprehensive Documentation & Evaluator Walkthrough:**
+   - [`docs/operations/demo-acceptance-walkthrough.md`](file:///c:/Users/yuvra/Desktop/NexusOps/docs/operations/demo-acceptance-walkthrough.md): Comprehensive scripted walkthrough detailing credentials, step-by-step UI flows, API interactions, and automated acceptance test commands.
 
 ---
 
-## Overall Project Milestone Status
+## Overall Project Milestone Status (All Phases Complete)
 
 | Phase | Description | Status |
 |---|---|---|
@@ -79,4 +70,4 @@
 | **Phase 8** | Nexus AI Assistant & Governed Tool Registry | **DONE** (`phase-8`) |
 | **Phase 9** | Transactional Outbox, Event Bus, Notifications & Audit | **DONE** (`phase-9`) |
 | **Phase 10** | Operational Analytics, SLA Monitoring & Department Reporting | **DONE** (`phase-10`) |
-| **Phase 11** | End-to-End Acceptance Demo, Seed Data & Final Hardening | **NEXT & FINAL** |
+| **Phase 11** | End-to-End Acceptance Demo, Seed Data & Final Hardening | **DONE** (`phase-11`, `v1.0.0`) |

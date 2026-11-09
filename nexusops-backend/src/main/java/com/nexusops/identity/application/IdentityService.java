@@ -112,6 +112,52 @@ public class IdentityService {
         return toDto(saved);
     }
 
+    @Transactional
+    public EmployeeResponseDto createEmployee(String email, String rawPassword, String firstName, String lastName,
+                                              String jobTitle, UUID departmentId, UUID managerMembershipId,
+                                              Set<String> roleCodes) {
+        UUID tenantId = TenantContextHolder.getRequiredTenantId();
+        String normalizedEmail = email.toLowerCase().trim();
+
+        UserEntity user = userRepository.findByEmail(normalizedEmail).orElseGet(() -> {
+            UserEntity newUser = new UserEntity(normalizedEmail, passwordEncoder.encode(rawPassword), firstName, lastName);
+            newUser.setStatus(UserStatus.ACTIVE);
+            newUser.setEmailVerified(true);
+            return userRepository.save(newUser);
+        });
+
+        // Ensure user password and active status are set
+        if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        }
+        user.setStatus(UserStatus.ACTIVE);
+        user.setEmailVerified(true);
+        user = userRepository.save(user);
+
+        // Find or create membership for this tenant
+        UserEntity finalUser = user;
+        OrganizationMembershipEntity membership = membershipRepository.findByOrganizationIdAndUserId(tenantId, user.getId())
+                .orElseGet(() -> new OrganizationMembershipEntity(tenantId, finalUser, jobTitle));
+
+        membership.setJobTitle(jobTitle);
+        membership.setDepartmentId(departmentId);
+        membership.setManagerMembershipId(managerMembershipId);
+        membership.setStatus(MembershipStatus.ACTIVE);
+
+        if (roleCodes != null && !roleCodes.isEmpty()) {
+            for (String roleCode : roleCodes) {
+                roleRepository.findByOrganizationIdAndCode(tenantId, roleCode)
+                        .ifPresent(membership::addRole);
+            }
+        } else {
+            roleRepository.findByOrganizationIdAndCode(tenantId, "EMPLOYEE")
+                    .ifPresent(membership::addRole);
+        }
+
+        OrganizationMembershipEntity saved = membershipRepository.save(membership);
+        return toDto(saved);
+    }
+
     @Transactional(readOnly = true)
     public Optional<UUID> getManagerMembershipId(UUID organizationId, UUID membershipId) {
         return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)

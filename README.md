@@ -70,8 +70,36 @@ npm run dev
 
 ---
 
+## 🎬 Acceptance Demo & Evaluator Guide
+
+NexusOps includes automated demo data seeding on boot and a 1-Click Persona Quick Login bar on the login page (`http://localhost:5173/login`).
+
+Detailed step-by-step walkthrough: [**Acceptance Demo Walkthrough**](file:///docs/operations/demo-acceptance-walkthrough.md).
+
+### Pre-Seeded Evaluator Personas (Password: `Password123!`)
+
+| Persona | Email | Organization | Role / Department | Responsibility in Acceptance Demo |
+|---|---|---|---|---|
+| **Alice Chen** | `alice@acme.com` | Acme Corporation | Employee (`ENG`) | Submits \$25,000 laptop purchase request |
+| **Bob Martinez** | `bob@acme.com` | Acme Corporation | Manager (`ENG` Head) | Direct manager who approves Alice's request |
+| **Carol Davis** | `carol@acme.com` | Acme Corporation | Finance (`FIN` Head) | Approves requests over \$10,000 |
+| **Dave Wilson** | `dave@acme.com` | Acme Corporation | IT Operator (`IT` Head) | Claims and fulfills the procurement task |
+| **Eve Vance** | `eve@acme.com` | Acme Corporation | Org Administrator | Audits tamper-evident ledger and analytics KPIs |
+| **Frank Grimes** | `frank@globex.com` | Globex Corporation | Employee (External Tenant) | Verifies cross-tenant isolation (IDOR 404) |
+
+### Automated Acceptance Verification
+
+Run the master end-to-end commercial lifecycle acceptance test:
+```bash
+cd nexusops-backend
+./mvnw test -Dtest=EndToEndDemoIntegrationTest
+```
+
+---
+
 ## 📖 Documentation Index
 
+- [Acceptance Demo Walkthrough](file:///docs/operations/demo-acceptance-walkthrough.md)
 - [PRD & User Stories](file:///docs/product/prd-and-user-stories.md)
 - [System Architecture & Boundaries](file:///docs/architecture/system-architecture.md)
 - [Database Schema & ER Diagram](file:///docs/database/er-diagram-and-schema.md)
@@ -81,4 +109,5 @@ npm run dev
 - [REST API Contracts](file:///docs/api/api-contracts.md)
 - [Event Catalogue & Outbox Architecture](file:///docs/architecture/event-catalogue.md)
 - [Master Implementation Plan](file:///IMPLEMENTATION_PLAN.md)
+- [Current Project Status](file:///CURRENT_STATUS.md)
 

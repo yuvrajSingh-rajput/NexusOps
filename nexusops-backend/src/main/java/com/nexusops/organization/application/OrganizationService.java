@@ -9,6 +9,7 @@ import com.nexusops.shared.tenant.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,6 +38,16 @@ public class OrganizationService {
         OrganizationEntity entity = organizationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", id));
         return toDto(entity);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsBySlug(String slug) {
+        return organizationRepository.existsBySlug(slug.toLowerCase().trim());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<OrganizationResponseDto> findOrganizationBySlug(String slug) {
+        return organizationRepository.findBySlug(slug.toLowerCase().trim()).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

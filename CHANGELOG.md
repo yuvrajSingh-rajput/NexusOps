@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2026-11-09 - Commercial Release & Final Acceptance Hardening
+
+### Added
+- **Automated Demo Data Seeder (`DemoDataSeeder.java` & `ByteArrayMultipartFile.java`):**
+  - Boot-time automated provisioner populating realistic commercial multi-tenant environments when the database is empty.
+  - **Tenant 1 (Acme Corporation - `acme-corp`):**
+    - Seeded personas (password: `Password123!`): `eve@acme.com` (Org Admin), `bob@acme.com` (Engineering Manager & Head), `alice@acme.com` (Software Engineer), `carol@acme.com` (Finance Manager & Head), and `dave@acme.com` (IT Operator & Head).
+    - Seeded department hierarchy: Engineering (`ENG`), Finance (`FIN`), IT Operations (`IT`), and Human Resources (`HR`).
+    - Seeded categories: Developer Laptop (`DEVELOPER_LAPTOP`), Software License (`SOFTWARE_ACCESS`), and Expense Reimbursement (`EXPENSE_REIMBURSEMENT`).
+    - Published reference workflow: `WF_DEVELOPER_LAPTOP` (Start $\to$ Manager Review $\to$ Condition $> \$10,000$ $\to$ Finance Review $\to$ IT Task Fulfillment $\to$ End).
+    - Seeded policy document: "Acme Corporation - Global IT Hardware & Procurement Policy (2026)" chunked and embedded into pgvector with 768-dimensional embeddings.
+    - Seeded baseline request for instant live operational analytics.
+  - **Tenant 2 (Globex Corporation - `globex-corp`):**
+    - Isolated tenant with `homer@globex.com` and `frank@globex.com` for cross-tenant isolation testing.
+- **Master End-to-End Acceptance Test Suite (`EndToEndDemoIntegrationTest.java`):**
+  - `executeFullCommercialLifecycleAcceptanceDemo`: Verifies employee laptop submission (\$25k) $\to$ manager approval $\to$ conditional branch $\to$ finance approval $\to$ operator task claim & completion $\to$ request `COMPLETED` $\to$ org admin audit ledger & analytics review.
+  - `executeNexusAiAcceptanceCapabilities`: Verifies grounded policy Q&A with citations and governed department report generation.
+  - `verifyCrossTenantIsolationStrictness`: Verifies cross-tenant IDOR protection (HTTP 404), approval/task queue isolation, and RAG vector search filtering.
+  - Full backend test suite passing: 46/46 tests, 0 failures, 0 errors, 100% clean Spring Modulith boundaries.
+- **Frontend 1-Click Persona Quick Login (`LoginPage.tsx`):**
+  - Interactive Evaluator Personas grid with visual role badges and one-click instant credentials population and login.
+  - Production build passing: `tsc && vite build` in 9.49s; Vitest 2/2 tests passed.
+- **Comprehensive Documentation:**
+  - `docs/operations/demo-acceptance-walkthrough.md`: Complete evaluator script and step-by-step verification guide.
+
+---
+
 ## [0.11.0-analytics] - 2026-11-09
 
 ### Added
