@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `CONVERSATION_FOLLOW_UP` intent to resolve queries like "what did you say" or "what did you explain" by quoting prior assistant answers from conversation history.
   - Added `INCOMPLETE_QUERY` intent to politely guide truncated prompts like "what is".
   - Enhanced RAG fallback to suggest available company policy documents when questions fall outside known policies.
+  - Made request intent classification resilient to natural conversational patterns (`"request for a new laptop for me"`) and direct model selections (`"Apple MacBook Pro 16..."`) following policy inquiries.
 
 ---
 

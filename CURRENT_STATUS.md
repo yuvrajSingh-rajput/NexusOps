@@ -34,6 +34,7 @@
    - Implemented zero-dependency, secure [`MarkdownRenderer.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/components/common/MarkdownRenderer.tsx) rendering headings, metadata banners, styled bullet/number lists, bold/italic, code blocks, tables, and blockquotes.
    - Upgraded both [`AiAssistantPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantPage.tsx) and [`AiAssistantDrawer.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/ai-assistant/AiAssistantDrawer.tsx) to render assistant responses with rich typography.
    - Enhanced [`IntentClassifier.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/IntentClassifier.java) and [`AiAssistantService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/AiAssistantService.java) with `CONVERSATION_FOLLOW_UP` (recalling and quoting previous answers when asked "what did you say" or "repeat"), `INCOMPLETE_QUERY` (guiding truncated queries like "what is"), and conversational gratitude handling ("thank you", "ok").
+   - Added resilient natural language request matching and conversational hardware selection memory: phrases like *"request for a new laptop for me"* or direct hardware model selections (*"Apple MacBook Pro 16..."*) seamlessly generate actionable proposal cards with pre-populated schema parameters instead of misclassifying into policy QA.
 
 ---
 
