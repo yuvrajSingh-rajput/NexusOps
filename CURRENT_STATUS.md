@@ -1,73 +1,68 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 4 – Workflow Engine Completed (Review Gate Active)  
+**Current Phase:** Phase 5 – Approval Engine Completed (Review Gate Active)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
 
 ---
 
-## Completed in Phase 4 (Workflow Engine – Graphs, Validation & Durable Execution)
+## Completed in Phase 5 (Approval Engine – Inboxes, Decision Logging & Optimistic Concurrency)
 
 1. **Database Schema & Migrations (Flyway):**
-   - [`V5__workflow_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V5__workflow_schema.sql):
-     - `workflow_definitions`: Organization-owned process catalogue with category linkage and composite foreign keys `(organization_id, id)`.
-     - `workflow_versions`: Immutable graph versions once published (`version_number`, `status: DRAFT / PUBLISHED / RETIRED`, `definition_snapshot` JSONB).
-     - `workflow_nodes`: Graph node blueprints (`node_key`, `node_type: START, END, APPROVAL, CONDITION, TASK`, `configuration` JSONB, UI positions `x, y`).
-     - `workflow_transitions`: Directed edges with typed JSON predicate expressions (`condition_expression` JSONB, `priority`, `is_default`).
-     - `workflow_instances`: Durable execution state linked to requests (`attempt_number`, `status: CREATED, RUNNING, WAITING, COMPLETED, REJECTED, CANCELLED`, `current_node_key`, `context_data` JSONB, `@Version` optimistic locking).
-     - `workflow_node_instances`: Step-by-step execution audit records (`status`, `result` JSONB, `entered_at`, `exited_at`).
+   - [`V6__approval_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V6__approval_schema.sql):
+     - `approval_instances`: Approval tracking table with composite foreign keys `(organization_id, id)`, `node_instance_id`, `request_id`, `assigned_membership_id`, `assigned_role_id`, `approver_type`, `status: PENDING, APPROVED, REJECTED, REQUESTED_INFO, EXPIRED, CANCELLED`, `due_at` SLA timestamp, and `@Version` optimistic locking column.
+     - `approval_actions`: Append-only, tamper-evident audit log of every human decision (`actor_membership_id`, `action: APPROVE, REJECT, REQUEST_INFORMATION, DELEGATE, REASSIGN`, `comments`, `created_at`).
+     - `scheduled_jobs`: Durable job store with `organization_id`, `job_type: APPROVAL_TIMEOUT, SLA_REMINDER`, `target_id`, `scheduled_at`, `status: PENDING, EXECUTED, FAILED`, and `payload` JSONB.
 
-2. **Backend Architecture & Domain Services (`com.nexusops.workflow`):**
-   - **Typed Condition Evaluator ([`TypedConditionEvaluator.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/evaluator/TypedConditionEvaluator.java)):**
-     - Evaluates structured JSON rules against runtime context (e.g. `payload.estimatedAmount <= 10000`).
-     - Whitelist of strict comparison operators (`EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, `IN`, `CONTAINS`).
-     - 100% immune to code injection: completely forbids SpEL, JavaScript, Groovy, or SQL evaluation.
-   - **Graph Validation Engine ([`WorkflowGraphValidator.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/validator/WorkflowGraphValidator.java)):**
-     - Enforces single `START` node with no incoming edges and at least one outgoing edge.
-     - Enforces at least one reachable `END` node with no outgoing edges.
-     - Breadth-First Search (BFS) reachability validation to guarantee no orphaned or dead-end subgraphs.
-     - Rejects duplicate node keys across graph versions.
-   - **Node Handler Registry & State Handlers (`com.nexusops.workflow.application.handler`):**
-     - `StartNodeHandler`: Advances workflow immediately to initial routing node.
-     - `ConditionNodeHandler`: Evaluates outbound predicate transitions in priority sequence and branches dynamically.
-     - `ApprovalNodeHandler`: Suspends execution into durable `WAITING` state; resumes on `APPROVED`, `REJECTED`, or `WAITING_FOR_INFORMATION` signals.
-     - `TaskNodeHandler`: Suspends execution into durable `WAITING` state for fulfillment operators; resumes on `COMPLETED` signal.
-     - `EndNodeHandler`: Finalizes request and workflow state into `COMPLETED` or `REJECTED`.
-   - **Engine Orchestrator ([`WorkflowEngineService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/WorkflowEngineService.java)):**
-     - `startWorkflow()`: Automatically kicks off when requests requiring workflow are submitted.
-     - `resumeWorkflowWithSignal()`: Atomically applies external decisions, advances through transitions, and persists node execution logs.
-     - Auto-bootstrapping reference Laptop Workflow ($10,000 and $50,000 threshold tiers).
-   - **REST APIs (`com.nexusops.workflow.api`):**
-     - `WorkflowDefinitionController` (`/api/v1/workflows`): Definition listing, details, and version publication.
-     - `WorkflowInstanceController` (`/api/v1/workflow-instances`): Request instance status inspection, node timeline history, and signal dispatch.
+2. **Backend Architecture & Domain Services (`com.nexusops.approval`):**
+   - **Approver Resolution Engine ([`ApproverResolutionService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/application/ApproverResolutionService.java)):**
+     - Dynamic resolution of approvers based on workflow node configuration:
+       - `MANAGER`: Traverses `organization_memberships.manager_membership_id` of the requester.
+       - `DEPT_HEAD`: Resolves department head from `departments.head_membership_id`.
+       - `ROLE`: Resolves shared functional role queue (e.g. `FINANCE`, `OPERATOR`) via `roles.id`.
+       - Fallback explicit membership assignment.
+   - **Approval Lifecycle Service ([`ApprovalService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/application/ApprovalService.java)):**
+     - Event-driven decoupling: listens to `ApprovalRequestedEvent` emitted by `ApprovalNodeHandler` in the workflow module via `@EventListener`, maintaining strict one-way module dependencies.
+     - `createApproval()`: Calculates due dates, records scheduled timeout jobs, and instantiates pending approval records.
+     - `getMyPendingApprovals()`: Queries pending approvals matching either the user's direct membership ID or their assigned organizational role queues.
+     - `decideApproval()`:
+       - Enforces strict authorization (direct assignee, role member, or org admin override).
+       - Records append-only decision audit row in `approval_actions`.
+       - Applies decision state (`APPROVED`, `REJECTED`, `REQUESTED_INFO`).
+       - Enforces Hibernate `@Version` optimistic locking to prevent race conditions.
+       - Dispatches decision signals (`APPROVED`, `REJECTED`) back into `WorkflowEngineService`.
+       - Upon rejection, transitions the request status to `REJECTED` and terminates the workflow with **zero tasks created**.
+   - **REST APIs ([`ApprovalController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/api/ApprovalController.java)):**
+     - `GET /api/v1/approvals/pending` & `GET /api/v1/approvals/my-pending`: Paginated/scoped pending approvals.
+     - `GET /api/v1/approvals/{id}`: Single approval instance with decision history and request snapshot.
+     - `GET /api/v1/approvals/request/{requestId}`: All approvals linked to a specific request.
+     - `POST /api/v1/approvals/{id}/action` & `POST /api/v1/approvals/{id}/decide`: Render approval decisions with optional/required comments.
 
-3. **Multi-Tenant & Workflow Integration Testing:**
-   - [`WorkflowEngineIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/WorkflowEngineIntegrationTest.java):
-     - Verified reference laptop workflow seeding (8 nodes, 11 transitions, version 1.0 published).
-     - Verified dynamic condition branching: request for $2,500 (< $10,000) routes directly from Manager Approval to IT Procurement Task, bypassing Finance.
-     - Verified multi-tier escalation: request for $25,000 routes through Manager Approval -> Finance Approval -> IT Procurement Task.
-     - Verified rejection termination: Manager rejection immediately terminates workflow as `REJECTED` (zero tasks created).
-     - Verified multi-tenant isolation: Tenant B queries return 0 workflow definitions from Tenant A.
+3. **Multi-Tenant & Concurrency Testing:**
+   - [`ApprovalEngineIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/ApprovalEngineIntegrationTest.java):
+     - `shouldCreateApprovalAndAdvanceWorkflowOnApprove`: Submits laptop request, verifies pending approval creation, renders `APPROVE` via REST, and verifies workflow advances to task fulfillment.
+     - `shouldTerminateWorkflowAndSetRequestRejectedOnReject`: Renders `REJECT`, verifies workflow transitions to `END_REJECTED`, request transitions to `REJECTED`, and zero tasks are created.
+     - `shouldRouteToFinanceRoleApprovalForAmountExceedingThreshold`: Submits high-amount request ($15k > $10k), verifies Manager approval completes, workflow condition branches to `FIN_APPROVAL`, and creates role-based approval instance for `FINANCE`.
+     - `shouldEnforceOptimisticLockingOnConcurrentDecisions`: Simulates concurrent decisions on the same approval instance; verifies second update fails with HTTP `409 Conflict`.
+     - `shouldEnforceCrossTenantIsolation`: Verifies Tenant B cannot query or decide Tenant A's approvals (returns HTTP `404 Not Found`).
    - **Backend Test Suite Results:**
-     - Total tests run: **16 passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
-     - Spring Modulith architectural boundaries test: 100% passed with zero violations.
+     - Total tests run: **21 passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
+     - Spring Modulith architectural boundaries test: 100% clean verification across all 13 modules.
 
 4. **Frontend Implementation (`nexusops-frontend`):**
-   - **TypeScript Definitions (`src/types/api.ts`):** Added `NodeType`, `WorkflowVersionStatus`, `WorkflowStatus`, `NodeInstanceStatus`, `WorkflowDefinitionResponseDto`, `WorkflowVersionResponseDto`, `WorkflowNodeDto`, `WorkflowTransitionDto`, `WorkflowInstanceResponseDto`, `NodeInstanceResponseDto`.
-   - **Workflow Engine Studio ([`WorkflowsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/WorkflowsPage.tsx)):**
-     - Overview of active workflow definitions with version pills (`v1.0 PUBLISHED`).
-     - Interactive Graph Inspector Modal showing all nodes with typed badges (`START`, `APPROVAL`, `CONDITION`, `TASK`, `END`), node configuration parameters, and directed transition table with condition predicates.
-     - Modal to define new workflows bound to request categories.
-   - **Request Detail Drawer Integration ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
-     - Real-time Workflow Orchestration Audit Trail displaying every visited node in sequence.
-     - Active node indicator with pulsing badge (`Awaiting Action`).
-     - Execution timestamps and attempt counter.
+   - **TypeScript Definitions (`src/types/api.ts`):** Added `ApprovalStatus`, `ApprovalActionType`, `ApproverType`, `ApprovalActionResponseDto`, `ApprovalInstanceResponseDto`, `ApprovalDecisionDto`.
+   - **Approval Inbox ([`ApprovalsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/approvals/ApprovalsPage.tsx)):**
+     - Real-time TanStack / API client integration loading user's pending approvals.
+     - Filter tabs: Pending Actions (with live badge counter) vs All Assigned.
+     - Request summary cards showing Request #, Category, Approver Queue type (`Role Queue` vs `Direct Manager`), Estimated Amount badge, and SLA countdown.
+     - Quick action buttons on row items: Approve, Reject, Request Info, and Inspect.
+     - Interactive Decision Drawer / Modal displaying dynamic form attributes, decision notes textarea (with mandatory rejection enforcement), audit trail of previous actions, and optimistic conflict error handling.
    - **Frontend Test & Build Results:**
      - Vitest: 2/2 tests passed.
-     - Production bundle: `tsc && vite build` built cleanly in 7.93s with zero TypeScript errors.
+     - Production bundle: `tsc && vite build` built cleanly in 7.15s with zero TypeScript errors.
 
 ---
 
-## Active Phase Gate: Phase 4 Review
-- Phase 4 (Workflow Engine) is 100% complete and verified against all criteria in `AGENTS.md`.
-- Next Phase: **Phase 5 – Approval Engine (`approval_instances`, `approval_actions`, approver resolution: Manager / Dept Head / Role, approvals inbox, and HTTP 409 optimistic locking)**.
+## Active Phase Gate: Phase 5 Review
+- Phase 5 (Approval Engine) is 100% complete and verified against all criteria in `AGENTS.md`.
+- Next Phase: **Phase 6 – Task Management & Queue Fulfillment (`tasks`, `task_comments`, `task_history`, functional team queues, claim/assign/complete, operational output data)**.

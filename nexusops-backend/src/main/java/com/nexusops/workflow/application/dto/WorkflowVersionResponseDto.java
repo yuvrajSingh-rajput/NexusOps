@@ -15,3 +15,4 @@ public record WorkflowVersionResponseDto(
         List<WorkflowTransitionDto> transitions,
         Instant createdAt
 ) {}
+

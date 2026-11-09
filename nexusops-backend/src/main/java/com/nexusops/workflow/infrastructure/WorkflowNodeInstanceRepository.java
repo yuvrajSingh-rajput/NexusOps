@@ -13,3 +13,4 @@ public interface WorkflowNodeInstanceRepository extends JpaRepository<WorkflowNo
     List<WorkflowNodeInstanceEntity> findAllByWorkflowInstanceIdOrderByEnteredAtAsc(UUID workflowInstanceId);
     Optional<WorkflowNodeInstanceEntity> findFirstByWorkflowInstanceIdAndNodeIdOrderByEnteredAtDesc(UUID workflowInstanceId, UUID nodeId);
 }
+

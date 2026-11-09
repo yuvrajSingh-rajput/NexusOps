@@ -36,8 +36,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorResponse.of(ex.getCode(), ex.getMessage())));
     }
 
-    @ExceptionHandler(OptimisticLockException.class)
-    public ResponseEntity<ApiResponse<Void>> handleOptimisticLock(OptimisticLockException ex) {
+    @ExceptionHandler({OptimisticLockException.class, org.springframework.orm.ObjectOptimisticLockingFailureException.class})
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLock(Exception ex) {
         log.warn("Optimistic concurrency conflict: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ErrorResponse.of("CONCURRENT_MODIFICATION",

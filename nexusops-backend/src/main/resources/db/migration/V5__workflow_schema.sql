@@ -98,3 +98,4 @@ CREATE INDEX IF NOT EXISTS idx_wf_tran_ver ON workflow_transitions(workflow_vers
 CREATE INDEX IF NOT EXISTS idx_wf_inst_org_req ON workflow_instances(organization_id, request_id);
 CREATE INDEX IF NOT EXISTS idx_wf_inst_status ON workflow_instances(organization_id, status);
 CREATE INDEX IF NOT EXISTS idx_wf_node_inst_wf ON workflow_node_instances(workflow_instance_id);
+

@@ -16,3 +16,4 @@ public record WorkflowDefinitionResponseDto(
         WorkflowVersionStatus latestVersionStatus,
         Instant createdAt
 ) {}
+

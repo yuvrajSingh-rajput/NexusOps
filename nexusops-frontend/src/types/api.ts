@@ -254,4 +254,49 @@ export interface NodeInstanceResponseDto {
   exitedAt?: string;
 }
 
+// ==============================================================================
+// APPROVAL ENGINE TYPES
+// ==============================================================================
+
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REQUESTED_INFO' | 'EXPIRED' | 'CANCELLED';
+export type ApprovalActionType = 'APPROVE' | 'REJECT' | 'REQUEST_INFORMATION' | 'DELEGATE' | 'REASSIGN';
+export type ApproverType = 'DIRECT_MEMBERSHIP' | 'MANAGER' | 'DEPT_HEAD' | 'ROLE';
+
+export interface ApprovalActionResponseDto {
+  id: string;
+  actorMembershipId: string;
+  actorName: string;
+  action: ApprovalActionType;
+  comments?: string;
+  createdAt: string;
+}
+
+export interface ApprovalInstanceResponseDto {
+  id: string;
+  organizationId: string;
+  nodeInstanceId: string;
+  requestId: string;
+  requestNumber: string;
+  requestTitle: string;
+  requesterName: string;
+  departmentName: string;
+  categoryName: string;
+  requestPayload: Record<string, any>;
+  assignedMembershipId?: string;
+  assignedRoleId?: string;
+  approverRoleName: string;
+  approverType: ApproverType;
+  status: ApprovalStatus;
+  dueAt?: string;
+  createdAt: string;
+  actions: ApprovalActionResponseDto[];
+}
+
+export interface ApprovalDecisionDto {
+  action: ApprovalActionType;
+  comments?: string;
+  delegateToMembershipId?: string;
+}
+
+
 

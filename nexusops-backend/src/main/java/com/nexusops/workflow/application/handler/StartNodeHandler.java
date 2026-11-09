@@ -16,3 +16,4 @@ public class StartNodeHandler implements NodeHandler {
         return NodeExecutionResult.completed();
     }
 }
+

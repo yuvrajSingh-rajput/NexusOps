@@ -35,3 +35,4 @@ public class TaskNodeHandler implements NodeHandler {
         return NodeExecutionResult.waiting(context.getSignalData());
     }
 }
+

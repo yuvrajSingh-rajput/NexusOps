@@ -10,3 +10,4 @@ public enum WorkflowStatus {
     CANCELLED,
     FAILED
 }
+

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,12 @@ public class DepartmentService {
     @Transactional(readOnly = true)
     public DepartmentResponseDto getDepartmentById(UUID id) {
         UUID tenantId = TenantContextHolder.getRequiredTenantId();
-        DepartmentEntity entity = departmentRepository.findByOrganizationIdAndId(tenantId, id)
+        return getDepartmentById(tenantId, id);
+    }
+
+    @Transactional(readOnly = true)
+    public DepartmentResponseDto getDepartmentById(UUID organizationId, UUID id) {
+        DepartmentEntity entity = departmentRepository.findByOrganizationIdAndId(organizationId, id)
                 .orElseThrow(() -> new ResourceNotFoundException("Department", id));
         return toDto(entity);
     }
@@ -60,6 +66,12 @@ public class DepartmentService {
 
         DepartmentEntity saved = departmentRepository.save(entity);
         return toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UUID> getDepartmentHeadMembershipId(UUID organizationId, UUID departmentId) {
+        return departmentRepository.findByOrganizationIdAndId(organizationId, departmentId)
+                .map(DepartmentEntity::getHeadMembershipId);
     }
 
     private DepartmentResponseDto toDto(DepartmentEntity entity) {

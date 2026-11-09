@@ -16,3 +16,4 @@ public interface WorkflowDefinitionRepository extends JpaRepository<WorkflowDefi
     Optional<WorkflowDefinitionEntity> findByOrganizationIdAndCode(UUID organizationId, String code);
     boolean existsByOrganizationIdAndCode(UUID organizationId, String code);
 }
+

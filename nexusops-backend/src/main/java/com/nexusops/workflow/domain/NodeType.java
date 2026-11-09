@@ -7,3 +7,4 @@ public enum NodeType {
     CONDITION,
     TASK
 }
+

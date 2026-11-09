@@ -18,3 +18,4 @@ public record NodeInstanceResponseDto(
         Instant enteredAt,
         Instant exitedAt
 ) {}
+

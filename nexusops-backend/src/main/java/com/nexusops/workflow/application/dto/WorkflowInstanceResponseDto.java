@@ -17,3 +17,4 @@ public record WorkflowInstanceResponseDto(
         Instant startedAt,
         Instant completedAt
 ) {}
+

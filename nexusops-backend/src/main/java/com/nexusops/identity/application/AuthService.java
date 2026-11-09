@@ -317,6 +317,16 @@ public class AuthService {
         opPerms.forEach(p -> { if (permMap.containsKey(p)) opRole.addPermission(permMap.get(p)); });
         roles.put("OPERATOR", roleRepository.save(opRole));
 
+        // FINANCE
+        RoleEntity finRole = new RoleEntity(orgId, "FINANCE", "Finance Officer",
+                "Finance department approver for budget reviews", true);
+        Set<String> finPerms = Set.of(
+                "REQUEST_VIEW_ALL", "REQUEST_COMMENT", "REQUEST_VIEW_INTERNAL_COMMENTS",
+                "APPROVAL_VIEW_PENDING", "APPROVAL_EXECUTE", "KNOWLEDGE_VIEW", "ANALYTICS_VIEW", "AI_CHAT_ACCESS"
+        );
+        finPerms.forEach(p -> { if (permMap.containsKey(p)) finRole.addPermission(permMap.get(p)); });
+        roles.put("FINANCE", roleRepository.save(finRole));
+
         return roles;
     }
 }

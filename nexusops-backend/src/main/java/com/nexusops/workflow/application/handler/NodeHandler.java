@@ -18,3 +18,4 @@ public interface NodeHandler {
         return NodeExecutionResult.completed();
     }
 }
+

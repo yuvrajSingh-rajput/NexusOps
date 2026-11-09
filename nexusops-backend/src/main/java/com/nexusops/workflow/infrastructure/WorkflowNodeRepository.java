@@ -13,3 +13,4 @@ public interface WorkflowNodeRepository extends JpaRepository<WorkflowNodeEntity
     List<WorkflowNodeEntity> findAllByWorkflowVersionId(UUID workflowVersionId);
     Optional<WorkflowNodeEntity> findByWorkflowVersionIdAndNodeKey(UUID workflowVersionId, String nodeKey);
 }
+

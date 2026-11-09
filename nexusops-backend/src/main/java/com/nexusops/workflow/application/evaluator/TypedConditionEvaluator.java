@@ -140,3 +140,4 @@ public class TypedConditionEvaluator {
         return new BigDecimal(obj.toString());
     }
 }
+

@@ -17,3 +17,4 @@ public class ConditionNodeHandler implements NodeHandler {
         return NodeExecutionResult.completed();
     }
 }
+

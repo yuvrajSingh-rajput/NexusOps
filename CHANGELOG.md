@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0-approval-engine] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V6__approval_schema.sql`: Schema for `approval_instances` (`@Version` optimistic locking, SLA `due_at`), `approval_actions` (append-only audit log of decisions), and `scheduled_jobs` (durable job store for approval timeouts and SLA reminders).
+- **Backend Architecture & Domain Services (`com.nexusops.approval`):**
+  - `ApproverResolutionService`: Resolves approvers dynamically based on node config (`MANAGER`, `DEPT_HEAD`, `ROLE`, or direct membership).
+  - `ApprovalService`: Manages approval lifecycle, list queries for user/role inboxes, append-only decision audit logging, decision routing (`APPROVE`, `REJECT`, `REQUEST_INFORMATION`), and workflow resumption.
+  - Event Decoupling via `ApprovalRequestedEvent`: Workflow engine publishes event on reaching `APPROVAL` nodes; `ApprovalService` listens via `@EventListener`, maintaining strict one-way dependency (`approval` -> `workflow`).
+  - `ApprovalController` (`/api/v1/approvals`): Endpoints for pending approvals (`/pending`, `/my-pending`), single approval detail, request approvals (`/request/{requestId}`), and decision execution (`/{id}/action`).
+  - Core `FINANCE` system role added to organization registration.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added types for `ApprovalStatus`, `ApprovalActionType`, `ApproverType`, `ApprovalInstanceResponseDto`, `ApprovalActionResponseDto`, `ApprovalDecisionDto`.
+  - `ApprovalsPage.tsx`: Interactive Approval Inbox with live pending counter badge, filter tabs, dynamic request attributes viewer, decision modal with mandatory rejection comments, and concurrency conflict handling.
+- **Automated Verification:**
+  - `ApprovalEngineIntegrationTest`: 5 integration tests verifying end-to-end Manager approval flow, Rejection termination with zero tasks, Finance role queue escalation, optimistic locking conflict detection (`409 Conflict`), and cross-tenant isolation.
+  - Full backend test suite: 21/21 tests passing (`BUILD SUCCESS`), including Spring Modulith architectural verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build`).
+
+---
+
 ## [0.5.0-workflow-engine] - 2026-11-09
 
 ### Added

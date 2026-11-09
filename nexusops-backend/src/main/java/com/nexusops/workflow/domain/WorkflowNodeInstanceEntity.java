@@ -111,3 +111,4 @@ public class WorkflowNodeInstanceEntity {
         return Objects.hash(id);
     }
 }
+

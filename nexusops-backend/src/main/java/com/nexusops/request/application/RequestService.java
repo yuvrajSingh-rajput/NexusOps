@@ -204,11 +204,34 @@ public class RequestService {
     @Transactional(readOnly = true)
     public RequestResponseDto getRequestById(UUID id, UserPrincipal principal) {
         UUID orgId = TenantContextHolder.requireTenantId();
-        RequestEntity entity = requestRepository.findByOrganizationIdAndId(orgId, id)
+        return getRequest(orgId, id);
+    }
+
+    @Transactional(readOnly = true)
+    public RequestResponseDto getRequest(UUID organizationId, UUID id) {
+        RequestEntity entity = requestRepository.findByOrganizationIdAndId(organizationId, id)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: " + id));
 
-        RequestCategoryEntity cat = categoryRepository.findByOrganizationIdAndId(orgId, entity.getCategoryId()).orElse(null);
-        return toDto(entity, cat != null ? cat.getCode() : "", cat != null ? cat.getName() : "", principal.getEmail());
+        RequestCategoryEntity cat = categoryRepository.findByOrganizationIdAndId(organizationId, entity.getCategoryId()).orElse(null);
+        return toDto(entity, cat != null ? cat.getCode() : "", cat != null ? cat.getName() : "", "system");
+    }
+
+    @Transactional
+    public void updateRequestStatus(UUID organizationId, UUID id, RequestStatus status) {
+        RequestEntity entity = requestRepository.findByOrganizationIdAndId(organizationId, id)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: " + id));
+        entity.setStatus(status);
+        requestRepository.save(entity);
+    }
+
+    @Transactional
+    public void rejectRequest(UUID organizationId, UUID id) {
+        updateRequestStatus(organizationId, id, RequestStatus.REJECTED);
+    }
+
+    @Transactional
+    public void markWaitingForInformation(UUID organizationId, UUID id) {
+        updateRequestStatus(organizationId, id, RequestStatus.WAITING_FOR_INFORMATION);
     }
 
     @Transactional
@@ -331,10 +354,12 @@ public class RequestService {
         Map<String, Object> payloadMap = parsePayloadJson(r.getPayload());
 
         String deptName = "Default Department";
-        try {
-            DepartmentResponseDto dept = departmentService.getDepartmentById(r.getDepartmentId());
-            deptName = dept.name();
-        } catch (Exception ignored) {
+        if (r.getDepartmentId() != null) {
+            try {
+                DepartmentResponseDto dept = departmentService.getDepartmentById(r.getOrganizationId(), r.getDepartmentId());
+                deptName = dept.name();
+            } catch (Exception ignored) {
+            }
         }
 
         return new RequestResponseDto(

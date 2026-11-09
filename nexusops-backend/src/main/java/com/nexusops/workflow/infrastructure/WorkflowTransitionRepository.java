@@ -12,3 +12,4 @@ public interface WorkflowTransitionRepository extends JpaRepository<WorkflowTran
     List<WorkflowTransitionEntity> findAllByWorkflowVersionId(UUID workflowVersionId);
     List<WorkflowTransitionEntity> findAllBySourceNodeIdOrderByPriorityAsc(UUID sourceNodeId);
 }
+

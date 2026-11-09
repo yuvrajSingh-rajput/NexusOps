@@ -13,3 +13,4 @@ public record WorkflowNodeDto(
         double positionX,
         double positionY
 ) {}
+

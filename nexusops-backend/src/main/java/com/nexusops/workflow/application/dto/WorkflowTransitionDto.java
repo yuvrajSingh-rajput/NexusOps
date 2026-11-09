@@ -11,3 +11,4 @@ public record WorkflowTransitionDto(
         int priority,
         boolean isDefault
 ) {}
+

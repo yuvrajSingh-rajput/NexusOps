@@ -112,6 +112,32 @@ public class IdentityService {
         return toDto(saved);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<UUID> getManagerMembershipId(UUID organizationId, UUID membershipId) {
+        return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
+                .map(OrganizationMembershipEntity::getManagerMembershipId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UUID> getRoleIdByCode(UUID organizationId, String roleCode) {
+        return roleRepository.findByOrganizationIdAndCode(organizationId, roleCode)
+                .map(RoleEntity::getId);
+    }
+
+    @Transactional(readOnly = true)
+    public Set<UUID> getRoleIdsForMembership(UUID organizationId, UUID membershipId) {
+        return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
+                .map(m -> m.getRoles().stream().map(RoleEntity::getId).collect(Collectors.toSet()))
+                .orElse(Collections.emptySet());
+    }
+
+    @Transactional(readOnly = true)
+    public String getMemberName(UUID organizationId, UUID membershipId) {
+        return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
+                .map(m -> m.getUser().getFullName())
+                .orElse("System Operator");
+    }
+
     private EmployeeResponseDto toDto(OrganizationMembershipEntity entity) {
         Set<String> roleCodes = entity.getRoles().stream()
                 .map(RoleEntity::getCode)
@@ -120,7 +146,7 @@ public class IdentityService {
         String departmentName = null;
         if (entity.getDepartmentId() != null) {
             try {
-                DepartmentResponseDto dept = departmentService.getDepartmentById(entity.getDepartmentId());
+                DepartmentResponseDto dept = departmentService.getDepartmentById(entity.getOrganizationId(), entity.getDepartmentId());
                 departmentName = dept.name();
             } catch (Exception ignored) {
             }

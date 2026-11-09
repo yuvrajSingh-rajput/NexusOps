@@ -14,3 +14,4 @@ public interface WorkflowInstanceRepository extends JpaRepository<WorkflowInstan
     Optional<WorkflowInstanceEntity> findByOrganizationIdAndRequestId(UUID organizationId, UUID requestId);
     List<WorkflowInstanceEntity> findAllByOrganizationId(UUID organizationId);
 }
+
