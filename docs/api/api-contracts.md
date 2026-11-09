@@ -177,3 +177,4 @@
 | `GET` | `/api/v1/analytics/overview` | KPI summaries: totals, approvals avg time, completion rate. | `ANALYTICS_VIEW` |
 | `GET` | `/api/v1/analytics/department-workload`| Workload and SLA performance grouped by department. | `ANALYTICS_VIEW` |
 | `GET` | `/api/v1/audit/logs` | Paginated search of append-only audit trail with diffs. | `AUDIT_VIEW` |
+

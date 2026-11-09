@@ -120,3 +120,4 @@ Before executing side-effects, the consumer performs an atomic insert. A primary
 1. **Transient Errors (e.g. database lock timeout, temporary SMTP glitch):** Retried 3 times with exponential backoff (1s, 2s, 4s).
 2. **Permanent Failures (poison pill, deserialization crash, data corruption):** Routed automatically to the Dead-Letter Topic: `nexusops.<topic>.DLT`.
 3. An operational alert is emitted to the admin dashboard, allowing inspection and replaying from the DLT after the root cause is resolved.
+

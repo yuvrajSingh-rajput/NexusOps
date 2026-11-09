@@ -187,3 +187,4 @@
   - Scripted demo walkthrough and complete documentation.
 - **Acceptance Criteria:**
   - Flawless execution of the acceptance demo test outlined in `AGENTS.md`.
+

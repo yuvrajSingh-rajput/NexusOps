@@ -62,3 +62,4 @@
 - **Rationale:**
   1. Avoids dual-write inconsistency (e.g. database commits but Kafka is down, or Kafka emits but database rolls back).
   2. Kafka outages do not impact user-facing API operations.
+

@@ -523,3 +523,4 @@ Polled using `SELECT ... FOR UPDATE SKIP LOCKED` to trigger SLA reminders, appro
 - `V2__create_indexes_and_rls.sql`: Performance indexes, HNSW index, and RLS policies.
 - `V3__seed_system_roles_and_permissions.sql`: Global permissions and system roles (`ORG_ADMIN`, `MANAGER`, `EMPLOYEE`, `OPERATOR`).
 - `V4__seed_default_request_categories.sql`: Seed Hardware, Software, Expense, and IT categories with dynamic JSON schemas.
+

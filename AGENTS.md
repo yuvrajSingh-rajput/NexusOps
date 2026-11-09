@@ -163,3 +163,4 @@ Maintain `docs/` (PRD, user stories, system architecture, module boundaries, arc
 5. Update docs and `CURRENT_STATUS.md`.
 6. Finish with: files changed, commands you actually ran, real results, known gaps, and what you need from me.
 7. Do not start the next phase while the current one has unresolved critical failures, and stop at each phase gate for review.
+

@@ -146,3 +146,4 @@ Optional<RequestEntity> findByTenantAndId(@Param("orgId") UUID orgId, @Param("re
 1. **Append-Only Enforcement:** The PostgreSQL database user used by the application service is granted `INSERT` and `SELECT` privileges on `audit_logs`, but **no `UPDATE` or `DELETE`** privileges.
 2. **Correlation ID Tracking:** Every incoming HTTP request is assigned a `X-Correlation-Id` (UUID v4) via an MDC filter. The correlation ID is propagated across all log statements, Kafka messages, outbox rows, and audit records.
 3. **Sensitive Data Sanitization:** An audit sanitizer intercepts JSON before/after snapshots and strips sensitive keys (`password`, `password_hash`, `jwt`, `token`, `secret`, `ssn`, `credit_card`) prior to serialization.
+

@@ -243,3 +243,4 @@ Timeouts and SLA tracking run asynchronously via `scheduled_jobs`:
   - Escalate to the approver's manager if configured.
   - Transition status to `EXPIRED` if a hard timeout is reached.
   - **Never auto-approve.**
+

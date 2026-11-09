@@ -81,3 +81,4 @@ npm run dev
 - [REST API Contracts](file:///docs/api/api-contracts.md)
 - [Event Catalogue & Outbox Architecture](file:///docs/architecture/event-catalogue.md)
 - [Master Implementation Plan](file:///IMPLEMENTATION_PLAN.md)
+

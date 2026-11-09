@@ -205,3 +205,4 @@ spring.ai.ollama.embedding.options.model=nomic-embed-text
   }
   ```
 - All other modules (Requests, Workflows, Approvals, Tasks, Admin) function with 100% feature completeness.
+

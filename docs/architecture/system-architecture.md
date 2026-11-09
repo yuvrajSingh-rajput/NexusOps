@@ -200,3 +200,4 @@ graph TD
 | **Styling** | Tailwind CSS | 3.4.x | Utility-first CSS, rapid UI development with consistent enterprise tokens. |
 | **Workflow Designer** | React Flow | 11.11.x | Robust visual canvas for node-based graph editing with customizable nodes/edges. |
 | **State & Data Fetching**| TanStack Query v5 + Zustand | 5.59.x / 4.5.x | Server state caching, optimistic updates, and minimal global state. |
+

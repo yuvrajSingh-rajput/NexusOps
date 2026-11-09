@@ -310,3 +310,4 @@ sequenceDiagram
   - Dashboard queries calculate: total requests by category/status, average time spent in `PENDING` approval by department, overdue fulfillment tasks.
   - All aggregation queries run using optimized indexes on `organization_id`, `status`, and `created_at`.
   - AI summary tool translates the aggregated statistics into an executive brief without running direct SQL.
+
