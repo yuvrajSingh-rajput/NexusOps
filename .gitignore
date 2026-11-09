@@ -53,4 +53,6 @@ test-results/
 # Temporary / Scratch
 scratch/
 tmp/
+my-work/
+*.tmp
 
