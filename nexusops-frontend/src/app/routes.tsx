@@ -13,6 +13,7 @@ import { DepartmentsPage } from '@/features/organization/DepartmentsPage';
 import { EmployeesPage } from '@/features/organization/EmployeesPage';
 import { AiAssistantPage } from '@/features/ai-assistant/AiAssistantPage';
 import { AuditTrailPage } from '@/features/audit/AuditTrailPage';
+import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 
 export const routes: RouteObject[] = [
   // Public Authentication Routes
@@ -43,7 +44,7 @@ export const routes: RouteObject[] = [
           { path: 'audit', element: <AuditTrailPage /> },
           { path: 'departments', element: <DepartmentsPage /> },
           { path: 'employees', element: <EmployeesPage /> },
-          { path: 'analytics', element: <DashboardPage /> },
+          { path: 'analytics', element: <AnalyticsPage /> },
           { path: 'settings', element: <div className="p-4 text-sm text-slate-500">Settings panel (Phase 2 &amp; 10)</div> },
         ],
       },

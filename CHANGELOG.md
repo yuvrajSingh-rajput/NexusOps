@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.0-analytics] - 2026-11-09
+
+### Added
+- **Backend Analytics Engine (`com.nexusops.analytics`):**
+  - `AnalyticsRepository`: Fast read-only ANSI SQL aggregations using `NamedParameterJdbcTemplate` strictly bounded by `organization_id`. Computes live request status counts, pending approval loads, open fulfillment tasks, and SLA compliance.
+  - In-memory `java.time.Duration` cycle time calculations avoiding database dialect discrepancies across PostgreSQL and H2.
+  - `AnalyticsService`: Generates operational KPIs, turnaround cycle times, category throughput, department queues, and executive summaries.
+  - `AnalyticsController` (`/api/v1/analytics`): REST endpoints for `/overview`, `/by-status`, `/by-category`, `/by-department`, and `/department-report`.
+- **Nexus AI Governed Analytics Integration:**
+  - `GenerateDepartmentReportTool`: AI tool registered in `ToolRegistry`. Calls pre-computed SQL analytics to synthesize grounded executive briefing cards without executing raw SQL.
+  - `IntentClassifier`: Added `DEPARTMENT_REPORT` intent classification.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added Analytics DTOs (`AnalyticsOverviewDto`, `StatusCountDto`, `CategoryMetricDto`, `DepartmentMetricDto`, `DepartmentReportDto`).
+  - `DashboardPage.tsx`: Connected to live `/api/v1/analytics/overview` with real-time stats for Active Requests, Pending Approvals, Open Tasks, and SLA Adherence.
+  - `AnalyticsPage.tsx`: Dedicated operational studio at `/analytics` featuring KPI summary cards, segmented status distribution meter, category throughput bars, department queue matrix, and interactive Department Report Generator card with clipboard copy button.
+  - Navigation: Wired `/analytics` route in `routes.tsx` and sidebar link in `Sidebar.tsx`.
+- **Automated Verification:**
+  - `AnalyticsIntegrationTest`: 5 integration tests verifying overview KPI calculation, status/category breakdowns, department metrics, multi-tenant isolation, and Nexus AI tool execution.
+  - Full backend test suite: 43/43 tests passing (`BUILD SUCCESS`), with Spring Modulith architectural verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 10.72s).
+
+---
+
 ## [0.10.0-outbox-kafka] - 2026-11-09
 
 ### Added

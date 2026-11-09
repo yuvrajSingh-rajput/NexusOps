@@ -1,70 +1,64 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 9 – Transactional Outbox, Event Bus, Notifications & Audit Trail Completed (Review Gate Active)  
+**Current Phase:** Phase 10 – Operational Analytics, SLA Monitoring & Department Reporting Completed (Review Gate Active)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
 
 ---
 
-## Completed in Phase 9 (Transactional Outbox, Kafka Event Bus, Notifications & Audit Trail)
+## Completed in Phase 10 (Operational Analytics, SLA Monitoring & Department Reporting)
 
-1. **Database Schema & Migrations (Flyway):**
-   - [`V10__outbox_and_events_schema.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V10__outbox_and_events_schema.sql):
-     - `outbox_events`: Persisted in the exact same ACID database transaction as domain state mutations (`id`, `organization_id`, `event_type`, `event_version`, `aggregate_type`, `aggregate_id`, `correlation_id`, `payload JSONB`, `status: PENDING, PUBLISHED, FAILED`, `retry_count`, `error_message`, `created_at`, `published_at`).
-     - `processed_events`: Composite primary key `(consumer_name, event_id)` guaranteeing at-least-once consumer idempotency and eliminating duplicate processing during event replay.
-     - `notifications`: Multi-tenant notification fan-out (`id`, `organization_id`, `recipient_membership_id`, `event_type`, `title`, `message`, `link_url`, `read`, `created_at`) with composite foreign key referencing `organization_memberships(organization_id, id)`.
-     - `audit_logs`: Append-only compliance log (`id`, `organization_id`, `actor_membership_id`, `event_type`, `aggregate_type`, `aggregate_id`, `correlation_id`, `before_state JSONB`, `after_state JSONB`, `created_at`).
-     - Defense-in-depth Row-Level Security (RLS) policies on `outbox_events`, `notifications`, and `audit_logs`.
+1. **Backend Analytics Engine (`com.nexusops.analytics`):**
+   - **Infrastructure & SQL Repositories ([`AnalyticsRepository.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/infrastructure/AnalyticsRepository.java)):**
+     - Fast read-only aggregations via `NamedParameterJdbcTemplate` strictly scoped to `organization_id`.
+     - `getRequestCountsByStatus`: ANSI SQL `COUNT(*)` grouped by `status`.
+     - `countPendingApprovals`: Live count of active review instances.
+     - `countOpenTasks`: Queue load across `OPEN`, `IN_PROGRESS`, `BLOCKED`.
+     - `getTaskSlaMetrics`: Accurate SLA compliance numerator and denominator.
+     - `getCompletedRequestDurationsHours`: In-memory `java.time.Duration` cycle time calculation avoiding database dialect discrepancies.
+     - `getCategoryMetrics`: Volume, completion counts, and turnaround hours grouped by request categories.
+     - `getDepartmentMetrics`: Department queue loads, pending approval bottlenecks, and completion throughput.
+     - `getDepartmentStatusBreakdown`: Targeted status distribution for specific department codes.
+   - **Application DTOs (`com.nexusops.analytics.application.dto`):**
+     - `AnalyticsOverviewDto`, `StatusCountDto`, `CategoryMetricDto`, `DepartmentMetricDto`, `DepartmentReportDto`.
+     - Annotated with Spring Modulith `@NamedInterface("dto")`.
+   - **Application Service ([`AnalyticsService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/application/AnalyticsService.java)):**
+     - Synthesizes overview KPIs, completion percentages, average turnaround hours, and formatted executive summaries.
+     - Annotated with Spring Modulith `@NamedInterface("application")`.
+   - **REST APIs ([`AnalyticsController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/api/AnalyticsController.java)):**
+     - `GET /api/v1/analytics/overview`: High-level operational metrics.
+     - `GET /api/v1/analytics/by-status`: Request status distribution.
+     - `GET /api/v1/analytics/by-category`: Category throughput metrics.
+     - `GET /api/v1/analytics/by-department`: Department queues and bottlenecks.
+     - `GET /api/v1/analytics/department-report`: Executive decision briefing card.
 
-2. **Backend Architecture & Core Outbox Framework (`com.nexusops.shared.events`):**
-   - **Domain & Event Records:**
-     - `EventEnvelope<T>`: Standardized versioned event envelope with metadata (`eventId`, `eventType`, `eventVersion`, `organizationId`, `aggregateType`, `aggregateId`, `occurredAt`, `correlationId`, `payload`).
-     - `OutboxEventEntity`, `OutboxStatus`, `ProcessedEventEntity`, `ProcessedEventId`.
-     - Repositories: `OutboxEventRepository`, `ProcessedEventRepository`.
-   - **Outbox Service (`OutboxService.java`):**
-     - Guarantees zero phantom events via `@Transactional(propagation = Propagation.MANDATORY)`. Any database transaction rollback discards both business mutations and outbox records simultaneously.
-   - **Event Publisher Abstraction (`EventPublisher.java` & `KafkaEventPublisher.java`):**
-     - Integrates with Spring Kafka (`KafkaTemplate`) with fallback logging when Kafka is disabled or offline.
-   - **Outbox Relay Publisher (`OutboxRelayPublisher.java`):**
-     - Scheduled background worker polling pending outbox events, dispatching to Kafka and Spring ApplicationContext, marking events `PUBLISHED` or `FAILED` with retry tracking.
+2. **Nexus AI Integration ([`GenerateDepartmentReportTool.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/tools/GenerateDepartmentReportTool.java)):**
+   - Governed tool registered in `ToolRegistry.java`.
+   - `IntentClassifier` detects `DEPARTMENT_REPORT` intent.
+   - AI strictly narrates pre-computed SQL aggregations (Zero Raw SQL executed by AI!).
 
-3. **Notifications Module (`com.nexusops.notification`):**
-   - `NotificationEntity`, `NotificationRepository`, `NotificationResponseDto`.
-   - `NotificationService`: Idempotent listener handling published outbox events (`REQUEST_SUBMITTED`, `APPROVAL_CREATED`, `APPROVAL_COMPLETED`, `TASK_CREATED`, `DOCUMENT_INDEXED`, `WORKFLOW_COMPLETED`), recording in-app notifications and dispatching asynchronous notification emails via Mailpit SMTP (`localhost:1025`).
-   - `NotificationController` (`/api/v1/notifications`): Endpoints for `/my` (paginated), `/unread-count`, `/{id}/read` (mark single), and `/read-all`.
-
-4. **Audit Module (`com.nexusops.audit`):**
-   - `AuditLogEntity`, `AuditLogRepository`, `AuditLogResponseDto`.
-   - `AuditLogService`: Idempotent listener recording append-only audit trail with actor membership, correlation ID, and state snapshots.
-   - `AuditLogController` (`/api/v1/audit`): Endpoint `/logs` with filtering by aggregate type, aggregate ID, and pagination.
-
-5. **Outbox In-Transaction Wiring Across Domain Modules:**
-   - `RequestService`: Emits `REQUEST_SUBMITTED` on submit, `REQUEST_CANCELLED` on cancel.
-   - `ApprovalService`: Emits `APPROVAL_CREATED` on pending review, `APPROVAL_COMPLETED` on approve, `APPROVAL_REJECTED` on reject.
-   - `TaskService`: Emits `TASK_CREATED` on task creation, `TASK_ASSIGNED` on assign/claim, `TASK_UPDATED` on status change, `TASK_COMPLETED` on fulfillment.
-   - `KnowledgeService`: Emits `DOCUMENT_INDEXED` on completion of embedding.
-   - `WorkflowEngineService`: Emits `WORKFLOW_COMPLETED` on reaching `END` node.
-
-6. **Backend Integration Testing ([`TransactionalOutboxIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/TransactionalOutboxIntegrationTest.java)):**
-   - `shouldAtomicallySaveRequestAndOutboxEvent`: Verifies request creation and outbox row are saved in the same transaction.
-   - `shouldRollbackOutboxEventsWhenBusinessTransactionFails`: Verifies transaction rollback results in zero phantom outbox events.
-   - `shouldRelayPendingEventsToEventBus`: Verifies relay publisher delivers events to event bus and marks rows PUBLISHED.
-   - `shouldDeduplicateEventsAtConsumerUsingProcessedEvents`: Verifies consumer idempotency ignores duplicate replay events.
-   - `shouldSurviveKafkaOutageWithoutLosingCommittedBusinessRequests`: Verifies broker failure marks outbox row FAILED without losing committed business state.
-   - `shouldEnforceTenantIsolationOnNotificationsAndAuditLogs`: Verifies Tenant B cannot view Tenant A's notifications or audit logs (returns empty).
+3. **Backend Integration Testing ([`AnalyticsIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/AnalyticsIntegrationTest.java)):**
+   - `shouldComputeOverviewMetricsAccurately`: Overview KPIs calculation with active, completed, and pending counts.
+   - `shouldProvideStatusAndCategoryBreakdowns`: Status counts and category volume aggregations.
+   - `shouldProvideDepartmentMetricsAndExecutiveReport`: Department throughput and bottleneck metrics.
+   - `shouldEnforceTenantIsolationOnAnalytics`: Tenant B sees 0 metrics from Tenant A (strict multi-tenant isolation).
+   - `shouldAllowNexusAiToGenerateDepartmentReport`: Nexus AI executes `generateDepartmentReport` tool with pre-computed SQL metrics.
    - **Full Backend Test Suite:**
-     - **38 tests passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
+     - **43 tests passed, 0 failures, 0 errors (`BUILD SUCCESS`)**.
      - Spring Modulith architectural boundaries test: 100% clean across all modules.
 
-7. **Frontend Implementation (`nexusops-frontend`):**
-   - **TypeScript Definitions (`src/types/api.ts`):** Added `NotificationResponseDto` and `AuditLogResponseDto`.
-   - **Notification Popover (`NotificationPopover.tsx`):**
-     - Bell icon in `Topbar.tsx` with live unread badge.
-     - Dropdown popover displaying unread count, event-specific icons, relative timestamps, single "Mark as read", and "Mark all read" controls.
-     - Click navigates directly to target resources (`/requests`, `/approvals`, `/tasks`).
-   - **Audit Trail Dashboard (`AuditTrailPage.tsx`):**
-     - Accessible via `/audit` and Sidebar navigation.
-     - Real-time search, aggregate type filter pills (`REQUEST`, `APPROVAL`, `TASK`, `DOCUMENT`, `WORKFLOW`), pagination, and JSON state snapshot inspector modal.
+4. **Frontend Implementation (`nexusops-frontend`):**
+   - **TypeScript Definitions (`src/types/api.ts`):** Added `AnalyticsOverviewDto`, `StatusCountDto`, `CategoryMetricDto`, `DepartmentMetricDto`, `DepartmentReportDto`.
+   - **Live Operations Dashboard ([`DashboardPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/dashboard/DashboardPage.tsx)):**
+     - Connected to `/api/v1/analytics/overview` with real live stats for Active Requests, Pending Approvals, Open Tasks, and SLA Adherence.
+   - **Operational Analytics Studio ([`AnalyticsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/analytics/AnalyticsPage.tsx)):**
+     - KPI summary cards (Total Volume, Approval Turnaround, Fulfillment Turnaround, SLA Adherence).
+     - Segmented status distribution progress meter.
+     - Category throughput and completion rate bars.
+     - Department bottleneck and pending review queue matrix.
+     - Interactive Executive Briefing & Department Report Generator card with department picker and clipboard copy button.
+   - **Navigation & Routing:**
+     - Wired `/analytics` route in `routes.tsx` and sidebar link in `Sidebar.tsx`.
    - **Verification:**
      - Vitest (2/2 passed) and production bundle build (`tsc && vite build` in 10.72s).
 
@@ -84,4 +78,5 @@
 | **Phase 7** | Operations Task Management & Queues | **DONE** (`phase-7`) |
 | **Phase 8** | Nexus AI Assistant & Governed Tool Registry | **DONE** (`phase-8`) |
 | **Phase 9** | Transactional Outbox, Event Bus, Notifications & Audit | **DONE** (`phase-9`) |
-| **Phase 10** | Analytics, SLA Monitoring, Hardening & End-to-End Demo | **NEXT** |
+| **Phase 10** | Operational Analytics, SLA Monitoring & Department Reporting | **DONE** (`phase-10`) |
+| **Phase 11** | End-to-End Acceptance Demo, Seed Data & Final Hardening | **NEXT & FINAL** |

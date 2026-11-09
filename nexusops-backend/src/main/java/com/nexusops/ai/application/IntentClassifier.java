@@ -12,6 +12,7 @@ public class IntentClassifier {
         SEARCH_APPROVALS,
         SEARCH_TASKS,
         CREATE_REQUEST,
+        DEPARTMENT_REPORT,
         POLICY_QA,
         CONVERSATION
     }
@@ -23,7 +24,14 @@ public class IntentClassifier {
 
         String lower = message.toLowerCase(Locale.ROOT).trim();
 
-        // 1. Tool Intent: Search Requests
+        // 1. Tool Intent: Department Analytics & Reports
+        if (lower.contains("department report") || lower.contains("department metrics") || lower.contains("operations report")
+                || lower.contains("analytics report") || lower.contains("sla report") || lower.contains("metrics report")
+                || lower.contains("throughput") || (lower.contains("report") && (lower.contains("engineering") || lower.contains("eng") || lower.contains("hr") || lower.contains("it")))) {
+            return Intent.DEPARTMENT_REPORT;
+        }
+
+        // 2. Tool Intent: Search Requests
         if (lower.contains("my request") || lower.contains("my submitted") || lower.contains("track request")
                 || (lower.contains("status") && lower.contains("request") && !lower.contains("how"))) {
             return Intent.SEARCH_REQUESTS;

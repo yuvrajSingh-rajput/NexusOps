@@ -512,6 +512,57 @@ export interface AuditLogResponseDto {
   createdAt: string;
 }
 
+export interface AnalyticsOverviewDto {
+  totalRequests: number;
+  activeRequests: number;
+  completedRequests: number;
+  rejectedRequests: number;
+  cancelledRequests: number;
+  pendingApprovals: number;
+  openTasks: number;
+  avgApprovalCycleHours: number;
+  avgFulfillmentCycleHours: number;
+  slaComplianceRate: number;
+}
+
+export interface StatusCountDto {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+export interface CategoryMetricDto {
+  categoryId: string;
+  categoryKey: string;
+  categoryName: string;
+  totalRequests: number;
+  completedRequests: number;
+  avgCycleHours: number;
+}
+
+export interface DepartmentMetricDto {
+  departmentCode: string;
+  departmentName: string;
+  totalRequests: number;
+  completedRequests: number;
+  pendingApprovals: number;
+  avgCycleHours: number;
+}
+
+export interface DepartmentReportDto {
+  departmentCode: string;
+  departmentName: string;
+  totalRequests: number;
+  completedRequests: number;
+  pendingApprovals: number;
+  openTasks: number;
+  avgCycleHours: number;
+  slaComplianceRate: number;
+  statusBreakdown: StatusCountDto[];
+  executiveSummary: string;
+  generatedAt: string;
+}
+
 
 
 

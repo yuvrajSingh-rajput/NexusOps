@@ -164,6 +164,17 @@ public class AiAssistantService {
                             proposal.title());
                 }
             }
+            case DEPARTMENT_REPORT -> {
+                toolUsed = "generateDepartmentReport";
+                Optional<NexusAiTool> toolOpt = toolRegistry.getTool(toolUsed);
+                if (toolOpt.isPresent()) {
+                    String deptCode = extractDepartmentCode(dto.message());
+                    ToolExecutionResult res = toolOpt.get().execute(Map.of("departmentCode", deptCode), context);
+                    reply = res.summary();
+                } else {
+                    reply = "Unable to access department analytics report tool.";
+                }
+            }
             case POLICY_QA -> {
                 // Grounded RAG Semantic Search
                 citations = knowledgeService.semanticSearch(organizationId, dto.message(), 5, 0.40);
@@ -180,6 +191,7 @@ public class AiAssistantService {
                         "- **Policy Inquiries (RAG):** Ask questions about hardware budgets, leaves, or reimbursement rules.\n" +
                         "- **Track Requests:** Ask *\"What is the status of my requests?\"*\n" +
                         "- **Approvals & Tasks:** Ask *\"Show my pending approvals\"* or *\"Show my tasks\"*.\n" +
+                        "- **Analytics & Reports:** Ask *\"Generate department report for Engineering\"* or *\"Show operational metrics\"*.\n" +
                         "- **Create Requests:** Ask *\"I need a new developer laptop\"* to prepare a submission card.";
             }
             default -> {
@@ -448,5 +460,16 @@ public class AiAssistantService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String extractDepartmentCode(String message) {
+        if (message == null) return "ALL";
+        String lower = message.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("engineering") || lower.contains("eng")) return "ENG";
+        if (lower.contains("information technology") || lower.contains("it")) return "IT";
+        if (lower.contains("human resources") || lower.contains("hr")) return "HR";
+        if (lower.contains("finance") || lower.contains("fin")) return "FIN";
+        if (lower.contains("operations") || lower.contains("ops")) return "OPS";
+        return "ALL";
     }
 }
