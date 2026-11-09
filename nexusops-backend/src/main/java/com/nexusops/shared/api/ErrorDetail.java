@@ -8,3 +8,4 @@ public record ErrorDetail(
         return new ErrorDetail(field, issue);
     }
 }
+

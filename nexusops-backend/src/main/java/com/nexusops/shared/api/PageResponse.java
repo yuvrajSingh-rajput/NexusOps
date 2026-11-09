@@ -14,3 +14,4 @@ public record PageResponse<T>(
         return new PageResponse<>(content, pageNumber, pageSize, totalElements, totalPages, isLast);
     }
 }
+

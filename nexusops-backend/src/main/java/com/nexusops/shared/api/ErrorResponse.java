@@ -18,3 +18,4 @@ public record ErrorResponse(
         return new ErrorResponse(code, message, details);
     }
 }
+

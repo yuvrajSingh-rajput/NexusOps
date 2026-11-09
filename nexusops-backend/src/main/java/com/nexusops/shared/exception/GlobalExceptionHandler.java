@@ -98,3 +98,4 @@ public class GlobalExceptionHandler {
                         "An unexpected error occurred. Please contact system support.")));
     }
 }
+

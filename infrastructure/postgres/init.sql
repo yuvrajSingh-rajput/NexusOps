@@ -14,3 +14,4 @@ BEGIN
     RAISE NOTICE 'pgcrypto version: %', (SELECT extversion FROM pg_extension WHERE extname = 'pgcrypto');
     RAISE NOTICE 'vector version: %', (SELECT extversion FROM pg_extension WHERE extname = 'vector');
 END $$;
+

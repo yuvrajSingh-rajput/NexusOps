@@ -19,3 +19,4 @@ public record ApiResponse<T>(
         return new ApiResponse<>(false, null, error, Instant.now());
     }
 }
+

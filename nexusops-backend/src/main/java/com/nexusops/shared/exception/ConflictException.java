@@ -9,3 +9,4 @@ public class ConflictException extends NexusOpsException {
         super("CONFLICT", message);
     }
 }
+

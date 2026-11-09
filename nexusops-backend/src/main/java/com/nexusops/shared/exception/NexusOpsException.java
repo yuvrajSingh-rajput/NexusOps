@@ -17,3 +17,4 @@ public class NexusOpsException extends RuntimeException {
         return code;
     }
 }
+

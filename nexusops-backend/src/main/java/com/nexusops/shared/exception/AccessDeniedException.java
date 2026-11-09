@@ -5,3 +5,4 @@ public class AccessDeniedException extends NexusOpsException {
         super("FORBIDDEN", message);
     }
 }
+

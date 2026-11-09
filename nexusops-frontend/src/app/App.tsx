@@ -12,10 +12,14 @@ const queryClient = new QueryClient({
   },
 });
 
-export const App: React.FC = () => {
+interface AppProps {
+  router?: ReturnType<typeof import('react-router-dom').createBrowserRouter>;
+}
+
+export const App: React.FC<AppProps> = ({ router: customRouter }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <RouterProvider router={customRouter || router} />
     </QueryClientProvider>
   );
 };

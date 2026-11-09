@@ -48,3 +48,4 @@ export const WorkflowsPage: React.FC = () => {
     </div>
   );
 };
+

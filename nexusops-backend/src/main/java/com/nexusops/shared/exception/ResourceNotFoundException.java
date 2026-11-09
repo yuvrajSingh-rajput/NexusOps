@@ -9,3 +9,4 @@ public class ResourceNotFoundException extends NexusOpsException {
         super("RESOURCE_NOT_FOUND", message);
     }
 }
+

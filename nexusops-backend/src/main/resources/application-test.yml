@@ -20,3 +20,4 @@ nexusops:
     refresh-token-expiration-ms: 86400000
   cors:
     allowed-origins: "*"
+

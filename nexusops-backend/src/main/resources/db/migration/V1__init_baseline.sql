@@ -16,3 +16,4 @@ CREATE TABLE IF NOT EXISTS platform_system_health (
 );
 
 INSERT INTO platform_system_health (status) VALUES ('INITIALIZED');
+

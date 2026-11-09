@@ -33,3 +33,4 @@ class SystemHealthControllerTest {
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 }
+

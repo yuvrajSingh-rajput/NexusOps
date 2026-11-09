@@ -47,3 +47,4 @@ nexusops:
     refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000}
   cors:
     allowed-origins: "http://localhost:5173,http://localhost:3000"
+

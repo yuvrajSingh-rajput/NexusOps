@@ -35,3 +35,4 @@ export const KnowledgePage: React.FC = () => {
     </div>
   );
 };
+

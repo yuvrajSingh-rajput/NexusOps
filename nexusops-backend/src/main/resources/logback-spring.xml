@@ -19,3 +19,4 @@
     <logger name="org.springframework.modulith" level="INFO"/>
     <logger name="org.hibernate.SQL" level="WARN"/>
 </configuration>
+

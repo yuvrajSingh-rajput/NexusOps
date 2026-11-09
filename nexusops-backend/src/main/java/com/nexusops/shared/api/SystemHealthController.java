@@ -21,3 +21,4 @@ public class SystemHealthController {
         return ResponseEntity.ok(ApiResponse.success(status));
     }
 }
+

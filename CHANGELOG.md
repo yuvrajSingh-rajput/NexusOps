@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0-identity-org] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V2__identity_and_organization_schema.sql`: Multi-tenant identity tables (`users`, `organizations`, `organization_memberships`, `departments`, `teams`, `roles`, `permissions`, `refresh_tokens`) with composite foreign keys `(organization_id, id)`.
+  - `V3__seed_system_roles_and_permissions.sql`: Core system permission catalogue across operational domains.
+- **Authentication & Security (`shared.security`):**
+  - `JwtTokenProvider`: HS512 JWT access token generation and validation with tenant isolation claims, and cryptographic 256-bit refresh token hashing.
+  - `JwtAuthenticationFilter`: Automatic Bearer token extraction, Spring Security principal population, and `TenantContextHolder` injection.
+  - `SecurityConfig`: Stateless JWT security filter chain, method security enabled (`@EnableMethodSecurity`), and BCrypt password encryption.
+- **Backend Application Services & REST APIs:**
+  - `AuthService` & `AuthController`: Self-service organization registration (`/api/v1/auth/register-org`), login with HttpOnly refresh cookies (`/api/v1/auth/login`), refresh token rotation with token reuse detection (`/api/v1/auth/refresh`), profile inspection (`/api/v1/auth/me`), and tenant context switching (`/api/v1/auth/switch-org`).
+  - `DepartmentService` & `DepartmentController`: Department CRUD, tree hierarchy verification, and duplicate code prevention scoped to the authenticated tenant (`/api/v1/departments`).
+  - `IdentityService` & `MembershipController`: Paginated employee directory queries and member invitations with department and role assignments (`/api/v1/memberships`).
+- **Frontend Features & Screens:**
+  - `authStore.ts`: Zustand store for token persistence, active organization context, and session refresh.
+  - `ProtectedRoute.tsx`: Client-side route guard preventing unauthenticated access to workspace pages.
+  - `LoginPage.tsx`: Enterprise Sign In screen with validation and error alerts.
+  - `RegisterOrgPage.tsx`: Workspace onboarding screen with slug generation and admin credentials.
+  - `DepartmentsPage.tsx`: Department hierarchy management with creation modal and code validation.
+  - `EmployeesPage.tsx`: Employee directory table with search filtering and employee invitation modal.
+  - `Topbar.tsx` & `Sidebar.tsx`: Multi-tenant organization switcher, user avatar with roles badge, and navigation integration.
+- **Automated Verification:**
+  - Cross-tenant IDOR defense, token rotation, and membership isolation tests in `AuthControllerIntegrationTest`.
+  - Spring Modulith architectural verification in `NexusOpsModulithTest` (0 module violations).
+  - Vitest routing and authenticated session tests in `App.test.tsx` (2/2 passed).
+
+---
+
 ## [0.2.0-foundation] - 2026-11-09
 
 ### Added

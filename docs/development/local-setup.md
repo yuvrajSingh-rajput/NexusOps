@@ -111,3 +111,4 @@ Open your browser at `http://localhost:5173`.
    - Make sure Docker Desktop is launched and the Linux engine status indicator is green.
 3. **Database extension errors:**
    - If PostgreSQL complains about `vector` extension, ensure the container image is `pgvector/pgvector:pg16` which includes pre-compiled vector extensions.
+

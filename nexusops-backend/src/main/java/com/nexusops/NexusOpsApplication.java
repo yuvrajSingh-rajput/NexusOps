@@ -10,3 +10,4 @@ public class NexusOpsApplication {
         SpringApplication.run(NexusOpsApplication.class, args);
     }
 }
+

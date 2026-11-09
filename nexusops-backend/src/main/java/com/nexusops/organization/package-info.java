@@ -6,3 +6,4 @@
         displayName = "Organization Management"
 )
 package com.nexusops.organization;
+
