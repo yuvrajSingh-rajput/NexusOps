@@ -2,7 +2,7 @@
 
 **Current Phase:** Visual Workflow Studio Upgrade & v1.1.0 Enterprise Canvas Release (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-09  
-**Branch:** master  
+**Branch:** main  
 **Milestone:** v1.1.0 Enterprise Canvas & Visual Designer  
 
 ---
