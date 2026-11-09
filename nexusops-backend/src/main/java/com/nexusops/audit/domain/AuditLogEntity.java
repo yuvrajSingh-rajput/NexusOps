@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -38,10 +40,12 @@ public class AuditLogEntity {
     @Column(name = "correlation_id", length = 100)
     private String correlationId;
 
-    @Column(name = "before_state", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "before_state", columnDefinition = "jsonb")
     private String beforeState;
 
-    @Column(name = "after_state", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "after_state", columnDefinition = "jsonb")
     private String afterState;
 
     @Column(name = "created_at", nullable = false, updatable = false)
