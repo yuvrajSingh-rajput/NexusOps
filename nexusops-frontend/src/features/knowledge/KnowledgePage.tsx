@@ -36,7 +36,9 @@ export const KnowledgePage: React.FC = () => {
     if (!user) return false;
     return (
       user.permissions?.includes('KNOWLEDGE_MANAGE') ||
-      user.roles?.includes('ORG_ADMIN')
+      user.permissions?.includes('ORG_ADMIN_MANAGE') ||
+      user.roles?.includes('ORG_ADMIN') ||
+      user.roles?.includes('ROLE_ORG_ADMIN')
     );
   }, [user]);
 

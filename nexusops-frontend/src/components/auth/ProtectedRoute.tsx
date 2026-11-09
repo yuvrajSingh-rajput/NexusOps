@@ -24,7 +24,7 @@ export const ProtectedRoute: React.FC = () => {
 
   if (checking) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-slate-300">
+      <div className="h-full w-full min-h-screen flex flex-col items-center justify-center bg-slate-900 text-slate-300">
         <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg animate-pulse mb-3">
           <Sparkles className="h-5 w-5" />
         </div>

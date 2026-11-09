@@ -45,6 +45,7 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
   const [actionConfirmingId, setActionConfirmingId] = useState<string | null>(null);
   const [confirmedRequests, setConfirmedRequests] = useState<Record<string, RequestResponseDto>>({});
   const [cancelledActions, setCancelledActions] = useState<Record<string, boolean>>({});
+  const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +115,11 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
 
   const handleConfirmAction = async (proposal: ActionProposalDto) => {
     setActionConfirmingId(proposal.actionId);
+    setActionErrors((prev) => {
+      const next = { ...prev };
+      delete next[proposal.actionId];
+      return next;
+    });
     try {
       const res = (await apiClient.post(`/ai/actions/${proposal.actionId}/confirm`, {
         confirm: true,
@@ -128,7 +134,8 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
         }));
       }
     } catch (err: any) {
-      alert(`Action confirmation failed: ${err.message || 'Backend validation rejected the request'}`);
+      const msg = err?.message || err?.error?.message || 'Backend validation rejected the request.';
+      setActionErrors((prev) => ({ ...prev, [proposal.actionId]: msg }));
     } finally {
       setActionConfirmingId(null);
     }
@@ -338,6 +345,14 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
                   <Clock className="h-3 w-3 text-slate-400" />
                   <span>Proposal expires in 15 minutes.</span>
                 </div>
+
+                {/* Inline Error Notice */}
+                {actionErrors[msg.proposal.actionId] && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-2.5 flex items-start gap-2 text-xs text-rose-800">
+                    <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                    <span>{actionErrors[msg.proposal.actionId]}</span>
+                  </div>
+                )}
 
                 {/* Confirm / Cancel Buttons */}
                 {confirmedRequests[msg.proposal.actionId] ? (

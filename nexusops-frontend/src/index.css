@@ -3,8 +3,86 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-slate-50 text-slate-900;
+  }
+
+  /* Global Scrollbar (Light / Standard Workspace) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  /* WebKit browsers (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; /* slate-300 */
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8; /* slate-400 */
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-color: #64748b; /* slate-500 */
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Dark Variant (Sidebar, dark slide-overs, dark drawers) */
+  aside,
+  aside *,
+  .dark-scrollbar,
+  .dark-scrollbar * {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 transparent; /* slate-600 */
+  }
+
+  aside::-webkit-scrollbar-thumb,
+  aside *::-webkit-scrollbar-thumb,
+  .dark-scrollbar::-webkit-scrollbar-thumb,
+  .dark-scrollbar *::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  aside::-webkit-scrollbar-thumb:hover,
+  aside *::-webkit-scrollbar-thumb:hover,
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark-scrollbar *::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
+  aside::-webkit-scrollbar-thumb:active,
+  aside *::-webkit-scrollbar-thumb:active,
+  .dark-scrollbar::-webkit-scrollbar-thumb:active,
+  .dark-scrollbar *::-webkit-scrollbar-thumb:active {
+    background-color: #94a3b8; /* slate-400 */
   }
 }
 

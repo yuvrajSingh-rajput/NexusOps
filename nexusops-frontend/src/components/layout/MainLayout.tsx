@@ -9,7 +9,7 @@ export const MainLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50">
       {/* Sidebar (Desktop static & Mobile off-canvas drawer) */}
       <Sidebar
         mobileOpen={mobileMenuOpen}

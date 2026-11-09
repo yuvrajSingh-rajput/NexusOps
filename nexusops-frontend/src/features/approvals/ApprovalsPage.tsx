@@ -96,8 +96,9 @@ export const ApprovalsPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Decision execution error:', err);
-      if (err?.code === 'CONCURRENT_MODIFICATION' || err?.code === 'APPROVAL_CONFLICT') {
-        setDecisionError('This approval was already decided by another approver or administrator. Please refresh.');
+      if (err?.code === 'CONCURRENT_MODIFICATION' || err?.code === 'APPROVAL_CONFLICT' || err?.code === 'CONFLICT') {
+        setDecisionError('This approval has already been resolved or decided by another approver. Refreshing data...');
+        await fetchApprovals();
       } else {
         setDecisionError(err?.message || 'Failed to submit decision.');
       }
@@ -369,73 +370,87 @@ export const ApprovalsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Decision Selector */}
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                  Select Decision Action
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setDecisionAction('APPROVE')}
-                    className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
-                      decisionAction === 'APPROVE'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Authorize &amp; Approve
-                  </button>
+              {/* Action Decision Selector or Resolved Status */}
+              {selectedApproval.status === 'PENDING' ? (
+                <>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                      Select Decision Action
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setDecisionAction('APPROVE')}
+                        className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
+                          decisionAction === 'APPROVE'
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Authorize &amp; Approve
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setDecisionAction('REJECT')}
-                    className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
-                      decisionAction === 'REJECT'
-                        ? 'border-rose-500 bg-rose-50 text-rose-800 ring-2 ring-rose-500/20'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <XCircle className="h-4 w-4 text-rose-600" />
-                    Reject Request
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => setDecisionAction('REJECT')}
+                        className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
+                          decisionAction === 'REJECT'
+                            ? 'border-rose-500 bg-rose-50 text-rose-800 ring-2 ring-rose-500/20'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <XCircle className="h-4 w-4 text-rose-600" />
+                        Reject Request
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setDecisionAction('REQUEST_INFORMATION')}
-                    className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
-                      decisionAction === 'REQUEST_INFORMATION'
-                        ? 'border-amber-500 bg-amber-50 text-amber-800 ring-2 ring-amber-500/20'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <HelpCircle className="h-4 w-4 text-amber-600" />
-                    Request Info
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => setDecisionAction('REQUEST_INFORMATION')}
+                        className={`p-3 rounded-xl border text-center font-semibold text-xs transition-all flex flex-col items-center gap-1.5 ${
+                          decisionAction === 'REQUEST_INFORMATION'
+                            ? 'border-amber-500 bg-amber-50 text-amber-800 ring-2 ring-amber-500/20'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <HelpCircle className="h-4 w-4 text-amber-600" />
+                        Request Info
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Comments Textarea */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 block">
+                      Decision Notes &amp; Audit Comments
+                      {decisionAction === 'REJECT' && (
+                        <span className="text-rose-600 ml-1 font-semibold">* (Mandatory for rejection)</span>
+                      )}
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={comments}
+                      onChange={(e) => setComments(e.target.value)}
+                      placeholder={
+                        decisionAction === 'REJECT'
+                          ? 'Please explain the specific reason for rejecting this requisition...'
+                          : 'Add any operational guidance, budget authorization codes, or delivery notes...'
+                      }
+                      className="w-full p-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl flex items-center gap-3 text-xs text-emerald-900">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <span className="font-semibold text-slate-900">Decision Already Finalized</span>
+                    <p className="text-slate-600 mt-0.5">
+                      This approval step was completed with status <span className="font-bold uppercase text-emerald-700">{selectedApproval.status}</span>.
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Comments Textarea */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Decision Notes &amp; Audit Comments
-                  {decisionAction === 'REJECT' && (
-                    <span className="text-rose-600 ml-1 font-semibold">* (Mandatory for rejection)</span>
-                  )}
-                </label>
-                <textarea
-                  rows={3}
-                  value={comments}
-                  onChange={(e) => setComments(e.target.value)}
-                  placeholder={
-                    decisionAction === 'REJECT'
-                      ? 'Please explain the specific reason for rejecting this requisition...'
-                      : 'Add any operational guidance, budget authorization codes, or delivery notes...'
-                  }
-                  className="w-full p-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
-                />
-              </div>
+              )}
 
               {/* Historical Actions / Audit Trail */}
               {selectedApproval.actions && selectedApproval.actions.length > 0 && (
@@ -473,35 +488,37 @@ export const ApprovalsPage: React.FC = () => {
                 onClick={() => setSelectedApproval(null)}
                 className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-xl transition-colors"
               >
-                Cancel
+                {selectedApproval.status === 'PENDING' ? 'Cancel' : 'Close'}
               </button>
 
-              <button
-                type="button"
-                disabled={!decisionAction || submittingDecision}
-                onClick={() => decisionAction && handleExecuteDecision(decisionAction)}
-                className={`px-5 py-2 text-xs font-semibold text-white rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                  !decisionAction
-                    ? 'bg-slate-300 cursor-not-allowed'
-                    : decisionAction === 'APPROVE'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : decisionAction === 'REJECT'
-                    ? 'bg-rose-600 hover:bg-rose-700'
-                    : 'bg-amber-600 hover:bg-amber-700'
-                }`}
-              >
-                {submittingDecision ? (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    Executing Decision...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-3.5 w-3.5" />
-                    Confirm {decisionAction || 'Decision'}
-                  </>
-                )}
-              </button>
+              {selectedApproval.status === 'PENDING' && (
+                <button
+                  type="button"
+                  disabled={!decisionAction || submittingDecision}
+                  onClick={() => decisionAction && handleExecuteDecision(decisionAction)}
+                  className={`px-5 py-2 text-xs font-semibold text-white rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                    !decisionAction
+                      ? 'bg-slate-300 cursor-not-allowed'
+                      : decisionAction === 'APPROVE'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : decisionAction === 'REJECT'
+                      ? 'bg-rose-600 hover:bg-rose-700'
+                      : 'bg-amber-600 hover:bg-amber-700'
+                  }`}
+                >
+                  {submittingDecision ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Executing Decision...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      Confirm {decisionAction || 'Decision'}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

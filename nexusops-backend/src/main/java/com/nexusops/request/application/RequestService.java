@@ -356,8 +356,10 @@ public class RequestService {
     private boolean isOperatorOrAdmin(UserPrincipal principal) {
         return principal.getAuthorities().stream().anyMatch(a ->
                 a.getAuthority().equals("ROLE_ORG_ADMIN") ||
+                a.getAuthority().equals("ORG_ADMIN_MANAGE") ||
                 a.getAuthority().equals("ROLE_OPERATOR") ||
                 a.getAuthority().equals("ROLE_MANAGER") ||
+                a.getAuthority().equals("ROLE_FINANCE") ||
                 a.getAuthority().equals("ROLE_FINANCE_OPERATOR") ||
                 a.getAuthority().equals("ROLE_IT_OPERATOR"));
     }
