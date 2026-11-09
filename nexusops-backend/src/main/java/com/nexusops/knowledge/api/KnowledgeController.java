@@ -45,7 +45,7 @@ public class KnowledgeController {
     }
 
     @PostMapping(value = "/documents/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasRole('ORG_ADMIN') or hasAuthority('ROLE_ORG_ADMIN') or hasAuthority('ORG_ADMIN_MANAGE')")
     public ResponseEntity<ApiResponse<DocumentResponseDto>> uploadDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam("title") String title,
@@ -111,7 +111,7 @@ public class KnowledgeController {
     }
 
     @PostMapping("/documents/{id}/reindex")
-    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasRole('ORG_ADMIN') or hasAuthority('ROLE_ORG_ADMIN') or hasAuthority('ORG_ADMIN_MANAGE')")
     public ResponseEntity<ApiResponse<DocumentResponseDto>> reindexDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -121,7 +121,7 @@ public class KnowledgeController {
     }
 
     @DeleteMapping("/documents/{id}")
-    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasAuthority('ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('KNOWLEDGE_MANAGE') or hasRole('ORG_ADMIN') or hasAuthority('ROLE_ORG_ADMIN') or hasAuthority('ORG_ADMIN_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deleteDocument(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {

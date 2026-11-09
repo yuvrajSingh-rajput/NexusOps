@@ -179,6 +179,9 @@ public class IdentityService {
 
     @Transactional(readOnly = true)
     public String getMemberName(UUID organizationId, UUID membershipId) {
+        if (membershipId == null) {
+            return "System Automated";
+        }
         return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
                 .map(m -> m.getUser().getFullName())
                 .orElse("System Operator");

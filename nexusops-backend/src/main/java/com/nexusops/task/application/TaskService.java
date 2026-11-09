@@ -126,7 +126,7 @@ public class TaskService {
         TaskHistoryEntity history = new TaskHistoryEntity(
                 organizationId,
                 task.getId(),
-                assigneeMembershipId != null ? assigneeMembershipId : organizationId,
+                assigneeMembershipId,
                 "CREATED",
                 Map.of(),
                 Map.of("taskNumber", taskNumber, "status", task.getStatus().name())

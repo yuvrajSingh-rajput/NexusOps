@@ -41,7 +41,15 @@ export const TasksPage: React.FC = () => {
     );
   }, [user]);
 
-  const [activeTab, setActiveTab] = useState<'QUEUE' | 'MY'>('QUEUE');
+  const [activeTab, setActiveTab] = useState<'QUEUE' | 'MY'>('MY');
+
+  useEffect(() => {
+    if (canOperateTasks) {
+      setActiveTab('QUEUE');
+    } else {
+      setActiveTab('MY');
+    }
+  }, [canOperateTasks]);
   const [tasks, setTasks] = useState<TaskResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

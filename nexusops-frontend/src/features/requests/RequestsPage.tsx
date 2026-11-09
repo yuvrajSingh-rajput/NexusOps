@@ -25,8 +25,10 @@ import {
   ArrowRight,
   Layers,
   GitFork,
+  Users
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/features/auth/authStore';
 import {
   ApiResponse,
   PageResponse,
@@ -55,6 +57,17 @@ const getCategoryIcon = (code?: string, size: 'sm' | 'lg' = 'sm') => {
 };
 
 export const RequestsPage: React.FC = () => {
+  const user = useAuthStore((s) => s.user);
+  const canViewAllRequests = useMemo(() => {
+    if (!user) return false;
+    return (
+      user.permissions?.includes('REQUEST_VIEW_ALL') ||
+      user.permissions?.includes('ORG_ADMIN_MANAGE') ||
+      user.roles?.includes('ORG_ADMIN')
+    );
+  }, [user]);
+
+  const [viewScope, setViewScope] = useState<'my' | 'all'>('my');
   const [requests, setRequests] = useState<RequestResponseDto[]>([]);
   const [categories, setCategories] = useState<RequestCategoryResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +115,8 @@ export const RequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      let url = '/requests?page=0&size=50';
+      const baseUrl = viewScope === 'all' && canViewAllRequests ? '/requests' : '/requests/my';
+      let url = `${baseUrl}?page=0&size=50`;
       if (statusFilter !== 'ALL') {
         url += `&status=${statusFilter}`;
       }
@@ -124,7 +138,7 @@ export const RequestsPage: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [statusFilter]);
+  }, [statusFilter, viewScope]);
 
   const loadComments = async (requestId: string) => {
     setLoadingComments(true);
@@ -415,6 +429,34 @@ export const RequestsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {canViewAllRequests && (
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold mr-2">
+              <button
+                type="button"
+                onClick={() => setViewScope('my')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                  viewScope === 'my'
+                    ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <User className="h-3.5 w-3.5" />
+                <span>My Requests</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewScope('all')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                  viewScope === 'all'
+                    ? 'bg-white text-indigo-700 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span>All Requests</span>
+              </button>
+            </div>
+          )}
           <button
             onClick={() => {
               fetchCategories();

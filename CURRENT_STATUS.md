@@ -1,9 +1,56 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Phase 11 & v1.0.1 Stability Patch – Knowledge Vector Ingestion, AI Co-Pilot & UI Hardening (ALL PHASES COMPLETE & ACCEPTED)  
+**Current Phase:** Visual Workflow Studio Upgrade & v1.1.0 Enterprise Canvas Release (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-09  
 **Branch:** master  
-**Milestone:** v1.0.1 Commercial Release Ready  
+**Milestone:** v1.1.0 Enterprise Canvas & Visual Designer  
+
+---
+
+## Completed in v1.1.0 (Visual Workflow Studio Upgrade & Knowledge Hardening)
+
+1. **Enterprise Visual Canvas Designer ([`@xyflow/react`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/WorkflowCanvas.tsx)):**
+   - Integrated React Flow (`@xyflow/react`) with interactive node palette, drag-and-drop node placement, custom handle connections, zoom/pan controls, and mini-map.
+   - Dual-mode Studio: Seamless toggle between **Visual Canvas** (interactive React Flow editor) and **Inspect Graph** (structured card summaries and transition routing table).
+   - Dedicated visual node cards for all 5 core types: `START` (Emerald), `APPROVAL` (Amber), `CONDITION` (Sky), `TASK` (Purple), and `END` (Rose/Emerald) with node key chips, status badges, and selection glow rings.
+   - Curved Bezier transitions with dynamic routing pills (`APPROVED`, `REJECTED`, `Amount > $10k & ≤ $50k`, `DEFAULT`, `≤ $10,000`).
+
+2. **Interactive Node Configuration Sidebar ([`NodeConfigSidebar.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/NodeConfigSidebar.tsx)):**
+   - Dynamic slide-over drawer for configuring selected nodes or transition edges:
+     - **Approval Node:** Approver type (`MANAGER`, `DEPT_HEAD`, `ROLE`, `SPECIFIC_USER`), role selection (`FINANCE`, `OPERATOR`, `ORG_ADMIN`, `HR`), SLA timeout (hours), and approval policy (`SINGLE_APPROVER`, `ALL_MUST_APPROVE`, `MAJORITY`).
+     - **Condition Node:** Evaluated field paths (`payload.estimatedAmount`, `payload.deviceModel`, etc.).
+     - **Task Node:** Fulfillment queue (`IT_OPERATIONS`, `FACILITIES`, `FINANCE_QUEUE`, `HR_QUEUE`), assignment strategy (`DIRECT_CLAIM`, `ROUND_ROBIN`, `LEAST_LOADED`), SLA duration, and priority (`LOW`, `MEDIUM`, `HIGH`, `URGENT`).
+     - **End Node:** Outcome status (`COMPLETED`, `REJECTED`, `CANCELLED`).
+     - **Transition Edge:** Default fallback route toggle, typed field path, comparison operator (`EQUALS`, `NOT_EQUALS`, `LESS_THAN`, `LESS_THAN_OR_EQUAL`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL`, `BETWEEN`, `IN`, `IS_EMPTY`), comparison value, and evaluation priority order.
+
+3. **Backend-Driven Graph Validation & Immutability ([`WorkflowGraphValidator.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/validator/WorkflowGraphValidator.java), [`WorkflowDefinitionService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/WorkflowDefinitionService.java)):**
+   - Strict graph invariants: exactly one `START`, at least one `END`, no dangling transitions, BFS reachability from START to END, unique node keys, required role/queue configurations, and explicit default fallback routes on condition nodes.
+   - Version Immutability: Published versions are strictly read-only in both database and UI. Edits require creating a new Draft version (`POST /api/v1/workflows/{id}/versions`) which clones nodes, transitions, and coordinates from the latest published version.
+   - Deterministic condition evaluation via [`TypedConditionEvaluator.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/evaluator/TypedConditionEvaluator.java) supporting compound AND/OR grouping and numeric comparison ranges.
+
+4. **REST API Extensions & Endpoints ([`WorkflowDefinitionController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/api/WorkflowDefinitionController.java)):**
+   - `GET /api/v1/workflows/{id}/versions`: Version history with publication timestamps and statuses.
+   - `POST /api/v1/workflows/{id}/versions`: Create next draft version cloning current topology.
+   - `PUT /api/v1/workflows/{id}/versions/{versionNumber}`: Save visual draft coordinates, configurations, and transitions.
+   - `POST /api/v1/workflows/{id}/versions/{versionNumber}/validate`: Detailed graph validation returning errors and warnings.
+   - `POST /api/v1/workflows/{id}/versions/{versionNumber}/publish`: Strict graph verification and publication with version snapshotting.
+
+5. **Knowledge Base Role Permissions & PDF Ingestion:**
+   - Secured Knowledge upload, deletion, and re-indexing behind `KNOWLEDGE_MANAGE` and `ROLE_ORG_ADMIN`.
+   - Replaced naive byte reader with Apache PDFBox 3.0.3 (`Loader.loadPDF`) with graceful fallback.
+
+6. **Requests Endpoint Permission & Status Filtering Hardening:**
+   - Fixed HTTP 403 Forbidden on the Operations Requests page (`/requests`) when accessed by standard employees (e.g. Alice Chen).
+   - In [`RequestController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/api/RequestController.java): Updated `GET /api/v1/requests` to authorize callers with `REQUEST_VIEW_OWN` in addition to administrative roles (`REQUEST_VIEW_ALL`, `ORG_ADMIN_MANAGE`), automatically and safely scoping the response to the caller's own requests if they lack org-wide viewing authority.
+   - In [`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx): Switched default intake endpoint to `/requests/my` for employees, and dynamically rendered an interactive scope switcher ("My Requests" vs "All Requests") for administrators and managers.
+   - Added status filtering (`ALL`, `SUBMITTED`, `IN_REVIEW`, `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) across [`RequestRepository.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/infrastructure/RequestRepository.java), [`RequestService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/application/RequestService.java), and [`RequestController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/api/RequestController.java).
+
+7. **Automated Task Creation & Task History Foreign Key Fix:**
+   - Fixed `DataIntegrityViolationException` / PostgreSQL foreign key constraint violation (`fk_task_history_actor`) when an approval decision (e.g. Bob Martinez approving `REQ-1001`) automatically advanced the workflow and created an unassigned task (`TASK_PROCUREMENT`).
+   - Root cause: [`TaskService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/task/application/TaskService.java) previously passed `organizationId` as fallback when `assigneeMembershipId` was null, which failed composite foreign key validation on `(organization_id, actor_membership_id)`.
+   - Added Flyway migration [`V11__task_history_actor_nullable.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V11__task_history_actor_nullable.sql) allowing `NULL` for system-generated initial task creation events.
+   - Updated [`TaskHistoryEntity.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/task/domain/TaskHistoryEntity.java) and [`TaskService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/task/application/TaskService.java) to set `actorMembershipId = null` for automated transitions, and updated [`IdentityService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/identity/application/IdentityService.java) to return `"System Automated"` when `membershipId` is null.
+   - Upgraded [`TaskController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/task/api/TaskController.java) `/queue` and [`ApprovalController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/api/ApprovalController.java) `/pending` to return empty collections gracefully for unauthorized roles rather than HTTP 403.
 
 ---
 

@@ -19,6 +19,8 @@ public interface RequestRepository extends JpaRepository<RequestEntity, UUID> {
 
     Page<RequestEntity> findAllByOrganizationIdAndRequesterMembershipId(UUID organizationId, UUID requesterMembershipId, Pageable pageable);
 
+    Page<RequestEntity> findAllByOrganizationIdAndRequesterMembershipIdAndStatus(UUID organizationId, UUID requesterMembershipId, RequestStatus status, Pageable pageable);
+
     Page<RequestEntity> findAllByOrganizationId(UUID organizationId, Pageable pageable);
 
     Page<RequestEntity> findAllByOrganizationIdAndStatus(UUID organizationId, RequestStatus status, Pageable pageable);

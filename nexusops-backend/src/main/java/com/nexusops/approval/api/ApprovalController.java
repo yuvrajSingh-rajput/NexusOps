@@ -25,7 +25,7 @@ public class ApprovalController {
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyAuthority('APPROVAL_VIEW_PENDING', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<ApprovalInstanceResponseDto>>> getPendingApprovals(
             @AuthenticationPrincipal UserPrincipal principal) {
         List<ApprovalInstanceResponseDto> pending = approvalService.getMyPendingApprovals(
@@ -35,7 +35,7 @@ public class ApprovalController {
     }
 
     @GetMapping("/my-pending")
-    @PreAuthorize("hasAnyAuthority('APPROVAL_VIEW_PENDING', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<ApprovalInstanceResponseDto>>> getMyPendingApprovals(
             @AuthenticationPrincipal UserPrincipal principal) {
         return getPendingApprovals(principal);

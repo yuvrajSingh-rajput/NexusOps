@@ -109,6 +109,7 @@ public class IntentClassifier {
 
         boolean hasRequestTarget = lower.contains("laptop") || lower.contains("computer") || lower.contains("workstation")
                 || lower.contains("hardware") || lower.contains("macbook") || lower.contains("screen") || lower.contains("monitor")
+                || lower.contains("desk") || lower.contains("chair") || lower.contains("equipment") || lower.contains("device")
                 || lower.contains("software") || lower.contains("license") || lower.contains("access") || lower.contains("copilot")
                 || lower.contains("jetbrains") || lower.contains("figma") || lower.contains("aws")
                 || lower.contains("reimbursement") || lower.contains("expense") || lower.contains("flight") || lower.contains("hotel");

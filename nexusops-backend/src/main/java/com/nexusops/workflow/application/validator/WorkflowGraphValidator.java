@@ -1,6 +1,7 @@
 package com.nexusops.workflow.application.validator;
 
 import com.nexusops.shared.exception.ValidationException;
+import com.nexusops.workflow.application.dto.WorkflowValidationResultDto;
 import com.nexusops.workflow.domain.NodeType;
 import com.nexusops.workflow.domain.WorkflowNodeEntity;
 import com.nexusops.workflow.domain.WorkflowTransitionEntity;
@@ -12,17 +13,28 @@ import java.util.*;
 public class WorkflowGraphValidator {
 
     public void validateGraph(List<WorkflowNodeEntity> nodes, List<WorkflowTransitionEntity> transitions) {
+        WorkflowValidationResultDto result = validateGraphDetailed(nodes, transitions);
+        if (!result.valid()) {
+            throw new ValidationException("Workflow graph validation failed: " + String.join("; ", result.errors()));
+        }
+    }
+
+    public WorkflowValidationResultDto validateGraphDetailed(List<WorkflowNodeEntity> nodes, List<WorkflowTransitionEntity> transitions) {
         List<String> errors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
 
         if (nodes == null || nodes.isEmpty()) {
-            throw new ValidationException("Workflow graph must contain at least one node.");
+            errors.add("Workflow graph must contain at least one node.");
+            return new WorkflowValidationResultDto(false, errors, warnings);
         }
 
         // 1. Unique Node Keys
         Set<String> nodeKeys = new HashSet<>();
         Map<UUID, WorkflowNodeEntity> nodeMap = new HashMap<>();
         for (WorkflowNodeEntity node : nodes) {
-            nodeMap.put(node.getId(), node);
+            if (node.getId() != null) {
+                nodeMap.put(node.getId(), node);
+            }
             if (!nodeKeys.add(node.getNodeKey())) {
                 errors.add("Duplicate node key: " + node.getNodeKey());
             }
@@ -50,20 +62,23 @@ public class WorkflowGraphValidator {
         Map<UUID, List<WorkflowTransitionEntity>> outgoingEdges = new HashMap<>();
         Map<UUID, List<WorkflowTransitionEntity>> incomingEdges = new HashMap<>();
 
-        for (WorkflowTransitionEntity t : transitions) {
-            if (!nodeMap.containsKey(t.getSourceNodeId())) {
-                errors.add("Transition references unknown source node: " + t.getSourceNodeId());
-            }
-            if (!nodeMap.containsKey(t.getTargetNodeId())) {
-                errors.add("Transition references unknown target node: " + t.getTargetNodeId());
-            }
+        if (transitions != null) {
+            for (WorkflowTransitionEntity t : transitions) {
+                if (!nodeMap.containsKey(t.getSourceNodeId())) {
+                    errors.add("Transition references unknown source node: " + t.getSourceNodeId());
+                }
+                if (!nodeMap.containsKey(t.getTargetNodeId())) {
+                    errors.add("Transition references unknown target node: " + t.getTargetNodeId());
+                }
 
-            outgoingEdges.computeIfAbsent(t.getSourceNodeId(), k -> new ArrayList<>()).add(t);
-            incomingEdges.computeIfAbsent(t.getTargetNodeId(), k -> new ArrayList<>()).add(t);
+                outgoingEdges.computeIfAbsent(t.getSourceNodeId(), k -> new ArrayList<>()).add(t);
+                incomingEdges.computeIfAbsent(t.getTargetNodeId(), k -> new ArrayList<>()).add(t);
+            }
         }
 
-        // 5. Check dangling nodes
+        // 5. Check node connectivity and configurations
         for (WorkflowNodeEntity node : nodes) {
+            if (node.getId() == null) continue;
             int outgoing = outgoingEdges.getOrDefault(node.getId(), Collections.emptyList()).size();
             int incoming = incomingEdges.getOrDefault(node.getId(), Collections.emptyList()).size();
 
@@ -89,10 +104,37 @@ public class WorkflowGraphValidator {
                     errors.add("Node '" + node.getNodeKey() + "' is dead-ended (0 outgoing transitions).");
                 }
             }
+
+            // Node specific property validation
+            Map<String, Object> config = node.getConfiguration();
+            if (node.getNodeType() == NodeType.APPROVAL) {
+                boolean hasApprover = config != null && (
+                        config.containsKey("approverType") ||
+                        config.containsKey("approverRole") ||
+                        config.containsKey("assignedMembershipId")
+                );
+                if (!hasApprover) {
+                    warnings.add("Approval node '" + node.getNodeKey() + "' does not specify an approver type or role.");
+                }
+            } else if (node.getNodeType() == NodeType.TASK) {
+                boolean hasQueue = config != null && (
+                        config.containsKey("taskQueue") ||
+                        config.containsKey("queue")
+                );
+                if (!hasQueue) {
+                    warnings.add("Task node '" + node.getNodeKey() + "' does not specify a fulfillment queue.");
+                }
+            } else if (node.getNodeType() == NodeType.CONDITION) {
+                List<WorkflowTransitionEntity> edges = outgoingEdges.getOrDefault(node.getId(), Collections.emptyList());
+                boolean hasDefault = edges.stream().anyMatch(WorkflowTransitionEntity::isDefault);
+                if (!hasDefault && edges.size() > 1) {
+                    warnings.add("Condition node '" + node.getNodeKey() + "' does not have an explicit default route.");
+                }
+            }
         }
 
         // 6. Reachability of at least one END node from START via BFS
-        if (startNodes.size() == 1) {
+        if (startNodes.size() == 1 && startNodes.get(0).getId() != null) {
             UUID startId = startNodes.get(0).getId();
             Set<UUID> visited = new HashSet<>();
             Queue<UUID> queue = new LinkedList<>();
@@ -108,15 +150,14 @@ public class WorkflowGraphValidator {
                 }
             }
 
-            boolean anyEndReachable = endNodes.stream().anyMatch(e -> visited.contains(e.getId()));
+            boolean anyEndReachable = endNodes.stream()
+                    .anyMatch(e -> e.getId() != null && visited.contains(e.getId()));
             if (!anyEndReachable) {
                 errors.add("No END node is reachable from the START node.");
             }
         }
 
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Workflow graph validation failed: " + String.join("; ", errors));
-        }
+        return new WorkflowValidationResultDto(errors.isEmpty(), errors, warnings);
     }
 }
 

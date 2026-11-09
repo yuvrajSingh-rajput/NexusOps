@@ -12,5 +12,6 @@ import java.util.UUID;
 public interface WorkflowNodeRepository extends JpaRepository<WorkflowNodeEntity, UUID> {
     List<WorkflowNodeEntity> findAllByWorkflowVersionId(UUID workflowVersionId);
     Optional<WorkflowNodeEntity> findByWorkflowVersionIdAndNodeKey(UUID workflowVersionId, String nodeKey);
+    void deleteAllByWorkflowVersionId(UUID workflowVersionId);
 }
 

@@ -20,16 +20,34 @@ public class TypedConditionEvaluator {
             "LESS_THAN",
             "LESS_THAN_OR_EQUAL",
             "IN",
-            "CONTAINS"
+            "CONTAINS",
+            "BETWEEN",
+            "IS_EMPTY"
     );
 
     /**
      * Evaluates a typed JSON predicate condition against the workflow execution context.
+     * Supports single predicates or compound conditions grouped by AND / OR.
      * Returns true if condition is satisfied or if condition is null/empty.
      */
+    @SuppressWarnings("unchecked")
     public boolean evaluate(Map<String, Object> conditionExpr, Map<String, Object> contextData) {
         if (conditionExpr == null || conditionExpr.isEmpty()) {
             return true; // Unconditional edge
+        }
+
+        // Support compound AND / OR grouping
+        if (conditionExpr.containsKey("conditions") && conditionExpr.get("conditions") instanceof List<?> list) {
+            List<Map<String, Object>> childConditions = (List<Map<String, Object>>) list;
+            if (childConditions.isEmpty()) {
+                return true;
+            }
+            String logicalOp = conditionExpr.getOrDefault("logicalOperator", "AND").toString().trim().toUpperCase();
+            if ("OR".equals(logicalOp)) {
+                return childConditions.stream().anyMatch(c -> evaluate(c, contextData));
+            } else {
+                return childConditions.stream().allMatch(c -> evaluate(c, contextData));
+            }
         }
 
         Object fieldPathObj = conditionExpr.get("field");
@@ -85,6 +103,45 @@ public class TypedConditionEvaluator {
 
         if ("NOT_EQUALS".equals(operator)) {
             return !compare(actual, "EQUALS", expected);
+        }
+
+        if ("IS_EMPTY".equals(operator)) {
+            if (actual == null) return true;
+            if (actual instanceof Collection<?> coll) return coll.isEmpty();
+            if (actual instanceof Map<?, ?> map) return map.isEmpty();
+            return actual.toString().trim().isEmpty();
+        }
+
+        if ("BETWEEN".equals(operator)) {
+            if (actual == null || expected == null || !isNumeric(actual)) return false;
+            BigDecimal actualNum = toBigDecimal(actual);
+            BigDecimal min = null;
+            BigDecimal max = null;
+
+            if (expected instanceof List<?> list && list.size() >= 2) {
+                if (isNumeric(list.get(0)) && isNumeric(list.get(1))) {
+                    min = toBigDecimal(list.get(0));
+                    max = toBigDecimal(list.get(1));
+                }
+            } else if (expected instanceof Map<?, ?> map) {
+                Object minObj = map.get("min");
+                Object maxObj = map.get("max");
+                if (minObj != null && maxObj != null && isNumeric(minObj) && isNumeric(maxObj)) {
+                    min = toBigDecimal(minObj);
+                    max = toBigDecimal(maxObj);
+                }
+            } else if (expected instanceof String str && str.contains(",")) {
+                String[] parts = str.split(",");
+                if (parts.length >= 2 && isNumeric(parts[0].trim()) && isNumeric(parts[1].trim())) {
+                    min = toBigDecimal(parts[0].trim());
+                    max = toBigDecimal(parts[1].trim());
+                }
+            }
+
+            if (min != null && max != null) {
+                return actualNum.compareTo(min) >= 0 && actualNum.compareTo(max) <= 0;
+            }
+            return false;
         }
 
         if (actual == null || expected == null) {

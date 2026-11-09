@@ -31,9 +31,17 @@ public class TaskController {
     }
 
     @GetMapping("/queue")
-    @PreAuthorize("hasAnyAuthority('TASK_QUEUE_VIEW', 'ROLE_OPERATOR', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<TaskResponseDto>>> getQueueTasks(
             @AuthenticationPrincipal UserPrincipal principal) {
+        boolean canViewQueue = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("TASK_QUEUE_VIEW") ||
+                               a.getAuthority().equals("ROLE_OPERATOR") ||
+                               a.getAuthority().equals("ROLE_ORG_ADMIN") ||
+                               a.getAuthority().equals("ORG_ADMIN_MANAGE"));
+        if (!canViewQueue) {
+            return ResponseEntity.ok(ApiResponse.success(List.of()));
+        }
         List<TaskResponseDto> queue = taskService.getQueueTasks(principal.getOrganizationId());
         return ResponseEntity.ok(ApiResponse.success(queue));
     }

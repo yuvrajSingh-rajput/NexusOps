@@ -24,7 +24,7 @@ public class TaskHistoryEntity {
     @Column(name = "task_id", nullable = false)
     private UUID taskId;
 
-    @Column(name = "actor_membership_id", nullable = false)
+    @Column(name = "actor_membership_id")
     private UUID actorMembershipId;
 
     @Column(name = "action", nullable = false, length = 50)

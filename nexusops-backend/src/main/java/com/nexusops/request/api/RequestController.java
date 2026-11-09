@@ -2,6 +2,7 @@ package com.nexusops.request.api;
 
 import com.nexusops.request.application.RequestService;
 import com.nexusops.request.application.dto.*;
+import com.nexusops.request.domain.RequestStatus;
 import com.nexusops.shared.api.ApiResponse;
 import com.nexusops.shared.api.PageResponse;
 import com.nexusops.shared.security.UserPrincipal;
@@ -40,18 +41,31 @@ public class RequestController {
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('REQUEST_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PageResponse<RequestResponseDto>>> getMyRequests(
+            @RequestParam(required = false) RequestStatus status,
             @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal UserPrincipal principal) {
-        PageResponse<RequestResponseDto> response = requestService.getMyRequests(pageable, principal);
+        PageResponse<RequestResponseDto> response = requestService.getMyRequests(status, pageable, principal);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('REQUEST_VIEW_ALL', 'REQUEST_VIEW_DEPT', 'ORG_ADMIN_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_VIEW_ALL', 'REQUEST_VIEW_DEPT', 'ORG_ADMIN_MANAGE', 'REQUEST_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PageResponse<RequestResponseDto>>> getAllRequests(
+            @RequestParam(required = false) RequestStatus status,
+            @RequestParam(required = false, defaultValue = "false") boolean ownOnly,
             @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal UserPrincipal principal) {
-        PageResponse<RequestResponseDto> response = requestService.getAllRequests(pageable, principal);
+        boolean canViewAll = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("REQUEST_VIEW_ALL") ||
+                               a.getAuthority().equals("ORG_ADMIN_MANAGE") ||
+                               a.getAuthority().equals("ROLE_ORG_ADMIN"));
+
+        PageResponse<RequestResponseDto> response;
+        if (canViewAll && !ownOnly) {
+            response = requestService.getAllRequests(status, pageable, principal);
+        } else {
+            response = requestService.getMyRequests(status, pageable, principal);
+        }
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

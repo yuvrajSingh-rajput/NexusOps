@@ -11,5 +11,6 @@ import java.util.UUID;
 public interface WorkflowTransitionRepository extends JpaRepository<WorkflowTransitionEntity, UUID> {
     List<WorkflowTransitionEntity> findAllByWorkflowVersionId(UUID workflowVersionId);
     List<WorkflowTransitionEntity> findAllBySourceNodeIdOrderByPriorityAsc(UUID sourceNodeId);
+    void deleteAllByWorkflowVersionId(UUID workflowVersionId);
 }
 

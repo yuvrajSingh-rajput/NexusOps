@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-11-09 - Enterprise Visual Workflow Studio Upgrade & Knowledge Hardening
+
+### Added
+- **Visual Workflow Canvas (`@xyflow/react`):**
+  - Interactive drag-and-drop workflow canvas with zoom/pan, minimap, controls, and node palette.
+  - Dedicated custom node components for `START`, `APPROVAL`, `CONDITION`, `TASK`, and `END` with status chips, configuration summaries, and selected rings.
+  - Custom curved Bezier transitions (`CustomEdge.tsx`) rendering dynamic routing condition pills (`APPROVED`, `REJECTED`, `Amount > $10k & ≤ $50k`, `DEFAULT`, `≤ $10,000`).
+  - Dual Studio view modes: **Visual Canvas** (interactive editor) and **Inspect Graph** (structured card summaries and transition table).
+- **Node Configuration Properties Drawer (`NodeConfigSidebar.tsx`):**
+  - Right-side slide-over panel for configuring selected nodes and edges.
+  - Full support for Approval nodes (approver type, role, SLA timeout, approval policy), Condition nodes (field paths), Task nodes (fulfillment queue, assignment strategy, SLA duration, priority), and End nodes (outcome status).
+  - Transition routing configuration with default fallback route toggle, field path, comparison operator, comparison value, and priority order.
+- **Backend Workflow API & Graph Invariants:**
+  - `WorkflowGraphValidator.java`: Validates exactly one START, at least one END, no dangling transitions, BFS reachability from START to END, unique node keys, required role/queue configs, and default fallback route warnings.
+  - `WorkflowDefinitionController.java`: Endpoints for `GET /{id}/versions`, `POST /{id}/versions` (draft creation), `PUT /{id}/versions/{versionNumber}` (save draft), `POST /{id}/versions/{versionNumber}/validate` (graph validation), and `POST /{id}/versions/{versionNumber}/publish`.
+  - Immutable published versions: Editing a published workflow requires creating a new Draft version which clones existing nodes, transitions, and coordinates.
+  - Apache PDFBox 3.0.3 integration in `TextExtractionService.java` with safe page-by-page extraction for enterprise PDF documents.
+- **Operations Requests Scope & Permission Fix:**
+  - Resolved HTTP 403 Forbidden on the Operations Requests screen (`/requests`) when visited by standard employees lacking `REQUEST_VIEW_ALL`.
+  - Updated `RequestController.java` to permit callers with `REQUEST_VIEW_OWN`, automatically returning personal requests while returning full org-wide requests for administrators (`REQUEST_VIEW_ALL`, `ORG_ADMIN_MANAGE`).
+  - Added an interactive scope switcher ("My Requests" vs "All Requests") in `RequestsPage.tsx` for privileged users and supported `status` query filtering across repository, service, and controller.
+- **Task History Composite Foreign Key Constraint Fix:**
+  - Resolved PostgreSQL foreign key constraint violation on `fk_task_history_actor` during automated workflow transitions from Approval to Task node.
+  - Added Flyway migration `V11__task_history_actor_nullable.sql` dropping NOT NULL on `actor_membership_id` to accommodate system-spawned tasks.
+  - Replaced fallback to `organizationId` in `TaskService.java` with explicit `null` and handled display name resolution via `IdentityService.java` as `"System Automated"`.
+
+---
+
 ## [1.0.1] - 2026-11-09 - Knowledge Vector Store, AI Co-Pilot & UI Stability Patch
 
 ### Fixed

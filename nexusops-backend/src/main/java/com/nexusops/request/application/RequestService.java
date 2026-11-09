@@ -206,17 +206,38 @@ public class RequestService {
 
     @Transactional(readOnly = true)
     public PageResponse<RequestResponseDto> getMyRequests(Pageable pageable, UserPrincipal principal) {
+        return getMyRequests(null, pageable, principal);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RequestResponseDto> getMyRequests(RequestStatus status, Pageable pageable, UserPrincipal principal) {
         UUID orgId = TenantContextHolder.requireTenantId();
-        Page<RequestEntity> page = requestRepository.findAllByOrganizationIdAndRequesterMembershipId(
-                orgId, principal.getMembershipId(), pageable);
+        Page<RequestEntity> page;
+        if (status != null) {
+            page = requestRepository.findAllByOrganizationIdAndRequesterMembershipIdAndStatus(
+                    orgId, principal.getMembershipId(), status, pageable);
+        } else {
+            page = requestRepository.findAllByOrganizationIdAndRequesterMembershipId(
+                    orgId, principal.getMembershipId(), pageable);
+        }
 
         return toPageResponse(page, principal.getEmail());
     }
 
     @Transactional(readOnly = true)
     public PageResponse<RequestResponseDto> getAllRequests(Pageable pageable, UserPrincipal principal) {
+        return getAllRequests(null, pageable, principal);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RequestResponseDto> getAllRequests(RequestStatus status, Pageable pageable, UserPrincipal principal) {
         UUID orgId = TenantContextHolder.requireTenantId();
-        Page<RequestEntity> page = requestRepository.findAllByOrganizationId(orgId, pageable);
+        Page<RequestEntity> page;
+        if (status != null) {
+            page = requestRepository.findAllByOrganizationIdAndStatus(orgId, status, pageable);
+        } else {
+            page = requestRepository.findAllByOrganizationId(orgId, pageable);
+        }
         return toPageResponse(page, principal.getEmail());
     }
 
