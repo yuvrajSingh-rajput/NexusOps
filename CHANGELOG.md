@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0-knowledge-base] - 2026-11-09
+
+### Added
+- **Database Migrations:**
+  - `V8__knowledge_schema.sql`: Schema for `documents`, `document_versions` (checksums, file sizes, storage keys, processing status), `document_chunks` (text slices, page numbers, `VECTOR(768)` pgvector column, HNSW cosine distance index), implicit string-to-vector casts, and RLS policies.
+- **Backend Architecture & Storage Services (`com.nexusops.knowledge` & `com.nexusops.shared.storage`):**
+  - `StorageService` interface with `LocalStorageService` (local filesystem with path traversal protection) and `MinioStorageService` (MinIO S3 on port 9000).
+  - `TextExtractionService`: Structured document parser for Markdown, plain text, JSON, and PDF streams.
+  - `DocumentChunkerService`: Sliding-window chunker with 10% overlap (~500 tokens / 1800 chars) preserving natural paragraph and sentence boundaries.
+  - `VectorEmbeddingService`: 768-dimensional embedding engine supporting Ollama `nomic-embed-text` with deterministic local semantic hash projection fallback for offline test environments.
+  - `KnowledgeService`: Document upload, version management, re-indexing, cascading deletion, and tenant-scoped semantic similarity search with cosine scoring and formatted citations.
+  - `KnowledgeController` (`/api/v1/knowledge`): Endpoints for upload, list, get, download version binary, reindex, delete, and semantic search.
+- **Frontend Features & Screens:**
+  - `src/types/api.ts`: Added types for `DocumentAccessScope`, `DocumentProcessingStatus`, `DocumentResponseDto`, `DocumentVersionResponseDto`, `SearchResultDto`, `SemanticSearchRequestDto`.
+  - `KnowledgePage.tsx`: Interactive Knowledge Base dashboard with metrics banner, category filter pills, document cards grid, upload modal with drag-and-drop, and real-time Semantic Search Lab drawer with relevance threshold slider and ranked citation excerpts.
+- **Automated Verification:**
+  - `KnowledgeEngineIntegrationTest`: 3 multi-tenant integration tests verifying document upload, version indexing, binary download, semantic search with relevance scoring, cross-tenant isolation (HTTP 404 and 0 search results), re-indexing, and cascading deletion.
+  - Full backend test suite: 28/28 tests passing (`BUILD SUCCESS`), including Spring Modulith architectural verification.
+  - Frontend Vitest (2/2 passed) and production bundle build (`tsc && vite build`).
+
+---
+
 ## [0.7.0-task-management] - 2026-11-09
 
 ### Added

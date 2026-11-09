@@ -1,9 +1,8 @@
 /**
- * Knowledge Base Module.
- * Responsible for policy document upload, text extraction, chunking, and pgvector embeddings.
+ * Knowledge Base & Semantic Search Module.
+ * Ingestion, chunking, pgvector indexing, and policy document retrieval.
  */
 @org.springframework.modulith.ApplicationModule(
-        displayName = "Knowledge Base"
+        displayName = "Knowledge Base & RAG Ingestion"
 )
 package com.nexusops.knowledge;
-

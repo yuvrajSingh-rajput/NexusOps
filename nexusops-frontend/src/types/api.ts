@@ -363,6 +363,63 @@ export interface AddTaskCommentDto {
   content: string;
 }
 
+// ----------------------------------------------------------------------------
+// Knowledge Base & RAG Semantic Search
+// ----------------------------------------------------------------------------
+
+export type DocumentAccessScope = 'ALL' | 'DEPARTMENT' | 'ROLE';
+export type DocumentProcessingStatus = 'UPLOADED' | 'PROCESSING' | 'INDEXED' | 'FAILED' | 'RETIRED';
+
+export interface DocumentResponseDto {
+  id: string;
+  organizationId: string;
+  title: string;
+  description?: string;
+  category: string;
+  accessScope: DocumentAccessScope;
+  targetScopeId?: string;
+  createdByMembershipId?: string;
+  createdAt: string;
+  updatedAt: string;
+  latestVersionNumber: number;
+  latestStatus: DocumentProcessingStatus;
+  latestFileName: string;
+  latestFileSizeBytes: number;
+  totalChunks: number;
+}
+
+export interface DocumentVersionResponseDto {
+  id: string;
+  documentId: string;
+  versionNumber: number;
+  fileName: string;
+  fileSizeBytes: number;
+  mimeType: string;
+  processingStatus: DocumentProcessingStatus;
+  errorMessage?: string;
+  chunkCount: number;
+  createdAt: string;
+  processedAt?: string;
+}
+
+export interface SearchResultDto {
+  chunkId: string;
+  documentId: string;
+  documentTitle: string;
+  pageNumber?: number;
+  chunkIndex: number;
+  similarityScore: number;
+  content: string;
+  citation: string;
+}
+
+export interface SemanticSearchRequestDto {
+  query: string;
+  limit?: number;
+  minScore?: number;
+}
+
+
 
 
 

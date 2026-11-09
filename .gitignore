@@ -40,6 +40,8 @@ yarn-error.log*
 
 # Docker & Infrastructure Volumes (Local data)
 .data/
+data/
+**/data/
 infrastructure/data/
 
 # Testing & Coverage
