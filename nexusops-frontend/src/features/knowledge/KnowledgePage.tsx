@@ -21,10 +21,8 @@ import {
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import {
-  ApiResponse,
   DocumentResponseDto,
   SearchResultDto,
-  PageResponse,
   DocumentAccessScope,
   DocumentProcessingStatus
 } from '@/types/api';
@@ -67,13 +65,16 @@ export const KnowledgePage: React.FC = () => {
       if (selectedCategory !== 'ALL') {
         params.category = selectedCategory;
       }
-      const response = await apiClient.get<ApiResponse<PageResponse<DocumentResponseDto>>>('/api/v1/knowledge/documents', { params });
-      if (response.data.success && response.data.data) {
-        setDocuments(response.data.data.content);
+      const res: any = await apiClient.get('/knowledge/documents', { params });
+      const payload = res?.data || res;
+      if (payload?.content) {
+        setDocuments(payload.content);
+      } else if (Array.isArray(payload)) {
+        setDocuments(payload);
       }
     } catch (err: any) {
       console.error('Failed to fetch documents', err);
-      setActionError(err.response?.data?.error?.message || 'Failed to load knowledge documents');
+      setActionError(err?.message || err?.response?.data?.error?.message || 'Failed to load knowledge documents');
     } finally {
       setIsLoading(false);
     }
@@ -105,11 +106,11 @@ export const KnowledgePage: React.FC = () => {
       formData.append('accessScope', uploadAccessScope);
       formData.append('file', selectedFile);
 
-      const response = await apiClient.post<ApiResponse<DocumentResponseDto>>('/api/v1/knowledge/documents/upload', formData, {
+      const res: any = await apiClient.post('/knowledge/documents/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      if (response.data.success) {
+      if (res?.success || res?.id || res?.data) {
         setIsUploadModalOpen(false);
         resetUploadForm();
         setActionSuccess('Document uploaded, chunked, and embedded into pgvector successfully!');
@@ -118,7 +119,7 @@ export const KnowledgePage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Upload failed', err);
-      setUploadError(err.response?.data?.error?.message || 'Failed to upload document');
+      setUploadError(err?.message || err?.response?.data?.error?.message || 'Failed to upload document');
     } finally {
       setIsUploading(false);
     }
@@ -135,10 +136,11 @@ export const KnowledgePage: React.FC = () => {
 
   const handleDownload = async (doc: DocumentResponseDto) => {
     try {
-      const response = await apiClient.get(`/api/v1/knowledge/documents/${doc.id}/versions/${doc.latestVersionNumber}/download`, {
+      const response = await apiClient.get(`/knowledge/documents/${doc.id}/versions/${doc.latestVersionNumber}/download`, {
         responseType: 'blob',
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = response instanceof Blob ? response : new Blob([response?.data || response]);
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', doc.latestFileName || `${doc.title}.txt`);
@@ -153,7 +155,7 @@ export const KnowledgePage: React.FC = () => {
 
   const handleReindex = async (doc: DocumentResponseDto) => {
     try {
-      await apiClient.post(`/api/v1/knowledge/documents/${doc.id}/reindex`);
+      await apiClient.post(`/knowledge/documents/${doc.id}/reindex`);
       setActionSuccess(`Document "${doc.title}" re-indexed successfully!`);
       fetchDocuments();
       setTimeout(() => setActionSuccess(null), 4000);
@@ -168,7 +170,7 @@ export const KnowledgePage: React.FC = () => {
       return;
     }
     try {
-      await apiClient.delete(`/api/v1/knowledge/documents/${doc.id}`);
+      await apiClient.delete(`/knowledge/documents/${doc.id}`);
       setActionSuccess(`Document "${doc.title}" deleted.`);
       fetchDocuments();
       setTimeout(() => setActionSuccess(null), 4000);
@@ -185,14 +187,15 @@ export const KnowledgePage: React.FC = () => {
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const response = await apiClient.post<ApiResponse<SearchResultDto[]>>('/api/v1/knowledge/search', {
+      const res: any = await apiClient.post('/knowledge/search', {
         query: labQuery.trim(),
         limit: 5,
         minScore: labMinScore,
       });
 
-      if (response.data.success && response.data.data) {
-        setLabResults(response.data.data);
+      const results = res?.data || res;
+      if (Array.isArray(results)) {
+        setLabResults(results);
       }
     } catch (err: any) {
       console.error('Semantic search failed', err);
