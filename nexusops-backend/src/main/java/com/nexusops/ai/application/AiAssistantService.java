@@ -30,7 +30,9 @@ import com.nexusops.request.application.dto.CreateRequestDto;
 import com.nexusops.request.application.dto.RequestCategoryResponseDto;
 import com.nexusops.request.application.dto.RequestResponseDto;
 import com.nexusops.request.domain.RequestPriority;
+import com.nexusops.shared.exception.NexusOpsException;
 import com.nexusops.shared.exception.ResourceNotFoundException;
+import com.nexusops.shared.exception.ValidationException;
 import com.nexusops.shared.security.UserPrincipal;
 import com.nexusops.shared.tenant.TenantContextHolder;
 import org.slf4j.Logger;
@@ -277,10 +279,51 @@ public class AiAssistantService {
         }
         cleanTitle = Character.toUpperCase(cleanTitle.charAt(0)) + cleanTitle.substring(1);
 
+        String lower = prompt.toLowerCase(Locale.ROOT);
+        String categoryCode = "DEVELOPER_LAPTOP";
+        if (lower.contains("software") || lower.contains("license") || lower.contains("access") || lower.contains("tool") || lower.contains("seat")) {
+            categoryCode = "SOFTWARE_ACCESS";
+        } else if (lower.contains("reimburse") || lower.contains("expense") || lower.contains("travel") || lower.contains("meal") || lower.contains("flight")) {
+            categoryCode = "EXPENSE_REIMBURSEMENT";
+        }
+
         Map<String, Object> params = new HashMap<>();
         params.put("title", cleanTitle);
         params.put("priority", "MEDIUM");
-        params.put("estimatedAmount", 1200.00);
+        params.put("categoryCode", categoryCode);
+
+        if ("DEVELOPER_LAPTOP".equals(categoryCode)) {
+            String deviceModel = "MacBook Pro 16 M3 Max";
+            if (lower.contains("dell") || lower.contains("xps")) {
+                deviceModel = "Dell XPS 15 9530";
+            } else if (lower.contains("thinkpad") || lower.contains("lenovo")) {
+                deviceModel = "Lenovo ThinkPad P1 Gen 6";
+            } else if (lower.contains("framework")) {
+                deviceModel = "Framework Laptop 16";
+            }
+            int ramGb = 64;
+            if (lower.contains("128")) ramGb = 128;
+            else if (lower.contains("32")) ramGb = 32;
+
+            params.put("deviceModel", deviceModel);
+            params.put("ramGb", ramGb);
+            params.put("estimatedAmount", 3500.00);
+            params.put("urgencyReason", "Requested via Nexus AI Co-pilot for development workstation setup.");
+        } else if ("SOFTWARE_ACCESS".equals(categoryCode)) {
+            String softwareName = "GitHub Copilot Enterprise";
+            if (lower.contains("jetbrains") || lower.contains("intellij")) softwareName = "JetBrains All Products Pack";
+            else if (lower.contains("aws")) softwareName = "AWS Dev Sandbox";
+            else if (lower.contains("figma")) softwareName = "Figma Enterprise";
+
+            params.put("softwareName", softwareName);
+            params.put("licenseType", "Annual");
+            params.put("estimatedAmount", 450.00);
+            params.put("justification", "Requested via Nexus AI Co-pilot for engineering workflows.");
+        } else {
+            params.put("expenseType", "Home Office Hardware");
+            params.put("estimatedAmount", 250.00);
+            params.put("receiptNumber", "REC-" + (int) (Math.random() * 90000 + 10000));
+        }
 
         String argsJson;
         try {
@@ -350,35 +393,57 @@ public class AiAssistantService {
                 Map<String, Object> args = objectMapper.convertValue(argsNode, new TypeReference<Map<String, Object>>() {});
                 String title = (String) args.getOrDefault("title", "Service Request");
                 String priorityStr = (String) args.getOrDefault("priority", "MEDIUM");
+                String categoryCode = (String) args.getOrDefault("categoryCode", "DEVELOPER_LAPTOP");
 
-                // Resolve active categories
-                List<RequestCategoryResponseDto> categories = requestCategoryService.getActiveCategories();
+                // Lookup matching category for this organization
                 UUID categoryId;
-                if (!categories.isEmpty()) {
-                    categoryId = categories.get(0).id();
+                Optional<RequestCategoryResponseDto> matchedCat = requestCategoryService.getCategoryByCode(organizationId, categoryCode);
+                if (matchedCat.isPresent()) {
+                    categoryId = matchedCat.get().id();
                 } else {
-                    String schema = """
-                            {
-                              "$schema": "http://json-schema.org/draft-07/schema#",
-                              "type": "object",
-                              "properties": {
-                                "urgencyReason": { "type": "string" },
-                                "ramGb": { "type": "integer" },
-                                "storage": { "type": "string" }
-                              },
-                              "required": ["urgencyReason"]
-                            }
-                            """;
-                    RequestCategoryResponseDto createdCat = requestCategoryService.createCategory(
-                            new CreateRequestCategoryDto("GENERAL", "General Request", "General requests", "file", schema, true)
-                    );
-                    categoryId = createdCat.id();
+                    List<RequestCategoryResponseDto> categories = requestCategoryService.getActiveCategories();
+                    if (!categories.isEmpty()) {
+                        categoryId = categories.get(0).id();
+                    } else {
+                        String schema = """
+                                {
+                                  "$schema": "http://json-schema.org/draft-07/schema#",
+                                  "type": "object",
+                                  "properties": {
+                                    "urgencyReason": { "type": "string" },
+                                    "ramGb": { "type": "integer" },
+                                    "storage": { "type": "string" }
+                                  },
+                                  "required": ["urgencyReason"]
+                                }
+                                """;
+                        RequestCategoryResponseDto createdCat = requestCategoryService.createCategory(
+                                new CreateRequestCategoryDto("GENERAL", "General Request", "General requests", "file", schema, true)
+                        );
+                        categoryId = createdCat.id();
+                    }
                 }
 
                 Map<String, Object> payload = new HashMap<>(args);
-                payload.put("urgencyReason", "Submitted via Nexus AI Co-pilot");
-                payload.put("ramGb", 16);
-                payload.put("storage", "512GB");
+                payload.remove("title");
+                payload.remove("priority");
+                payload.remove("categoryCode");
+
+                // Guarantee valid schema fields
+                if ("DEVELOPER_LAPTOP".equals(categoryCode) || payload.containsKey("deviceModel")) {
+                    payload.putIfAbsent("deviceModel", "MacBook Pro 16 M3 Max");
+                    payload.putIfAbsent("ramGb", 64);
+                    payload.putIfAbsent("estimatedAmount", 3500.00);
+                    payload.putIfAbsent("urgencyReason", "Requested via Nexus AI Co-pilot for workstation setup.");
+                } else if ("SOFTWARE_ACCESS".equals(categoryCode)) {
+                    payload.putIfAbsent("softwareName", "GitHub Copilot Enterprise");
+                    payload.putIfAbsent("licenseType", "Annual");
+                    payload.putIfAbsent("estimatedAmount", 450.00);
+                    payload.putIfAbsent("justification", "Requested via Nexus AI Co-pilot");
+                } else if ("EXPENSE_REIMBURSEMENT".equals(categoryCode)) {
+                    payload.putIfAbsent("expenseType", "Home Office Hardware");
+                    payload.putIfAbsent("estimatedAmount", 250.00);
+                }
 
                 CreateRequestDto createDto = new CreateRequestDto(
                         categoryId,
@@ -407,12 +472,18 @@ public class AiAssistantService {
             } else {
                 throw new UnsupportedOperationException("Unknown tool action: " + action.getToolName());
             }
+        } catch (NexusOpsException | AccessDeniedException | IllegalStateException e) {
+            log.warn("Validation error on action proposal {}: {}", actionId, e.getMessage());
+            action.setStatus(ToolExecutionStatus.FAILED);
+            action.setErrorCode(e.getClass().getSimpleName());
+            toolExecutionRepository.save(action);
+            throw e;
         } catch (Exception e) {
             log.error("Failed to execute action proposal {}: {}", actionId, e.getMessage(), e);
             action.setStatus(ToolExecutionStatus.FAILED);
             action.setErrorCode(e.getClass().getSimpleName());
             toolExecutionRepository.save(action);
-            throw new RuntimeException("Action execution failed: " + e.getMessage(), e);
+            throw new NexusOpsException("ACTION_FAILED", "Failed to execute action: " + e.getMessage());
         }
     }
 
