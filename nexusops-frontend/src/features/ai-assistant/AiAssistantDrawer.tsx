@@ -146,7 +146,12 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-[420px] max-w-[95vw] bg-white border-l border-slate-200 flex flex-col shadow-2xl z-50 animate-in slide-in-from-right duration-200">
+    <>
+      <div
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 sm:hidden animate-in fade-in duration-150"
+        onClick={onClose}
+      />
+      <aside className="fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-full bg-white border-l border-slate-200 flex flex-col shadow-2xl z-50 animate-in slide-in-from-right duration-200">
       {/* Top Header */}
       <div className="h-16 px-4 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white shrink-0">
         <div className="flex items-center gap-2.5">
@@ -460,5 +465,6 @@ export const AiAssistantDrawer: React.FC<AiAssistantDrawerProps> = ({
         </div>
       )}
     </aside>
+  </>
   );
 };

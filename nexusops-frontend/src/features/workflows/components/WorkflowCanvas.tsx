@@ -359,7 +359,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#cbd5e1" />
           <Controls className="!bg-white !border !border-slate-200 !rounded-xl !shadow-md" />
           <MiniMap
-            className="!bg-white/90 !border !border-slate-200 !rounded-xl !shadow-md !overflow-hidden"
+            className="hidden md:block !bg-white/90 !border !border-slate-200 !rounded-xl !shadow-md !overflow-hidden"
             nodeColor={(node) => {
               switch (node.type) {
                 case 'START':

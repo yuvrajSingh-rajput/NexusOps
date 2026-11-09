@@ -36,7 +36,7 @@ export const NodeConfigSidebar: React.FC<NodeConfigSidebarProps> = ({
   if (!selectedNode && !selectedEdge) return null;
 
   return (
-    <aside className="w-88 bg-white border-l border-slate-200 h-full flex flex-col shadow-xl z-20 animate-slide-left">
+    <aside className="w-full sm:w-88 max-w-full bg-white border-l border-slate-200 h-full flex flex-col shadow-xl z-20 animate-slide-left">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
         <div className="flex items-center gap-2">

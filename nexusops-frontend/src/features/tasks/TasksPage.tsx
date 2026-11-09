@@ -245,11 +245,11 @@ export const TasksPage: React.FC = () => {
       </div>
 
       {/* Tabs and Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="flex items-center gap-2 w-full md:w-auto">
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-stretch md:items-center">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
           <button
             onClick={() => setActiveTab('QUEUE')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'QUEUE'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -269,7 +269,7 @@ export const TasksPage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('MY')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'MY'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -279,7 +279,7 @@ export const TasksPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -399,7 +399,7 @@ export const TasksPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 pt-3 lg:pt-0">
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start sm:justify-end border-t lg:border-t-0 pt-3 lg:pt-0">
                 {task.status === 'OPEN' && canOperateTasks && (
                   <button
                     onClick={() => handleClaimTask(task.id)}

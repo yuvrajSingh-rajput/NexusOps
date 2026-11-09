@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Sparkles, LogOut, Building, Check, ChevronDown } from 'lucide-react';
+import { Search, Sparkles, LogOut, Building, Check, ChevronDown, Menu } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/authStore';
 import { NotificationPopover } from './NotificationPopover';
 
 interface TopbarProps {
   onOpenAiChat?: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat }) => {
+export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat, onToggleMobileMenu }) => {
   const navigate = useNavigate();
   const { user, logout, switchOrganization } = useAuthStore();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -48,19 +49,31 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat }) => {
   const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U';
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
-      {/* Search Input & Tenant Switcher */}
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between shrink-0 gap-2 sm:gap-4">
+      {/* Search Input, Hamburger & Tenant Switcher */}
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+        {/* Mobile Hamburger Menu Button */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          className="p-2 -ml-1 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg lg:hidden transition-colors"
+          title="Open navigation menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
         {/* Organization Switcher */}
         {user?.availableOrganizations && user.availableOrganizations.length > 0 && (
-          <div className="relative" ref={orgRef}>
+          <div className="relative shrink-0" ref={orgRef}>
             <button
               onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 rounded-lg text-xs font-semibold text-slate-800 transition-colors border border-slate-200"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 rounded-lg text-xs font-semibold text-slate-800 transition-colors border border-slate-200"
             >
-              <Building className="h-3.5 w-3.5 text-indigo-600" />
-              <span>{currentOrg?.organizationName || 'Organization'}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              <Building className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              <span className="max-w-[100px] sm:max-w-[160px] truncate">
+                {currentOrg?.organizationName || 'Organization'}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
             </button>
 
             {orgDropdownOpen && (
@@ -86,26 +99,27 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat }) => {
           </div>
         )}
 
-        <div className="relative w-72">
+        {/* Search Bar (Collapsible on Mobile) */}
+        <div className="relative hidden md:block w-48 lg:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search requests, tasks, policies..."
-            className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
           />
         </div>
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Nexus AI Assistant Trigger */}
         <button
           onClick={onOpenAiChat}
-          className="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 border border-indigo-200/80 rounded-lg text-sm font-medium transition-all shadow-sm"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 border border-indigo-200/80 rounded-lg text-xs sm:text-sm font-medium transition-all shadow-sm"
           title="Open Nexus AI Co-pilot"
         >
-          <Sparkles className="h-4 w-4 text-indigo-600 animate-spin-slow" />
-          <span>Nexus AI</span>
+          <Sparkles className="h-4 w-4 text-indigo-600 animate-spin-slow shrink-0" />
+          <span className="hidden sm:inline">Nexus AI</span>
           <span className="text-[10px] bg-indigo-200/80 text-indigo-800 px-1.5 py-0.5 rounded font-bold">
             PRO
           </span>
@@ -118,16 +132,18 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenAiChat }) => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            className="flex items-center gap-2.5 pl-2 border-l border-slate-200 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-slate-200 hover:opacity-90 transition-opacity"
           >
-            <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
               {userInitials}
             </div>
             <div className="hidden md:block text-left">
               <div className="text-xs font-semibold text-slate-800 leading-tight">
                 {user ? `${user.firstName} ${user.lastName}` : 'Signed In User'}
               </div>
-              <div className="text-[11px] text-slate-500">{user?.jobTitle || user?.email || 'Operations'}</div>
+              <div className="text-[11px] text-slate-500 truncate max-w-[120px]">
+                {user?.jobTitle || user?.email || 'Operations'}
+              </div>
             </div>
           </button>
 

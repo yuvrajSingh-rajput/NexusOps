@@ -6,18 +6,25 @@ import { AiAssistantDrawer } from '@/features/ai-assistant/AiAssistantDrawer';
 
 export const MainLayout: React.FC = () => {
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
-      {/* Left Sidebar */}
-      <Sidebar />
+      {/* Sidebar (Desktop static & Mobile off-canvas drawer) */}
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Topbar onOpenAiChat={() => setAiChatOpen(!aiChatOpen)} />
+        <Topbar
+          onOpenAiChat={() => setAiChatOpen(!aiChatOpen)}
+          onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        />
 
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+          <div className="max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
         </main>

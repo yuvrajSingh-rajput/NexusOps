@@ -15,7 +15,8 @@ import {
   Plus,
   MessageSquare,
   Cpu,
-  Lock
+  Lock,
+  X,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { MarkdownRenderer } from '@/components/common/MarkdownRenderer';
@@ -41,6 +42,7 @@ export const AiAssistantPage: React.FC = () => {
   const [actionConfirmingId, setActionConfirmingId] = useState<string | null>(null);
   const [confirmedRequests, setConfirmedRequests] = useState<Record<string, RequestResponseDto>>({});
   const [cancelledActions, setCancelledActions] = useState<Record<string, boolean>>({});
+  const [mobileChatsOpen, setMobileChatsOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -179,9 +181,9 @@ export const AiAssistantPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] -m-6 bg-slate-50 border-t border-slate-200 overflow-hidden">
-      {/* 1. Left Sidebar: Conversation History */}
-      <div className="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0">
+    <div className="flex h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] -m-3 sm:-m-4 md:-m-6 bg-slate-50 border-t border-slate-200 overflow-hidden relative">
+      {/* 1. Left Sidebar: Conversation History (Desktop) */}
+      <div className="hidden md:flex w-72 bg-white border-r border-slate-200 flex-col shrink-0">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-indigo-600 rounded-lg text-white">
@@ -228,23 +230,100 @@ export const AiAssistantPage: React.FC = () => {
         </div>
       </div>
 
+      {/* 1b. Mobile Conversation History Drawer */}
+      {mobileChatsOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-150"
+            onClick={() => setMobileChatsOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col z-50 shadow-2xl md:hidden animate-in slide-in-from-left duration-200">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-indigo-600 rounded-lg text-white">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Nexus AI Chats</h2>
+              </div>
+              <button
+                onClick={() => setMobileChatsOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+              {conversations.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">
+                  <MessageSquare className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <p>No previous conversations.</p>
+                </div>
+              ) : (
+                conversations.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setActiveConvId(c.id);
+                      setMobileChatsOpen(false);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg text-xs transition-colors flex items-center justify-between ${
+                      activeConvId === c.id
+                        ? 'bg-indigo-50/80 text-indigo-900 border border-indigo-200 font-medium'
+                        : 'hover:bg-slate-50 text-slate-700 border border-transparent'
+                    }`}
+                  >
+                    <div className="truncate pr-2">
+                      <p className="truncate font-medium">{c.title || 'Conversation'}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(c.createdAt).toLocaleDateString()} · {c.messageCount} messages
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* 2. Center: Chat Canvas */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+        {/* Mobile Subheader Bar */}
+        <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-white shrink-0">
+          <button
+            type="button"
+            onClick={() => setMobileChatsOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+            <span>Chats ({conversations.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleStartNewChat}
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>New Chat</span>
+          </button>
+        </div>
+
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
           {messages.length === 0 && !isLoadingHistory && (
-            <div className="max-w-2xl mx-auto my-8 space-y-6">
+            <div className="max-w-2xl mx-auto my-4 sm:my-8 space-y-6">
               <div className="text-center space-y-2">
                 <div className="inline-flex p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 mb-2">
                   <Bot className="h-8 w-8" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900">Nexus AI Operations Co-pilot</h1>
-                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Nexus AI Operations Co-pilot</h1>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
                   Grounded enterprise assistant powered by company documents, strict tenant isolation, and governed two-phase tool execution.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={() => handleSendMessage('What is our developer laptop budget and refresh policy?')}
                   className="p-4 bg-white hover:bg-indigo-50/40 border border-slate-200 hover:border-indigo-200 rounded-xl text-left transition-all shadow-xs group"

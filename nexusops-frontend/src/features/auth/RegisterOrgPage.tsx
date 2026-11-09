@@ -79,17 +79,17 @@ export const RegisterOrgPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="mx-auto h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
           <Sparkles className="h-7 w-7" />
         </div>
-        <h2 className="mt-4 text-3xl font-extrabold text-white tracking-tight">Create Organization</h2>
-        <p className="mt-1 text-sm text-slate-400">Set up your company workspace and administrative root</p>
+        <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Create Organization</h2>
+        <p className="mt-1 text-xs sm:text-sm text-slate-400">Set up your company workspace and administrative root</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
-        <div className="bg-slate-800 py-8 px-6 shadow-xl rounded-2xl border border-slate-700/80 sm:px-10">
+      <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
+        <div className="bg-slate-800 py-6 px-4 sm:px-10 shadow-xl rounded-2xl border border-slate-700/80">
           <form className="space-y-4" onSubmit={handleSubmit}>
             {error && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">

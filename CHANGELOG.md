@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Resolved PostgreSQL foreign key constraint violation on `fk_task_history_actor` during automated workflow transitions from Approval to Task node.
   - Added Flyway migration `V11__task_history_actor_nullable.sql` dropping NOT NULL on `actor_membership_id` to accommodate system-spawned tasks.
   - Replaced fallback to `organizationId` in `TaskService.java` with explicit `null` and handled display name resolution via `IdentityService.java` as `"System Automated"`.
+- **Full-Stack Responsive Design Overhaul (Mobile, Tablet & Desktop):**
+  - Upgraded `Sidebar.tsx` with off-canvas mobile drawer and backdrop overlay, auto-closing on navigation item clicks.
+  - Added mobile hamburger menu toggle, responsive search input bar, and adaptive branding in `Topbar.tsx`.
+  - Built collapsible conversation history drawer with mobile quick-action header in `AiAssistantPage.tsx`, and full-screen mobile slide-over in `AiAssistantDrawer.tsx`.
+  - Upgraded data grids, filter pill bars, tabular views, and action drawers across `DashboardPage`, `RequestsPage`, `ApprovalsPage`, `TasksPage`, `KnowledgePage`, `WorkflowsPage`, `AuditTrailPage`, `AnalyticsPage`, and authentication forms for seamless responsiveness on mobile and tablet screens.
 
 ---
 

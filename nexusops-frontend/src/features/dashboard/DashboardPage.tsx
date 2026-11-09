@@ -34,14 +34,14 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Operations Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Operations Dashboard</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Real-time status of service requests, approval workflows, and operational fulfillment.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
             Backend: {health ? `${health.service} (${health.status})` : 'Connecting...'}
           </span>
@@ -49,7 +49,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div
           onClick={() => navigate('/requests')}
           className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-300 transition-all"

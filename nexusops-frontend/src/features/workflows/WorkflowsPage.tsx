@@ -736,7 +736,7 @@ export const WorkflowsPage: React.FC = () => {
 
       {/* Workflow Definitions Cards */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
             Active Workflow Definitions ({definitions.length})
           </span>

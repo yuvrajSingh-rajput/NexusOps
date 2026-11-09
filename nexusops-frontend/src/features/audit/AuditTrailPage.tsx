@@ -131,7 +131,7 @@ export const AuditTrailPage: React.FC = () => {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
         {/* Aggregate Type Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
           {['ALL', 'REQUEST', 'APPROVAL', 'TASK', 'DOCUMENT', 'WORKFLOW'].map((type) => (
             <button
               key={type}
@@ -166,7 +166,7 @@ export const AuditTrailPage: React.FC = () => {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
+          <table className="w-full min-w-[700px] text-left text-xs text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
               <tr>
                 <th className="py-3 px-4">Event &amp; Action</th>
