@@ -554,6 +554,42 @@ export const AiAssistantPage: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Quick Suggestion Chips */}
+        <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/60 flex items-center gap-2 overflow-x-auto text-[11px]">
+          <span className="text-slate-400 font-medium shrink-0 flex items-center gap-1">
+            <Sparkles className="h-3 w-3 text-indigo-500" />
+            Try:
+          </span>
+          <button
+            type="button"
+            onClick={() => handleSendMessage('Create an expense reimbursement request')}
+            className="shrink-0 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 rounded-full transition-colors font-medium shadow-2xs"
+          >
+            "Create an expense reimbursement request"
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendMessage('I need a high performance developer laptop')}
+            className="shrink-0 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 rounded-full transition-colors font-medium shadow-2xs"
+          >
+            "I need a MacBook Pro 16"
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendMessage('Request access to GitHub Copilot Enterprise')}
+            className="shrink-0 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 rounded-full transition-colors font-medium shadow-2xs"
+          >
+            "Request GitHub Copilot license"
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendMessage('What is our expense reimbursement policy?')}
+            className="shrink-0 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 rounded-full transition-colors font-medium shadow-2xs"
+          >
+            "What is our reimbursement policy?"
+          </button>
+        </div>
+
         {/* Input Bar */}
         <div className="p-4 border-t border-slate-200 bg-white">
           <form

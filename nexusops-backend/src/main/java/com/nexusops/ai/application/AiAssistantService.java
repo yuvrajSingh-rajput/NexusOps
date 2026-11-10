@@ -286,19 +286,19 @@ public class AiAssistantService {
     private ActionProposalDto prepareCreateRequestProposal(UUID organizationId, UUID conversationId,
                                                            UUID userId, String prompt) {
         String cleanTitle = prompt
-                .replaceAll("(?i)^(i need|i want|i would like|i'd like|can i get|can you request|please request|request for a|request for|request a|request an|order a|order an|order me a|order me|order|please create|create request for|create a request for|submit request for|apply for|get me a|procure a)\\s*", "")
-                .replaceAll("(?i)\\s+(for me|please)$", "")
+                .replaceAll("(?i)^(please |kindly )?(i need|i want|i would like|i'd like|can i get|can you (please )?(create|generate|prepare|request)|please (create|request|order)|create (a |an )?(request for )?|create |raise (a |an )?(request for )?|raise |file (a |an )?(request for )?|file |claim (a |an )?|make (a |an )?(request for )?|make |submit (a |an )?(request for )?|submit |apply (for a |for an |for )?|request (for a |for an |for |a |an )?|request |order (a |an |me a |me )?|order |get me (a |an )?|procure (a |an )?)\\s*", "")
+                .replaceAll("(?i)\\s+(for me|please|reuest|request|ticket|claim)$", "")
                 .trim();
-        if (cleanTitle.isBlank()) {
-            cleanTitle = "Developer Laptop Request";
+        if (cleanTitle.isBlank() || cleanTitle.equalsIgnoreCase("request") || cleanTitle.equalsIgnoreCase("reuest")) {
+            cleanTitle = "Expense Reimbursement Request";
         }
         cleanTitle = Character.toUpperCase(cleanTitle.charAt(0)) + cleanTitle.substring(1);
 
         String lower = prompt.toLowerCase(Locale.ROOT);
         String categoryCode = "DEVELOPER_LAPTOP";
-        if (lower.contains("software") || lower.contains("license") || lower.contains("access") || lower.contains("tool") || lower.contains("seat")) {
+        if (lower.contains("software") || lower.contains("license") || lower.contains("access") || lower.contains("tool") || lower.contains("seat") || lower.contains("copilot") || lower.contains("jetbrains") || lower.contains("figma") || lower.contains("aws")) {
             categoryCode = "SOFTWARE_ACCESS";
-        } else if (lower.contains("reimburse") || lower.contains("expense") || lower.contains("travel") || lower.contains("meal") || lower.contains("flight")) {
+        } else if (lower.contains("reimburse") || lower.contains("expense") || lower.contains("expence") || lower.contains("expences") || lower.contains("travel") || lower.contains("meal") || lower.contains("flight") || lower.contains("recharge") || lower.contains("hotel") || lower.contains("lunch") || lower.contains("dinner") || lower.contains("receipt")) {
             categoryCode = "EXPENSE_REIMBURSEMENT";
         }
 

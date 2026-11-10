@@ -102,17 +102,23 @@ public class IntentClassifier {
                 || lower.contains("thinkpad") || lower.contains("framework laptop");
 
         // Match B: Request action verbs with requestable items
-        boolean hasRequestVerb = lower.contains("request") || lower.contains("order") || lower.contains("need")
-                || lower.contains("want") || lower.contains("apply") || lower.contains("procure")
-                || lower.contains("purchase") || lower.contains("get me") || lower.contains("give me")
-                || lower.contains("book") || lower.contains("issue") || lower.contains("submit");
+        boolean hasRequestVerb = lower.contains("request") || lower.contains("reuest") || lower.contains("requst")
+                || lower.contains("create") || lower.contains("generate") || lower.contains("raise")
+                || lower.contains("order") || lower.contains("need") || lower.contains("want")
+                || lower.contains("apply") || lower.contains("procure") || lower.contains("purchase") || lower.contains("buy")
+                || lower.contains("file") || lower.contains("claim") || lower.contains("make") || lower.contains("initiate")
+                || lower.contains("reimburse") || lower.contains("get me") || lower.contains("give me")
+                || lower.contains("book") || lower.contains("issue") || lower.contains("submit")
+                || lower.startsWith("new ");
 
         boolean hasRequestTarget = lower.contains("laptop") || lower.contains("computer") || lower.contains("workstation")
                 || lower.contains("hardware") || lower.contains("macbook") || lower.contains("screen") || lower.contains("monitor")
-                || lower.contains("desk") || lower.contains("chair") || lower.contains("equipment") || lower.contains("device")
+                || lower.contains("desk") || lower.contains("chair") || lower.contains("equipment") || lower.contains("device") || lower.contains("pc")
                 || lower.contains("software") || lower.contains("license") || lower.contains("access") || lower.contains("copilot")
-                || lower.contains("jetbrains") || lower.contains("figma") || lower.contains("aws")
-                || lower.contains("reimbursement") || lower.contains("expense") || lower.contains("flight") || lower.contains("hotel");
+                || lower.contains("jetbrains") || lower.contains("figma") || lower.contains("aws") || lower.contains("tool") || lower.contains("subscription")
+                || lower.contains("reimbursement") || lower.contains("expense") || lower.contains("expence") || lower.contains("expences") || lower.contains("recharge")
+                || lower.contains("flight") || lower.contains("hotel") || lower.contains("travel") || lower.contains("bill") || lower.contains("ticket")
+                || lower.contains("request") || lower.contains("reuest") || lower.contains("requst");
 
         // Match C: Follow-up selection after previous hardware policy discussion
         boolean isFollowUpDeviceSelection = !prevLower.isEmpty() && (prevLower.contains("hardware") || prevLower.contains("laptop") || prevLower.contains("workstation"))
