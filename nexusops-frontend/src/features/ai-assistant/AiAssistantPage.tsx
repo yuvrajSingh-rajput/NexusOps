@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Sparkles,
   Send,
@@ -62,8 +63,16 @@ export const AiAssistantPage: React.FC = () => {
     }
   }, [activeConvId]);
 
+  const scrollToBottom = () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 50);
+    });
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages, isSending]);
 
   const loadConversations = async () => {
@@ -136,6 +145,40 @@ export const AiAssistantPage: React.FC = () => {
           createdAt: new Date().toISOString()
         };
         setMessages((prev) => [...prev, botMsg]);
+
+        // If an action proposal was confirmed via chat
+        if (res.data.proposal && (res.data.toolUsed === 'confirmAction' || res.data.proposal.status === 'SUCCEEDED')) {
+          const prop = res.data.proposal;
+          const reqNum = prop.parameters?.requestNumber ? String(prop.parameters.requestNumber) : 'Created';
+          setConfirmedRequests((prev) => ({
+            ...prev,
+            [prop.actionId]: {
+              id: prop.actionId,
+              requestNumber: reqNum,
+              title: prop.title,
+              status: 'IN_REVIEW' as any
+            } as any
+          }));
+
+          // Also update any prior proposal in the conversation so older cards switch to confirmed
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.proposal
+                ? {
+                    ...m,
+                    proposal: {
+                      ...m.proposal,
+                      status: 'SUCCEEDED' as any,
+                      parameters: {
+                        ...m.proposal.parameters,
+                        requestNumber: reqNum
+                      }
+                    }
+                  }
+                : m
+            )
+          );
+        }
       }
     } catch (err: any) {
       const errorMsg: ChatMessageDto = {
@@ -170,6 +213,18 @@ export const AiAssistantPage: React.FC = () => {
           ...prev,
           [proposal.actionId]: confirmedData
         }));
+
+        // Add assistant confirmation message to conversation
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: 'ASSISTANT',
+            content: `Action Confirmed! I have submitted your request **${confirmedData.requestNumber}** ("${confirmedData.title}").\n\nIt has entered the active approval workflow and reviewers/operators have been notified. You can track its progress in [My Requests](/requests).`,
+            citations: [],
+            createdAt: new Date().toISOString()
+          }
+        ]);
       }
     } catch (err: any) {
       const msg = err?.message || err?.error?.message || 'Backend validation rejected the request.';
@@ -319,7 +374,7 @@ export const AiAssistantPage: React.FC = () => {
         </div>
 
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-28 sm:pb-36 space-y-4">
           {messages.length === 0 && !isLoadingHistory && (
             <div className="max-w-2xl mx-auto my-4 sm:my-8 space-y-6">
               <div className="text-center space-y-2">
@@ -450,97 +505,139 @@ export const AiAssistantPage: React.FC = () => {
               </div>
 
               {/* Action Proposal Card */}
-              {msg.proposal && (
-                <div className="w-full bg-white border border-amber-300 rounded-xl p-4 shadow-sm space-y-3 mt-1">
-                  <div className="flex items-start justify-between gap-2 border-b border-amber-100 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 bg-amber-100 text-amber-700 rounded-lg">
-                        <AlertTriangle className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-900">
-                          {msg.proposal.title || 'Proposed Operation'}
-                        </h4>
-                        <p className="text-xs text-slate-500">Governed Tool: {msg.proposal.toolName}</p>
-                      </div>
-                    </div>
-                    <span className="px-2.5 py-1 text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-                      Awaiting User Confirmation
-                    </span>
-                  </div>
+              {msg.proposal && (() => {
+                const isConfirmed = !!confirmedRequests[msg.proposal.actionId] || msg.proposal.status === 'SUCCEEDED';
+                const confirmedNumber = confirmedRequests[msg.proposal.actionId]?.requestNumber || msg.proposal.parameters?.requestNumber;
+                const isCancelled = !!cancelledActions[msg.proposal.actionId] || msg.proposal.status === 'REJECTED';
 
-                  <p className="text-xs text-slate-600">{msg.proposal.description}</p>
-
-                  {/* Parameters */}
-                  {msg.proposal.parameters && (
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3 text-xs font-mono text-slate-700 space-y-1.5">
-                      {Object.entries(msg.proposal.parameters).map(([k, v]) => (
-                        <div key={k} className="flex justify-between">
-                          <span className="text-slate-500">{k}:</span>
-                          <span className="font-semibold text-slate-900">{String(v)}</span>
+                return (
+                  <div className={`w-full rounded-2xl p-4 shadow-xs space-y-3 mt-1 border transition-all ${
+                    isConfirmed
+                      ? 'bg-emerald-50/50 border-emerald-300'
+                      : isCancelled
+                      ? 'bg-slate-50 border-slate-200'
+                      : 'bg-white border-amber-300 shadow-sm'
+                  }`}>
+                    <div className="flex items-start justify-between gap-2 border-b border-amber-100/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-1.5 rounded-lg ${isConfirmed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {isConfirmed ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
                         </div>
-                      ))}
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {msg.proposal.title || 'Proposed Request'}
+                          </h4>
+                          <p className="text-xs text-slate-500 font-mono">Governed Tool: {msg.proposal.toolName}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                        isConfirmed
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : isCancelled
+                          ? 'bg-slate-100 text-slate-600 border-slate-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
+                      }`}>
+                        {isConfirmed ? 'Action Executed' : isCancelled ? 'Dismissed' : 'Awaiting Confirmation'}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>Durable TTL: Expires in 15 minutes unless confirmed.</span>
-                  </div>
+                    <p className="text-xs text-slate-600">{msg.proposal.description}</p>
 
-                  {/* Inline Error Notice */}
-                  {actionErrors[msg.proposal.actionId] && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-2.5 text-xs text-rose-800">
-                      <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                      <span>{actionErrors[msg.proposal.actionId]}</span>
-                    </div>
-                  )}
+                    {/* Parameters Grid */}
+                    {msg.proposal.parameters && (
+                      <div className="bg-slate-50/90 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {Object.entries(msg.proposal.parameters)
+                            .filter(([k]) => k !== 'title' && k !== 'categoryCode')
+                            .map(([k, v]) => (
+                              <div key={k} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-b-0">
+                                <span className="text-slate-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                                <span className="font-semibold text-slate-800 font-mono text-[11px] truncate max-w-[180px] sm:max-w-[220px]" title={String(v)}>
+                                  {k.toLowerCase().includes('amount') ? `$${Number(v).toFixed(2)}` : String(v)}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
 
-                  {confirmedRequests[msg.proposal.actionId] ? (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-3 text-xs text-emerald-800">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                      <div>
-                        <span className="font-bold text-sm">Successfully Created in Database!</span>
-                        <p className="text-xs text-emerald-700 mt-0.5">
-                          Request Number: <strong>{confirmedRequests[msg.proposal.actionId].requestNumber}</strong> · Workflow Instance Triggered
+                    {!isConfirmed && !isCancelled && (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Clock className="h-3.5 w-3.5 text-amber-600" />
+                        <span>Durable TTL: Expires in 15 minutes unless confirmed.</span>
+                      </div>
+                    )}
+
+                    {/* Inline Error Notice */}
+                    {actionErrors[msg.proposal.actionId] && (
+                      <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-2.5 text-xs text-rose-800">
+                        <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                        <span>{actionErrors[msg.proposal.actionId]}</span>
+                      </div>
+                    )}
+
+                    {isConfirmed ? (
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-800">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
+                          <div>
+                            <span className="font-bold text-sm text-emerald-950">Successfully Created in Database!</span>
+                            <p className="text-xs text-emerald-700 mt-0.5">
+                              Request Number: <strong className="font-mono font-bold text-emerald-900">{confirmedNumber || 'Created'}</strong> · Workflow Active
+                            </p>
+                          </div>
+                        </div>
+                        <Link
+                          to="/requests"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors shadow-xs shrink-0"
+                        >
+                          <span>View in My Requests</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    ) : isCancelled ? (
+                      <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center gap-2 text-xs text-slate-600">
+                        <XCircle className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span>Action proposal was dismissed.</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 pt-1">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmAction(msg.proposal!)}
+                            disabled={actionConfirmingId === msg.proposal.actionId}
+                            className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {actionConfirmingId === msg.proposal.actionId ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Validating &amp; Creating via Backend Service...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span>Confirm &amp; Execute Action</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCancelAction(msg.proposal!)}
+                            disabled={actionConfirmingId === msg.proposal.actionId}
+                            className="py-2.5 px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-slate-400 text-center">
+                          💡 You can also reply <span className="font-semibold text-slate-600">"can you make it work"</span>, <span className="font-semibold text-slate-600">"yes"</span>, or <span className="font-semibold text-slate-600">"confirm"</span> in chat!
                         </p>
                       </div>
-                    </div>
-                  ) : cancelledActions[msg.proposal.actionId] ? (
-                    <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center gap-2 text-xs text-slate-600">
-                      <XCircle className="h-4 w-4 text-slate-400 shrink-0" />
-                      <span>Action proposal was dismissed.</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 pt-1">
-                      <button
-                        onClick={() => handleConfirmAction(msg.proposal!)}
-                        disabled={actionConfirmingId === msg.proposal.actionId}
-                        className="flex-1 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                      >
-                        {actionConfirmingId === msg.proposal.actionId ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Validating &amp; Creating via Backend Service...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>Confirm &amp; Execute Action</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleCancelAction(msg.proposal!)}
-                        disabled={actionConfirmingId === msg.proposal.actionId}
-                        className="py-2 px-4 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium transition-colors"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           ))}
 
@@ -551,7 +648,7 @@ export const AiAssistantPage: React.FC = () => {
             </div>
           )}
 
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-10 shrink-0" />
         </div>
 
         {/* Quick Suggestion Chips */}

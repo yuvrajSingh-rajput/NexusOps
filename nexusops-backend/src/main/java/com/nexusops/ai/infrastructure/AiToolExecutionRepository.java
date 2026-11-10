@@ -14,6 +14,9 @@ public interface AiToolExecutionRepository extends JpaRepository<AiToolExecution
 
     Optional<AiToolExecutionEntity> findByOrganizationIdAndId(UUID organizationId, UUID id);
 
+    List<AiToolExecutionEntity> findByOrganizationIdAndConversationIdOrderByCreatedAtDesc(
+            UUID organizationId, UUID conversationId);
+
     List<AiToolExecutionEntity> findByOrganizationIdAndUserIdAndStatus(
             UUID organizationId, UUID userId, ToolExecutionStatus status);
 }

@@ -181,6 +181,55 @@ public class AiAssistantService {
                             proposal.title());
                 }
             }
+            case CONFIRM_ACTION -> {
+                // Search for pending proposal in this conversation first
+                List<AiToolExecutionEntity> pending = toolExecutionRepository
+                        .findByOrganizationIdAndConversationIdOrderByCreatedAtDesc(organizationId, conversation.getId());
+                Optional<AiToolExecutionEntity> actionable = pending.stream()
+                        .filter(e -> (e.getStatus() == ToolExecutionStatus.PROPOSED || e.getStatus() == ToolExecutionStatus.AWAITING_CONFIRMATION) && !e.isExpired())
+                        .findFirst();
+
+                // If not found in conversation, check unexpired pending proposals by this user
+                if (actionable.isEmpty()) {
+                    List<AiToolExecutionEntity> userPending = toolExecutionRepository
+                            .findByOrganizationIdAndUserIdAndStatus(organizationId, userId, ToolExecutionStatus.PROPOSED);
+                    actionable = userPending.stream()
+                            .filter(e -> !e.isExpired())
+                            .findFirst();
+                }
+
+                if (actionable.isPresent()) {
+                    AiToolExecutionEntity action = actionable.get();
+                    try {
+                        RequestResponseDto created = confirmAction(principal, action.getId(),
+                                new ConfirmActionDto(true, "Confirmed by user in chat: " + dto.message()));
+                        toolUsed = "confirmAction";
+                        reply = String.format("Action Confirmed! I have submitted your request **%s** (\"%s\").\n\n" +
+                                "It has entered the active approval workflow and reviewers/operators have been notified. You can track its progress in **My Requests**.",
+                                created.requestNumber(), created.title());
+                        proposal = new ActionProposalDto(
+                                action.getId(),
+                                action.getToolName(),
+                                created.title(),
+                                "Action successfully confirmed and executed.",
+                                Map.of(
+                                        "requestNumber", created.requestNumber(),
+                                        "title", created.title(),
+                                        "status", created.status().name(),
+                                        "priority", created.priority().name()
+                                ),
+                                action.getExpiresAt(),
+                                ToolExecutionStatus.SUCCEEDED
+                        );
+                    } catch (Exception ex) {
+                        log.error("Failed to execute proposal confirmation in chat", ex);
+                        reply = "I attempted to confirm your action proposal, but encountered an issue: " + ex.getMessage() +
+                                ". Please review the proposal card and click Confirm directly.";
+                    }
+                } else {
+                    reply = "There are no pending action proposals awaiting confirmation in this conversation. If you would like me to create a new request or look up policy rules, just ask!";
+                }
+            }
             case DEPARTMENT_REPORT -> {
                 toolUsed = "generateDepartmentReport";
                 Optional<NexusAiTool> toolOpt = toolRegistry.getTool(toolUsed);

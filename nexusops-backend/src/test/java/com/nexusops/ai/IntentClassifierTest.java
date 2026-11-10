@@ -53,4 +53,18 @@ class IntentClassifierTest {
         IntentClassifier.Intent intent = classifier.classify("request access to GitHub Copilot Enterprise");
         assertThat(intent).isEqualTo(IntentClassifier.Intent.CREATE_REQUEST);
     }
+
+    @Test
+    @DisplayName("Should classify conversational confirmation commands as CONFIRM_ACTION")
+    void testConfirmationCommands() {
+        assertThat(classifier.classify("can you make it work")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("can you make it work?")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("make it work")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("confirm")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("yes")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("submit")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("do it")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("proceed")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+        assertThat(classifier.classify("looks good, proceed")).isEqualTo(IntentClassifier.Intent.CONFIRM_ACTION);
+    }
 }

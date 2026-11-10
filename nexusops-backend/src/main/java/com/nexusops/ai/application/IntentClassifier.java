@@ -12,6 +12,7 @@ public class IntentClassifier {
         SEARCH_APPROVALS,
         SEARCH_TASKS,
         CREATE_REQUEST,
+        CONFIRM_ACTION,
         DEPARTMENT_REPORT,
         POLICY_QA,
         CONVERSATION_FOLLOW_UP,
@@ -48,7 +49,25 @@ public class IntentClassifier {
             return Intent.CONVERSATION_FOLLOW_UP;
         }
 
-        // 3. Conversational Greetings, Thanks, Acknowledgments
+        // 3. Conversational Confirmation / Execution for Pending Proposals
+        String sanitized = lower.replaceAll("[^a-z0-9\\s]", " ").replaceAll("\\s+", " ").trim();
+        boolean isConfirmationCommand = sanitized.equals("can you make it work")
+                || sanitized.contains("make it work") || sanitized.contains("make this work")
+                || sanitized.equals("confirm") || sanitized.equals("yes") || sanitized.equals("submit")
+                || sanitized.equals("proceed") || sanitized.equals("execute") || sanitized.equals("do it")
+                || sanitized.equals("go ahead") || sanitized.equals("create it") || sanitized.equals("submit it")
+                || sanitized.equals("confirm it") || sanitized.equals("yes please") || sanitized.equals("yes do it")
+                || sanitized.equals("ok do it") || sanitized.equals("okay do it") || sanitized.equals("yes submit")
+                || sanitized.equals("sure do it") || sanitized.equals("please do it") || sanitized.equals("please submit")
+                || sanitized.contains("confirm and execute") || sanitized.contains("confirm action")
+                || sanitized.contains("confirm request") || sanitized.startsWith("proceed with")
+                || sanitized.startsWith("looks good");
+
+        if (isConfirmationCommand) {
+            return Intent.CONFIRM_ACTION;
+        }
+
+        // 4. Conversational Greetings, Thanks, Acknowledgments
         if (lower.equals("hi") || lower.equals("hello") || lower.equals("hey") || lower.equals("help")
                 || lower.contains("what can you do") || lower.contains("who are you") || lower.contains("what is nexusops")
                 || lower.startsWith("thank") || lower.contains("thanks") || lower.equals("thx")
@@ -58,7 +77,7 @@ public class IntentClassifier {
             return Intent.CONVERSATION;
         }
 
-        // 4. Explicit Policy Inquiries (Prioritized if explicitly asking for rules, policies, or SLAs)
+        // 5. Explicit Policy Inquiries (Prioritized if explicitly asking for rules, policies, or SLAs)
         boolean isExplicitPolicyQuery = lower.contains("what is the policy") || lower.contains("what is our policy")
                 || lower.contains("company policy") || lower.contains("hr policy") || lower.contains("leave policy")
                 || lower.contains("reimbursement policy") || lower.contains("hardware policy") || lower.contains("security policy")
