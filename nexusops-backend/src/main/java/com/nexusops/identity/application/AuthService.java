@@ -290,7 +290,8 @@ public class AuthService {
                 "Department manager with approval authorities", true);
         Set<String> mgrPerms = Set.of(
                 "REQUEST_CREATE", "REQUEST_VIEW_OWN", "REQUEST_VIEW_DEPT", "REQUEST_COMMENT",
-                "REQUEST_ATTACH", "APPROVAL_VIEW_PENDING", "APPROVAL_EXECUTE", "APPROVAL_DELEGATE",
+                "REQUEST_ATTACH", "REQUEST_CANCEL", "APPROVAL_VIEW_PENDING", "APPROVAL_EXECUTE",
+                "APPROVAL_DELEGATE", "TASK_VIEW_ASSIGNED", "TASK_QUEUE_VIEW",
                 "KNOWLEDGE_VIEW", "AI_CHAT_ACCESS", "ANALYTICS_VIEW"
         );
         mgrPerms.forEach(p -> { if (permMap.containsKey(p)) managerRole.addPermission(permMap.get(p)); });
@@ -310,9 +311,10 @@ public class AuthService {
         RoleEntity opRole = new RoleEntity(orgId, "OPERATOR", "Fulfillment Operator",
                 "IT and Procurement operator fulfilling tasks", true);
         Set<String> opPerms = Set.of(
+                "REQUEST_CREATE", "REQUEST_VIEW_OWN", "REQUEST_COMMENT", "REQUEST_ATTACH",
+                "REQUEST_CANCEL", "REQUEST_VIEW_ALL", "REQUEST_VIEW_INTERNAL_COMMENTS",
                 "TASK_VIEW_ASSIGNED", "TASK_QUEUE_VIEW", "TASK_CLAIM", "TASK_UPDATE",
-                "TASK_COMPLETE", "REQUEST_VIEW_ALL", "REQUEST_COMMENT", "REQUEST_VIEW_INTERNAL_COMMENTS",
-                "KNOWLEDGE_VIEW", "AI_CHAT_ACCESS"
+                "TASK_COMPLETE", "KNOWLEDGE_VIEW", "AI_CHAT_ACCESS", "ANALYTICS_VIEW"
         );
         opPerms.forEach(p -> { if (permMap.containsKey(p)) opRole.addPermission(permMap.get(p)); });
         roles.put("OPERATOR", roleRepository.save(opRole));
@@ -321,8 +323,10 @@ public class AuthService {
         RoleEntity finRole = new RoleEntity(orgId, "FINANCE", "Finance Officer",
                 "Finance department approver for budget reviews", true);
         Set<String> finPerms = Set.of(
-                "REQUEST_VIEW_ALL", "REQUEST_COMMENT", "REQUEST_VIEW_INTERNAL_COMMENTS",
-                "APPROVAL_VIEW_PENDING", "APPROVAL_EXECUTE", "KNOWLEDGE_VIEW", "ANALYTICS_VIEW", "AI_CHAT_ACCESS"
+                "REQUEST_CREATE", "REQUEST_VIEW_OWN", "REQUEST_COMMENT", "REQUEST_ATTACH",
+                "REQUEST_CANCEL", "REQUEST_VIEW_ALL", "REQUEST_VIEW_INTERNAL_COMMENTS",
+                "APPROVAL_VIEW_PENDING", "APPROVAL_EXECUTE", "APPROVAL_DELEGATE",
+                "KNOWLEDGE_VIEW", "ANALYTICS_VIEW", "AI_CHAT_ACCESS"
         );
         finPerms.forEach(p -> { if (permMap.containsKey(p)) finRole.addPermission(permMap.get(p)); });
         roles.put("FINANCE", roleRepository.save(finRole));

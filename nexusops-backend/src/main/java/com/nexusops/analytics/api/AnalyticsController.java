@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/analytics")
-@PreAuthorize("hasAuthority('ANALYTICS_VIEW') or hasAuthority('ROLE_ORG_ADMIN')")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
@@ -23,6 +22,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/overview")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AnalyticsOverviewDto>> getOverview() {
         UUID orgId = TenantContextHolder.requireTenantId();
         AnalyticsOverviewDto dto = analyticsService.getOverview(orgId);
@@ -30,6 +30,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/by-status")
+    @PreAuthorize("hasAnyAuthority('ANALYTICS_VIEW', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_OPERATOR')")
     public ResponseEntity<ApiResponse<List<StatusCountDto>>> getByStatus() {
         UUID orgId = TenantContextHolder.requireTenantId();
         List<StatusCountDto> breakdown = analyticsService.getStatusBreakdown(orgId);
@@ -37,6 +38,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/by-category")
+    @PreAuthorize("hasAnyAuthority('ANALYTICS_VIEW', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_OPERATOR')")
     public ResponseEntity<ApiResponse<List<CategoryMetricDto>>> getByCategory() {
         UUID orgId = TenantContextHolder.requireTenantId();
         List<CategoryMetricDto> metrics = analyticsService.getCategoryMetrics(orgId);
@@ -44,6 +46,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/by-department")
+    @PreAuthorize("hasAnyAuthority('ANALYTICS_VIEW', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_OPERATOR')")
     public ResponseEntity<ApiResponse<List<DepartmentMetricDto>>> getByDepartment() {
         UUID orgId = TenantContextHolder.requireTenantId();
         List<DepartmentMetricDto> metrics = analyticsService.getDepartmentMetrics(orgId);
@@ -51,6 +54,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/department-report")
+    @PreAuthorize("hasAnyAuthority('ANALYTICS_VIEW', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE', 'ROLE_OPERATOR')")
     public ResponseEntity<ApiResponse<DepartmentReportDto>> getDepartmentReport(
             @RequestParam(required = false, defaultValue = "ALL") String departmentCode) {
         UUID orgId = TenantContextHolder.requireTenantId();

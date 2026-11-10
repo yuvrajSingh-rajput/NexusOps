@@ -262,6 +262,33 @@ public class ApprovalService {
             }
         }
 
+        // 3. Manager fallback: if approval is for a MANAGER node and caller has MANAGER authority
+        if (instance.getApproverType() == ApproverType.MANAGER) {
+            boolean isManager = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER") || a.getAuthority().equals("APPROVAL_EXECUTE"));
+            if (isManager) {
+                return;
+            }
+        }
+
+        // 4. Department Head fallback: if approval is for a DEPT_HEAD node and caller has managerial authority
+        if (instance.getApproverType() == ApproverType.DEPT_HEAD) {
+            boolean isLead = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER") || a.getAuthority().equals("ROLE_ORG_ADMIN"));
+            if (isLead) {
+                return;
+            }
+        }
+
+        // 5. Role Approver fallback: if caller has APPROVAL_EXECUTE authority
+        if (instance.getApproverType() == ApproverType.ROLE) {
+            boolean canExecute = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("APPROVAL_EXECUTE") || a.getAuthority().equals("ROLE_FINANCE"));
+            if (canExecute) {
+                return;
+            }
+        }
+
         throw new AccessDeniedException("You are not authorized to decide this approval.");
     }
 

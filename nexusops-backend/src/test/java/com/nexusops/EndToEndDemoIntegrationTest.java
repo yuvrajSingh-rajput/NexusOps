@@ -382,4 +382,56 @@ public class EndToEndDemoIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.citations", hasSize(0)));
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("Acceptance Demo: Comprehensive Multi-Persona Request & Dashboard Permissions (Operator, Finance, Employee)")
+    void verifyMultiPersonaPermissions() throws Exception {
+        // 1. Dave Wilson (Operator) login & permissions verification
+        String daveToken = loginAndGetToken("dave@acme.com", "Password123!");
+
+        // Dave can view 'My Requests' without 403
+        mockMvc.perform(get("/api/v1/requests/my")
+                        .header("Authorization", "Bearer " + daveToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // Dave can view 'All Requests' without 403
+        mockMvc.perform(get("/api/v1/requests")
+                        .header("Authorization", "Bearer " + daveToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalElements", greaterThanOrEqualTo(1)));
+
+        // Dave can view dashboard overview without 403
+        mockMvc.perform(get("/api/v1/analytics/overview")
+                        .header("Authorization", "Bearer " + daveToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalRequests", greaterThanOrEqualTo(1)));
+
+        // 2. Carol Davis (Finance Controller) login & permissions verification
+        String carolToken = loginAndGetToken("carol@acme.com", "Password123!");
+
+        // Carol can view 'My Requests' without 403
+        mockMvc.perform(get("/api/v1/requests/my")
+                        .header("Authorization", "Bearer " + carolToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // Carol can view 'All Requests' without 403
+        mockMvc.perform(get("/api/v1/requests")
+                        .header("Authorization", "Bearer " + carolToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // 3. Alice Chen (Employee) dashboard overview verification
+        String aliceToken = loginAndGetToken("alice@acme.com", "Password123!");
+
+        // Alice can view dashboard overview without 403
+        mockMvc.perform(get("/api/v1/analytics/overview")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
 }

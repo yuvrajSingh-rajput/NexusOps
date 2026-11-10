@@ -30,7 +30,7 @@ public class RequestController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('REQUEST_CREATE')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_CREATE', 'ROLE_ORG_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_MANAGER', 'ROLE_OPERATOR', 'ROLE_FINANCE')")
     public ResponseEntity<ApiResponse<RequestResponseDto>> createRequest(
             @Valid @RequestBody CreateRequestDto dto,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -39,7 +39,7 @@ public class RequestController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasAuthority('REQUEST_VIEW_OWN')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_VIEW_OWN', 'REQUEST_VIEW_ALL', 'ROLE_ORG_ADMIN', 'ORG_ADMIN_MANAGE', 'ROLE_OPERATOR', 'ROLE_FINANCE', 'ROLE_MANAGER', 'ROLE_EMPLOYEE') or isAuthenticated()")
     public ResponseEntity<ApiResponse<PageResponse<RequestResponseDto>>> getMyRequests(
             @RequestParam(required = false) RequestStatus status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -49,7 +49,7 @@ public class RequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('REQUEST_VIEW_ALL', 'REQUEST_VIEW_DEPT', 'ORG_ADMIN_MANAGE', 'REQUEST_VIEW_OWN')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_VIEW_ALL', 'REQUEST_VIEW_DEPT', 'ORG_ADMIN_MANAGE', 'REQUEST_VIEW_OWN', 'ROLE_ORG_ADMIN', 'ROLE_OPERATOR', 'ROLE_FINANCE', 'ROLE_MANAGER')")
     public ResponseEntity<ApiResponse<PageResponse<RequestResponseDto>>> getAllRequests(
             @RequestParam(required = false) RequestStatus status,
             @RequestParam(required = false, defaultValue = "false") boolean ownOnly,
@@ -58,7 +58,9 @@ public class RequestController {
         boolean canViewAll = principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("REQUEST_VIEW_ALL") ||
                                a.getAuthority().equals("ORG_ADMIN_MANAGE") ||
-                               a.getAuthority().equals("ROLE_ORG_ADMIN"));
+                               a.getAuthority().equals("ROLE_ORG_ADMIN") ||
+                               a.getAuthority().equals("ROLE_OPERATOR") ||
+                               a.getAuthority().equals("ROLE_FINANCE"));
 
         PageResponse<RequestResponseDto> response;
         if (canViewAll && !ownOnly) {
@@ -78,7 +80,7 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/submit")
-    @PreAuthorize("hasAuthority('REQUEST_CREATE')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_CREATE', 'ROLE_ORG_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_MANAGER', 'ROLE_OPERATOR', 'ROLE_FINANCE')")
     public ResponseEntity<ApiResponse<RequestResponseDto>> submitRequest(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -87,6 +89,7 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyAuthority('REQUEST_CANCEL', 'REQUEST_CREATE', 'ROLE_ORG_ADMIN') or isAuthenticated()")
     public ResponseEntity<ApiResponse<RequestResponseDto>> cancelRequest(
             @PathVariable UUID id,
             @RequestBody(required = false) Map<String, String> body,
@@ -105,7 +108,7 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/comments")
-    @PreAuthorize("hasAuthority('REQUEST_COMMENT')")
+    @PreAuthorize("hasAnyAuthority('REQUEST_COMMENT', 'ROLE_ORG_ADMIN') or isAuthenticated()")
     public ResponseEntity<ApiResponse<RequestCommentResponseDto>> addComment(
             @PathVariable UUID id,
             @Valid @RequestBody AddCommentDto dto,

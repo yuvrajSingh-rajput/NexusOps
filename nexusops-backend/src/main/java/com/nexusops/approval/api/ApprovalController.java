@@ -62,7 +62,7 @@ public class ApprovalController {
     }
 
     @PostMapping("/{id}/action")
-    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE')")
     public ResponseEntity<ApiResponse<ApprovalInstanceResponseDto>> decideApproval(
             @PathVariable UUID id,
             @Valid @RequestBody ApprovalDecisionDto dto,
@@ -74,7 +74,7 @@ public class ApprovalController {
     }
 
     @PostMapping("/{id}/decide")
-    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('APPROVAL_EXECUTE', 'ROLE_ORG_ADMIN', 'ROLE_MANAGER', 'ROLE_FINANCE')")
     public ResponseEntity<ApiResponse<ApprovalInstanceResponseDto>> decideApprovalAlias(
             @PathVariable UUID id,
             @Valid @RequestBody ApprovalDecisionDto dto,

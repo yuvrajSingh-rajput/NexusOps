@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.5] - 2026-11-10 - Multi-Persona Role Permissions & Request Access Hardening
+
+### Fixed
+- **403 Forbidden Access on Requests Portal for Operators & Finance ([`RequestController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/api/RequestController.java)):**
+  - Resolved `403 Forbidden` error ("You do not have permission to perform this action") encountered by IT Operators (Dave Wilson) and Finance Officers (Carol Davis) when viewing `/requests`.
+  - Expanded `@PreAuthorize` on `GET /api/v1/requests/my` to permit any authenticated user as well as `ROLE_OPERATOR`, `ROLE_FINANCE`, `ROLE_MANAGER`, `ROLE_ORG_ADMIN`.
+  - Granted baseline employee self-service permissions (`REQUEST_CREATE`, `REQUEST_VIEW_OWN`, `REQUEST_CANCEL`, `REQUEST_COMMENT`, `REQUEST_ATTACH`, `KNOWLEDGE_VIEW`, `AI_CHAT_ACCESS`) to all organizational roles (`EMPLOYEE`, `MANAGER`, `OPERATOR`, `FINANCE`).
+  - Added Flyway migration [`V12__grant_baseline_permissions_to_all_roles.sql`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/resources/db/migration/V12__grant_baseline_permissions_to_all_roles.sql) to sync existing PostgreSQL tenant roles and permissions.
+  - Updated [`AuthService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/identity/application/AuthService.java) to guarantee all future organizations receive complete role permission sets.
+
+- **Dashboard Overview Endpoint Accessible to All Personas ([`AnalyticsController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/analytics/api/AnalyticsController.java)):**
+  - Removed class-level `@PreAuthorize` on `AnalyticsController` so `GET /api/v1/analytics/overview` is accessible to all authenticated users, preventing 403 errors when standard employees and operators open the home dashboard.
+  - Retained strict managerial authorization on granular reporting endpoints (`/by-status`, `/by-category`, `/by-department`, `/department-report`).
+
+- **Approval Authorization Fallback Matching ([`ApprovalService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/application/ApprovalService.java), [`ApprovalController.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/approval/api/ApprovalController.java)):**
+  - Added manager and role fallback authorization in `verifyApproverAuthorization` so that if an approval node is of type `MANAGER` or `DEPT_HEAD`, any manager with `ROLE_MANAGER` or `APPROVAL_EXECUTE` can decide the approval even if direct requester-manager assignment was ambiguous or defaulted during automated seeding.
+  - Updated decision endpoints to accept `ROLE_MANAGER` and `ROLE_FINANCE` explicitly.
+
+- **Intelligent Initial View Scope in Frontend ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
+  - Operators and Org Admins now automatically default to the "All Requests" view tab upon landing on `/requests`, reflecting their primary operational queue while still allowing seamless one-click switching to "My Requests".
+
+### Added
+- **Multi-Persona Permission Acceptance Test ([`EndToEndDemoIntegrationTest.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/test/java/com/nexusops/EndToEndDemoIntegrationTest.java)):**
+  - Added `verifyMultiPersonaPermissions` test validating that Dave Wilson (OPERATOR), Carol Davis (FINANCE), and Alice Chen (EMPLOYEE) can access request lists, dashboard overview metrics, and perform submissions without authorization failures.
+
+---
+
 ## [1.1.4] - 2026-11-10 - Request Dynamic Schema Intake, Multi-Category Workflows & Approvals Fixes
 
 ### Fixed

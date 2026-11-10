@@ -87,6 +87,13 @@ export const RequestsPage: React.FC = () => {
   }, [user]);
 
   const [viewScope, setViewScope] = useState<'my' | 'all'>('my');
+
+  // Intelligent initial view scope: Operators and Admins default to organization-wide requests
+  useEffect(() => {
+    if (user?.roles?.includes('OPERATOR') || user?.roles?.includes('ORG_ADMIN')) {
+      setViewScope('all');
+    }
+  }, [user?.roles]);
   const [requests, setRequests] = useState<RequestResponseDto[]>([]);
   const [categories, setCategories] = useState<RequestCategoryResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
