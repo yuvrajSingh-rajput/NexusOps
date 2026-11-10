@@ -58,20 +58,114 @@ const getCategoryIcon = (code?: string, size: 'sm' | 'lg' = 'sm') => {
 };
 
 export const parsePayloadSchema = (
-  rawSchema?: Record<string, any> | string | null
+  rawSchema?: Record<string, any> | string | null,
+  categoryCode?: string
 ): { properties?: Record<string, any>; required?: string[] } | null => {
-  if (!rawSchema) return null;
-  if (typeof rawSchema === 'object' && rawSchema !== null) {
-    return rawSchema as { properties?: Record<string, any>; required?: string[] };
-  }
-  if (typeof rawSchema === 'string') {
+  let schemaObj: any = rawSchema;
+
+  while (typeof schemaObj === 'string') {
     try {
-      const parsed = JSON.parse(rawSchema);
-      return typeof parsed === 'object' && parsed !== null ? parsed : null;
+      schemaObj = JSON.parse(schemaObj);
     } catch {
-      return null;
+      break;
     }
   }
+
+  if (typeof schemaObj === 'object' && schemaObj !== null) {
+    if (schemaObj.properties && Object.keys(schemaObj.properties).length > 0) {
+      return schemaObj;
+    }
+    if (schemaObj.payloadSchema) {
+      return parsePayloadSchema(schemaObj.payloadSchema, categoryCode);
+    }
+    if (schemaObj.schema) {
+      return parsePayloadSchema(schemaObj.schema, categoryCode);
+    }
+  }
+
+  // Resilient fallback for standard categories if schema is empty or corrupted
+  const normalizedCode = (categoryCode || '').toUpperCase();
+  if (normalizedCode.includes('EXPENSE') || normalizedCode.includes('REIMBURSEMENT')) {
+    return {
+      properties: {
+        expenseType: {
+          type: 'string',
+          title: 'Expense Type',
+          enum: ['Conference & Training', 'Travel & Lodging', 'Team Lunch & Catering', 'Home Office Hardware'],
+        },
+        estimatedAmount: {
+          type: 'number',
+          title: 'Amount ($)',
+          minimum: 1,
+        },
+        expenseDate: {
+          type: 'string',
+          title: 'Date of Expense',
+          format: 'date',
+        },
+        receiptDetails: {
+          type: 'string',
+          title: 'Vendor & Receipt Notes',
+        },
+      },
+      required: ['expenseType', 'estimatedAmount', 'expenseDate'],
+    };
+  }
+
+  if (normalizedCode.includes('SOFTWARE') || normalizedCode.includes('LICENSE') || normalizedCode.includes('ACCESS')) {
+    return {
+      properties: {
+        softwareName: {
+          type: 'string',
+          title: 'Software Tool',
+          enum: ['JetBrains All Products Pack', 'GitHub Copilot Enterprise', 'AWS Dev Sandbox', 'Figma Enterprise', 'Datadog APM'],
+        },
+        licenseType: {
+          type: 'string',
+          title: 'License Term',
+          enum: ['Annual', 'Monthly'],
+        },
+        estimatedAmount: {
+          type: 'number',
+          title: 'Estimated Cost ($)',
+          minimum: 1,
+        },
+        justification: {
+          type: 'string',
+          title: 'Justification',
+        },
+      },
+      required: ['softwareName', 'licenseType', 'estimatedAmount'],
+    };
+  }
+
+  if (normalizedCode.includes('LAPTOP') || normalizedCode.includes('HARDWARE') || normalizedCode.includes('WORKSTATION')) {
+    return {
+      properties: {
+        deviceModel: {
+          type: 'string',
+          title: 'Device Model',
+          enum: ['MacBook Pro 16 M3 Max', 'Dell XPS 15 9530', 'Lenovo ThinkPad P1 Gen 6', 'Framework Laptop 16'],
+        },
+        ramGb: {
+          type: 'integer',
+          title: 'RAM (GB)',
+          enum: [32, 64, 128],
+        },
+        estimatedAmount: {
+          type: 'number',
+          title: 'Estimated Amount ($)',
+          minimum: 500,
+        },
+        urgencyReason: {
+          type: 'string',
+          title: 'Business Justification',
+        },
+      },
+      required: ['deviceModel', 'ramGb', 'estimatedAmount', 'urgencyReason'],
+    };
+  }
+
   return null;
 };
 
@@ -298,8 +392,8 @@ export const RequestsPage: React.FC = () => {
     setSelectedCategory(category);
     setWizardError(null);
 
-    // Parse payload schema safely (handles both JSON string and object)
-    const schema = parsePayloadSchema(category.payloadSchema);
+    // Parse payload schema safely (handles both JSON string and object, with built-in fallback)
+    const schema = parsePayloadSchema(category.payloadSchema, category.code || category.key);
     const initialPayload: Record<string, any> = {};
 
     if (schema?.properties) {
@@ -341,7 +435,8 @@ export const RequestsPage: React.FC = () => {
 
     setWizardError(null);
 
-    const schema = parsePayloadSchema(selectedCategory.payloadSchema);
+    const categoryCode = selectedCategory.code || selectedCategory.key;
+    const schema = parsePayloadSchema(selectedCategory.payloadSchema, categoryCode);
     const cleanedPayload: Record<string, any> = {};
 
     if (schema?.properties) {
@@ -1102,7 +1197,10 @@ export const RequestsPage: React.FC = () => {
 
                 {/* Dynamic JSON Schema Fields */}
                 {(() => {
-                  const schema = parsePayloadSchema(selectedCategory?.payloadSchema);
+                  const schema = parsePayloadSchema(
+                    selectedCategory?.payloadSchema,
+                    selectedCategory?.code || (selectedCategory as any)?.key
+                  );
                   if (!schema?.properties || Object.keys(schema.properties).length === 0) {
                     return null;
                   }

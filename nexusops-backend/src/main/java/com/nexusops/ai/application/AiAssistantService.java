@@ -335,9 +335,27 @@ public class AiAssistantService {
             params.put("estimatedAmount", 450.00);
             params.put("justification", "Requested via Nexus AI Co-pilot for engineering workflows.");
         } else {
-            params.put("expenseType", "Home Office Hardware");
-            params.put("estimatedAmount", 250.00);
+            String expenseType = "Home Office Hardware";
+            double estAmount = 250.00;
+            if (lower.contains("travel") || lower.contains("flight") || lower.contains("hotel") || lower.contains("lodging")) {
+                expenseType = "Travel & Lodging";
+                estAmount = 450.00;
+            } else if (lower.contains("conference") || lower.contains("training") || lower.contains("seminar")) {
+                expenseType = "Conference & Training";
+                estAmount = 600.00;
+            } else if (lower.contains("lunch") || lower.contains("dinner") || lower.contains("catering") || lower.contains("food")) {
+                expenseType = "Team Lunch & Catering";
+                estAmount = 120.00;
+            } else if (lower.contains("recharge") || lower.contains("mobile") || lower.contains("phone") || lower.contains("wifi") || lower.contains("internet")) {
+                expenseType = "Home Office Hardware";
+                estAmount = 50.00;
+            }
+
+            params.put("expenseType", expenseType);
+            params.put("estimatedAmount", estAmount);
+            params.put("expenseDate", java.time.LocalDate.now().toString());
             params.put("receiptNumber", "REC-" + (int) (Math.random() * 90000 + 10000));
+            params.put("receiptDetails", "Receipt #" + (int) (Math.random() * 90000 + 10000) + " - Reimbursable operational expense");
         }
 
         String argsJson;
@@ -408,7 +426,9 @@ public class AiAssistantService {
                 Map<String, Object> args = objectMapper.convertValue(argsNode, new TypeReference<Map<String, Object>>() {});
                 String title = (String) args.getOrDefault("title", "Service Request");
                 String priorityStr = (String) args.getOrDefault("priority", "MEDIUM");
-                String categoryCode = (String) args.getOrDefault("categoryCode", "DEVELOPER_LAPTOP");
+                String categoryCode = args.containsKey("categoryCode") 
+                        ? String.valueOf(args.get("categoryCode")).trim().toUpperCase() 
+                        : "DEVELOPER_LAPTOP";
 
                 // Lookup matching category for this organization
                 UUID categoryId;
@@ -458,6 +478,11 @@ public class AiAssistantService {
                 } else if ("EXPENSE_REIMBURSEMENT".equals(categoryCode)) {
                     payload.putIfAbsent("expenseType", "Home Office Hardware");
                     payload.putIfAbsent("estimatedAmount", 250.00);
+                    payload.putIfAbsent("expenseDate", java.time.LocalDate.now().toString());
+                    if (payload.containsKey("receiptNumber") && !payload.containsKey("receiptDetails")) {
+                        payload.put("receiptDetails", "Receipt #" + payload.get("receiptNumber"));
+                    }
+                    payload.putIfAbsent("receiptDetails", "Receipt #" + (int) (Math.random() * 90000 + 10000) + " - Reimbursable operational expense");
                 }
 
                 CreateRequestDto createDto = new CreateRequestDto(

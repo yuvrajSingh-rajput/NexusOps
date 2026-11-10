@@ -505,6 +505,8 @@ export interface NotificationResponseDto {
 export interface AuditLogResponseDto {
   id: string;
   actorMembershipId?: string;
+  actorName?: string;
+  actorEmail?: string;
   eventType: string;
   aggregateType: string;
   aggregateId: string;

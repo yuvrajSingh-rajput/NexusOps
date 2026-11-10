@@ -184,7 +184,7 @@ export const NotificationPopover: React.FC = () => {
 
       {/* Popover Card */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-84 sm:w-[400px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -237,11 +237,11 @@ export const NotificationPopover: React.FC = () => {
                     {getEventIcon(notif.eventType)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-bold text-slate-800 truncate">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug">
                         {notif.title}
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                         <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                           <Clock className="h-2.5 w-2.5" />
                           {formatRelativeTime(notif.createdAt)}

@@ -216,7 +216,23 @@ export const AuditTrailPage: React.FC = () => {
 
                     {/* Actor */}
                     <td className="py-3 px-4">
-                      {log.actorMembershipId ? (
+                      {log.actorName ? (
+                        <div className="flex items-center gap-2 text-slate-800">
+                          <div className="h-6 w-6 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0">
+                            <User className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-xs text-slate-900 leading-tight truncate">
+                              {log.actorName}
+                            </span>
+                            {log.actorEmail && (
+                              <span className="text-[10px] text-slate-400 leading-tight truncate">
+                                {log.actorEmail}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : log.actorMembershipId ? (
                         <div className="flex items-center gap-1.5 text-slate-700">
                           <User className="h-3.5 w-3.5 text-slate-400" />
                           <span className="font-mono text-[10px] truncate max-w-[120px]">
@@ -224,7 +240,7 @@ export const AuditTrailPage: React.FC = () => {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 italic">System Event</span>
+                        <span className="text-slate-400 italic text-xs">System Event</span>
                       )}
                     </td>
 

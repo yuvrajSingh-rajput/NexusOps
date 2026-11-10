@@ -7,6 +7,8 @@ public record AuditLogResponseDto(
         UUID id,
         UUID organizationId,
         UUID actorMembershipId,
+        String actorName,
+        String actorEmail,
         String eventType,
         String aggregateType,
         UUID aggregateId,
@@ -16,4 +18,3 @@ public record AuditLogResponseDto(
         Instant createdAt
 ) {
 }
-

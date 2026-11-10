@@ -134,10 +134,12 @@ public class NotificationService {
             case "APPROVAL_COMPLETED" -> "Request Approved" + suffix;
             case "APPROVAL_REJECTED" -> "Request Rejected" + suffix;
             case "TASK_CREATED" -> "New Task Assigned" + suffix;
+            case "TASK_ASSIGNED" -> "Task Assigned" + suffix;
+            case "TASK_UPDATED" -> "Task Updated" + suffix;
             case "TASK_COMPLETED" -> "Fulfillment Completed" + suffix;
             case "DOCUMENT_INDEXED" -> "Document Indexing Completed";
             case "WORKFLOW_COMPLETED" -> "Workflow Completed" + suffix;
-            default -> "System Notification: " + eventType;
+            default -> eventType != null ? eventType.replace('_', ' ') + suffix : "Notification" + suffix;
         };
     }
 
@@ -152,6 +154,8 @@ public class NotificationService {
             case "APPROVAL_COMPLETED" -> "Your request \"" + title + "\" has been approved by authorized reviewers.";
             case "APPROVAL_REJECTED" -> "Your request \"" + title + "\" was rejected during approval review.";
             case "TASK_CREATED" -> "A new operations task was created for \"" + title + "\".";
+            case "TASK_ASSIGNED" -> "You have been assigned to fulfill task \"" + title + "\".";
+            case "TASK_UPDATED" -> "An operational update was recorded for \"" + title + "\".";
             case "TASK_COMPLETED" -> "Fulfillment task for \"" + title + "\" has been marked completed.";
             case "DOCUMENT_INDEXED" -> "Knowledge document was indexed into pgvector search.";
             case "WORKFLOW_COMPLETED" -> "All workflow steps for \"" + title + "\" have completed successfully.";

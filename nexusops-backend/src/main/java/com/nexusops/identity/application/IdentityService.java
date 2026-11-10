@@ -62,6 +62,15 @@ public class IdentityService {
         return toDto(entity);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<EmployeeResponseDto> findEmployeeByMembershipId(UUID organizationId, UUID membershipId) {
+        if (membershipId == null || organizationId == null) {
+            return Optional.empty();
+        }
+        return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
+                .map(this::toDto);
+    }
+
     @Transactional
     public EmployeeResponseDto inviteEmployee(InviteEmployeeDto dto) {
         UUID tenantId = TenantContextHolder.getRequiredTenantId();

@@ -1,9 +1,45 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Multi-Persona Role Permissions & Request Access Hardening (ALL PHASES COMPLETE & ACCEPTED)  
+**Current Phase:** Request Schemas, AI Action Confirmation & Audit Presentation Hardening (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-10  
 **Branch:** main  
-**Milestone:** v1.1.5 Role-Based Access Control Hardening & Persona Permission Synchronization  
+**Milestone:** v1.1.6 Dynamic Form Schemas, AI Action Confirmation & Audit Trail Polish  
+
+---
+
+## Completed in v1.1.6 (Dynamic Schemas, AI Actions & UI Polish)
+
+1. **Resolved AI Action Confirmation Missing `expenseDate` Validation Error ([`AiAssistantService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/ai/application/AiAssistantService.java)):**
+   - Problem: When users asked Nexus AI *"i want to request for reimbursement of my expenses"*, the co-pilot generated an action proposal card for `createRequest` with `categoryCode: EXPENSE_REIMBURSEMENT`, but omitted `expenseDate` and `receiptDetails`. When clicking "Confirm & Execute Action", backend category validation failed with `"Required form fields are missing: expenseDate"`.
+   - Fix:
+     - In `prepareCreateRequestProposal`: Added intelligent classification of expense types (e.g., travel, conference, meal, mobile recharge / home office), setting `expenseDate` to current UTC/local date (`LocalDate.now().toString()`), and generating complete `receiptDetails`.
+     - In `confirmAction`: Added defensive `putIfAbsent` for all required schema attributes (`expenseDate`, `expenseType`, `estimatedAmount`, `receiptDetails`) before invoking `requestService.createRequest`, ensuring both newly generated proposals and any in-flight proposals confirm cleanly.
+     - Normalized `categoryCode` lookup to uppercase to avoid case-mismatch issues.
+
+2. **Resilient Dynamic Form Schema Rendering & Client Validation ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
+   - Problem: If a category's `payloadSchema` was received as double-stringified JSON or if properties were empty, Step 2 in the Create Request modal did not render category-specific inputs, leading to validation failures upon submit.
+   - Fix:
+     - Upgraded `parsePayloadSchema` to recursively unwrap stringified JSON and nested schemas.
+     - Added robust fallback schema definitions for all standard categories (`EXPENSE_REIMBURSEMENT`, `SOFTWARE_ACCESS`, `DEVELOPER_LAPTOP`).
+     - Passed category codes to schema parser so form specifications are guaranteed to render in Step 2.
+     - Added comprehensive unit tests in [`RequestsPage.test.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.test.tsx) covering JSON parsing, double-escaped strings, and schema fallbacks (all 6 tests passing).
+
+3. **Audit Trail Actor Name & Email Resolution ([`AuditLogService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/audit/application/AuditLogService.java), [`AuditTrailPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/audit/AuditTrailPage.tsx)):**
+   - Problem: The Audit Trail table displayed raw truncated UUIDs (`8dedb19d-...`) under the Actor column instead of employee names.
+   - Fix:
+     - Added `findEmployeeByMembershipId` in [`IdentityService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/identity/application/IdentityService.java).
+     - Extended [`AuditLogResponseDto.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/audit/application/dto/AuditLogResponseDto.java) with `actorName` and `actorEmail`.
+     - Mapped `actorMembershipId` in `AuditLogService` to human-readable names (e.g., "Eve Vance", "Alice Chen") and emails, with "System Event" for automated background triggers.
+     - Updated `AuditTrailPage.tsx` to display an avatar badge, employee name, and secondary email address.
+
+4. **Notification Titles & Popover Formatting ([`NotificationService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/notification/application/NotificationService.java), [`NotificationPopover.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/components/layout/NotificationPopover.tsx)):**
+   - Added clean title and message generators for `TASK_ASSIGNED` and `TASK_UPDATED` (replacing `"System Notification: TASK_UPDATED"`).
+   - Widened popover card to `w-[400px]` and improved title wrapping to avoid mid-word truncation (`TASK_UPDA...`).
+
+5. **Test & Build Verification:**
+   - Backend: All 8 integration tests passed (`AiAssistantIntegrationTest`, `EndToEndDemoIntegrationTest`) with `BUILD SUCCESS`.
+   - Frontend: 10/10 Vitest tests passed; `npm run build` completed with 0 errors.
+   - Real end-to-end verification via PowerShell script confirmed AI proposal generation, action confirmation, and audit log actor name resolution.
 
 ---
 

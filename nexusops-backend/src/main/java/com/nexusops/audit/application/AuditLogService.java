@@ -9,6 +9,8 @@ import com.nexusops.shared.events.EventEnvelope;
 import com.nexusops.shared.events.ProcessedEventEntity;
 import com.nexusops.shared.events.ProcessedEventRepository;
 import com.nexusops.shared.security.UserPrincipal;
+import com.nexusops.identity.application.IdentityService;
+import com.nexusops.identity.application.dto.EmployeeResponseDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -31,14 +34,17 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
     private final ProcessedEventRepository processedEventRepository;
     private final ObjectMapper objectMapper;
+    private final IdentityService identityService;
 
     public AuditLogService(
             AuditLogRepository auditLogRepository,
             ProcessedEventRepository processedEventRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            IdentityService identityService) {
         this.auditLogRepository = auditLogRepository;
         this.processedEventRepository = processedEventRepository;
         this.objectMapper = objectMapper;
+        this.identityService = identityService;
     }
 
     /**
@@ -127,10 +133,27 @@ public class AuditLogService {
     }
 
     private AuditLogResponseDto toDto(AuditLogEntity entity) {
+        String actorName = null;
+        String actorEmail = null;
+        if (entity.getActorMembershipId() != null) {
+            Optional<EmployeeResponseDto> empOpt = identityService.findEmployeeByMembershipId(entity.getOrganizationId(), entity.getActorMembershipId());
+            if (empOpt.isPresent()) {
+                EmployeeResponseDto emp = empOpt.get();
+                actorName = emp.firstName() + " " + emp.lastName();
+                actorEmail = emp.email();
+            } else {
+                actorName = "User (" + entity.getActorMembershipId().toString().substring(0, 8) + ")";
+            }
+        } else {
+            actorName = "System Event";
+        }
+
         return new AuditLogResponseDto(
                 entity.getId(),
                 entity.getOrganizationId(),
                 entity.getActorMembershipId(),
+                actorName,
+                actorEmail,
                 entity.getEventType(),
                 entity.getAggregateType(),
                 entity.getAggregateId(),
