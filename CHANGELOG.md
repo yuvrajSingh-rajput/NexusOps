@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2026-11-10 - Public SEO, Search Engine Privacy & Header Notification Badge
+
+### Added
+- **Practical SEO for Public Pages (`SEO.tsx`, `LoginPage.tsx`, `RegisterOrgPage.tsx`):**
+  - Built a zero-dependency, lightweight `<SEO />` component and `useSEO` hook managing dynamic document titles (`${title} | NexusOps`), meta descriptions, OpenGraph tags, Twitter cards, and canonical links.
+  - Injected structured JSON-LD data (`SoftwareApplication` / `WebPage` schema) on `/login` and `/register` for rich search engine result snippets.
+  - Added [`sitemap.xml`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/public/sitemap.xml) in `public/` declaring canonical public discovery endpoints.
+- **Search Engine Privacy for Authenticated Pages (`robots.txt`, `ProtectedRoute.tsx`):**
+  - Added [`robots.txt`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/public/robots.txt) allowing only public authentication/registration routes and strictly disallowing all internal workspaces (`/requests`, `/approvals`, `/tasks`, `/knowledge`, `/workflows`, `/audit`, `/departments`, `/employees`, `/analytics`, `/api/`).
+  - Set baseline `noindex, nofollow, noarchive` in `index.html` as defense-in-depth against uncached crawler fetches.
+  - Enforced `noIndex: true` (`noindex, nofollow, noarchive`) dynamically across `ProtectedRoute.tsx` and all internal feature pages, ensuring enterprise company data and employee directories remain strictly unindexed.
+- **Header Unread Notification Badge (`NotificationPopover.tsx`, `NotificationController.java`):**
+  - Added a responsive red pill badge to the header Bell icon displaying the real-time unread notification count with subtle pulse animation.
+  - Fixed count extraction from backend response `{ unreadCount: n }`.
+  - Added dual `POST` and `PATCH` method support for marking notifications as read.
+
+---
+
 ## [1.1.2] - 2026-11-10 - Workflow Studio Canvas UX Upgrade & Dagre Auto-Layout
 
 ### Added

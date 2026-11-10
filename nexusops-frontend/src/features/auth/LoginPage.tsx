@@ -4,6 +4,7 @@ import { Sparkles, Lock, Mail, ArrowRight, AlertCircle, UserCheck, ShieldCheck, 
 import { apiClient } from '@/lib/api-client';
 import { ApiResponse, AuthResponseDto, UserMeResponseDto } from '@/types/api';
 import { useAuthStore } from './authStore';
+import { SEO } from '@/components/common/SEO';
 
 interface DemoPersona {
   role: string;
@@ -128,6 +129,25 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <SEO
+        title="Sign In – Enterprise Portal"
+        description="Secure single sign-on and credentials authentication for the NexusOps intelligent operations portal and automated workflow engine."
+        noIndex={false}
+        canonical="/login"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'NexusOps Enterprise Portal Login',
+          description: 'Secure sign-in access to the NexusOps internal operations platform.',
+          url: 'https://nexusops.internal/login',
+          isPartOf: {
+            '@type': 'SoftwareApplication',
+            name: 'NexusOps',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web Browser',
+          },
+        }}
+      />
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl text-center">
         <div className="mx-auto h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
           <Sparkles className="h-7 w-7" />

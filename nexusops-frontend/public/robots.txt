@@ -1,0 +1,29 @@
+# NexusOps – Intelligent Enterprise Operations Portal
+# Public portal pages are allowed for discovery; authenticated intranet views must remain strictly private.
+
+User-agent: *
+
+# Allow public onboarding and authentication endpoints
+Allow: /login
+Allow: /register
+Allow: /favicon.svg
+Allow: /robots.txt
+Allow: /sitemap.xml
+
+# Strictly disallow all internal company workspaces, requests, approvals, tasks, employee directory, and audit records
+Disallow: /
+Disallow: /requests
+Disallow: /approvals
+Disallow: /tasks
+Disallow: /knowledge
+Disallow: /workflows
+Disallow: /ai-assistant
+Disallow: /audit
+Disallow: /departments
+Disallow: /employees
+Disallow: /analytics
+Disallow: /settings
+Disallow: /api/
+
+# Sitemap for public discoverable routes
+Sitemap: https://nexusops.internal/sitemap.xml

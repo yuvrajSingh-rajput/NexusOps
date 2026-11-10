@@ -28,6 +28,7 @@ import {
   UpdateTaskStatusDto,
   AddTaskCommentDto
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const TasksPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
@@ -225,6 +226,7 @@ export const TasksPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Tasks & Fulfillment Queues" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

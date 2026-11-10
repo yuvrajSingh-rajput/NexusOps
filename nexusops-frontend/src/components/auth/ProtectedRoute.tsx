@@ -2,10 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/authStore';
 import { Sparkles } from 'lucide-react';
+import { useSEO } from '@/components/common/SEO';
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, token, user, loadCurrentUser } = useAuthStore();
   const [checking, setChecking] = useState(!user && !!token);
+
+  // Strictly enforce noindex, nofollow for search engines across all authenticated routes
+  useSEO({
+    title: 'Workspace',
+    noIndex: true,
+    description: 'NexusOps Internal Enterprise Operations Portal',
+  });
 
   useEffect(() => {
     const initAuth = async () => {

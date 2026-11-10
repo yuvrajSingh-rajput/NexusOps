@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle2, Clock, AlertTriangle, ArrowUpRight, Sparkles } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { ApiResponse, SystemHealth, AnalyticsOverviewDto } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Dashboard" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>

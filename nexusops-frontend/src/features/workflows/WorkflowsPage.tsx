@@ -33,6 +33,7 @@ import {
   WorkflowValidationResult,
   SaveWorkflowDraftDto
 } from './types/workflowCanvas';
+import { SEO } from '@/components/common/SEO';
 
 export const WorkflowsPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
@@ -358,6 +359,7 @@ export const WorkflowsPage: React.FC = () => {
   if (activeDef) {
     return (
       <div className="space-y-4">
+        <SEO title={`Workflow Studio – ${activeDef.name}`} noIndex={true} />
         {/* Top Studio Bar */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -688,6 +690,7 @@ export const WorkflowsPage: React.FC = () => {
   /* -------------------------------------------------------------------------- */
   return (
     <div className="space-y-6">
+      <SEO title="Workflow Engine Studio" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>

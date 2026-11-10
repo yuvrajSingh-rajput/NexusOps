@@ -30,6 +30,7 @@ import {
   ConversationSummaryDto,
   PageResponse
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const AiAssistantPage: React.FC = () => {
   const [conversations, setConversations] = useState<ConversationSummaryDto[]>([]);
@@ -189,6 +190,7 @@ export const AiAssistantPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] -m-3 sm:-m-4 md:-m-6 bg-slate-50 border-t border-slate-200 overflow-hidden relative">
+      <SEO title="Nexus AI Co-pilot" noIndex={true} />
       {/* 1. Left Sidebar: Conversation History (Desktop) */}
       <div className="hidden md:flex w-72 bg-white border-r border-slate-200 flex-col shrink-0">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">

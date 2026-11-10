@@ -3,6 +3,7 @@ import { Building2, Plus, AlertCircle, FolderTree, RefreshCw, X } from 'lucide-r
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, DepartmentResponseDto } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const DepartmentsPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
@@ -77,6 +78,7 @@ export const DepartmentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Departments Hierarchy" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>

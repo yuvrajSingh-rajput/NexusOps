@@ -4,6 +4,7 @@ import { Sparkles, Building2, User, Mail, Lock, ArrowRight, AlertCircle, CheckCi
 import { apiClient } from '@/lib/api-client';
 import { ApiResponse, AuthResponseDto, UserMeResponseDto } from '@/types/api';
 import { useAuthStore } from './authStore';
+import { SEO } from '@/components/common/SEO';
 
 export const RegisterOrgPage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,6 +81,25 @@ export const RegisterOrgPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <SEO
+        title="Register Organization – Get Started"
+        description="Register a new company organization and configure automated multi-tenant operational workflows and role governance on NexusOps."
+        noIndex={false}
+        canonical="/register"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'NexusOps Organization Registration',
+          description: 'Onboard your company organization into NexusOps for automated employee requests and workflow management.',
+          url: 'https://nexusops.internal/register',
+          isPartOf: {
+            '@type': 'SoftwareApplication',
+            name: 'NexusOps',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web Browser',
+          },
+        }}
+      />
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="mx-auto h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
           <Sparkles className="h-7 w-7" />

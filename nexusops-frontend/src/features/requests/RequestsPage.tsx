@@ -41,6 +41,7 @@ import {
   RequestStatus,
   CommentVisibility,
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 const getCategoryIcon = (code?: string, size: 'sm' | 'lg' = 'sm') => {
   const normalized = (code || '').toLowerCase();
@@ -417,6 +418,7 @@ export const RequestsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Operations Requests" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>

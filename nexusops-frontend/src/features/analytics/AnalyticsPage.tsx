@@ -22,6 +22,7 @@ import {
   DepartmentMetricDto,
   DepartmentReportDto,
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const AnalyticsPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
@@ -141,6 +142,7 @@ export const AnalyticsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Operational Analytics" noIndex={true} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

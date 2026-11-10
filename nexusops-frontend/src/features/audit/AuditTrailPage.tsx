@@ -10,6 +10,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, PageResponse, AuditLogResponseDto } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const AuditTrailPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
@@ -104,6 +105,7 @@ export const AuditTrailPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Audit Trail" noIndex={true} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

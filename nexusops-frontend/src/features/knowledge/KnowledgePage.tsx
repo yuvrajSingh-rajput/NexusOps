@@ -27,6 +27,7 @@ import {
   DocumentAccessScope,
   DocumentProcessingStatus
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 const CATEGORIES = ['ALL', 'POLICY', 'SOP', 'BENEFITS', 'HARDWARE', 'SECURITY', 'GENERAL'];
 
@@ -291,6 +292,7 @@ export const KnowledgePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Organization Knowledge Base" noIndex={true} />
       {/* Notifications */}
       {actionSuccess && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-sm animate-fade-in">

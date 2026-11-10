@@ -3,6 +3,7 @@ import { Users, UserPlus, Search, AlertCircle, RefreshCw, X, Shield, Mail, Brief
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/features/auth/authStore';
 import { ApiResponse, EmployeeResponseDto, DepartmentResponseDto, PageResponse } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 const AVAILABLE_ROLES = [
   { code: 'ROLE_EMPLOYEE', label: 'Employee', description: 'Can submit requests and view personal items' },
@@ -168,6 +169,7 @@ export const EmployeesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Employee Directory" noIndex={true} />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>

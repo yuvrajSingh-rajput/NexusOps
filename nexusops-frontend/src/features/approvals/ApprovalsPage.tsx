@@ -22,6 +22,7 @@ import {
   ApprovalDecisionDto,
   ApprovalActionType,
 } from '@/types/api';
+import { SEO } from '@/components/common/SEO';
 
 export const ApprovalsPage: React.FC = () => {
   const [approvals, setApprovals] = useState<ApprovalInstanceResponseDto[]>([]);
@@ -125,6 +126,7 @@ export const ApprovalsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <SEO title="Approvals Inbox" noIndex={true} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
