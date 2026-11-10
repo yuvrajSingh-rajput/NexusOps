@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.2] - 2026-11-10 - Workflow Studio Canvas UX Upgrade & Dagre Auto-Layout
 
 ### Added
+- **NexusOps Enterprise Favicon & Metadata (`index.html`, `favicon.svg`):**
+  - Added custom high-resolution SVG favicon ([`favicon.svg`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/public/favicon.svg)) matching the NexusOps brand: deep indigo gradient squircle with dual white-and-periwinkle sparkle constellation and ambient drop shadows.
+  - Updated [`index.html`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/index.html) with `/favicon.svg`, brand description metadata, and `#4f46e5` theme color.
 - **Dagre Left-to-Right Auto-Layout (`layoutUtils.ts`):**
   - Integrated `dagre` hierarchical graph layout algorithm (`rankdir: 'LR'`, `ranksep: 100`, `nodesep: 50`) for automated left-to-right alignment of workflow graphs.
   - Automatically positions `START` on the far left, intermediate approvals, conditions, and tasks in central ranks, and `END` nodes on the far right.

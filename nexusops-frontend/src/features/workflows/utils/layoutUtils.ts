@@ -93,3 +93,4 @@ export function hasValidSavedPositions(nodes: any[]): boolean {
 
   return uniqueX.size > 2 && uniqueY.size > 2;
 }
+
