@@ -1,5 +1,7 @@
 export type WorkflowNodeType = 'START' | 'APPROVAL' | 'CONDITION' | 'TASK' | 'END';
 
+export type NodeExecutionStatus = 'COMPLETED' | 'RUNNING' | 'WAITING' | 'PENDING' | 'FAILED' | 'SKIPPED';
+
 export interface WorkflowNodeData extends Record<string, unknown> {
   nodeKey: string;
   name: string;
@@ -8,6 +10,8 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   isPublished?: boolean;
   hasErrors?: boolean;
   errorMessage?: string;
+  executionStatus?: NodeExecutionStatus;
+  isCurrentExecutionNode?: boolean;
   onUpdate?: (updates: Partial<WorkflowNodeData>) => void;
 }
 
@@ -15,7 +19,15 @@ export interface WorkflowEdgeData extends Record<string, unknown> {
   conditionExpression?: Record<string, any>;
   priority?: number;
   isDefault?: boolean;
+  isActivePath?: boolean;
   onUpdate?: (updates: Partial<WorkflowEdgeData>) => void;
+}
+
+export interface WorkflowExecutionOverlay {
+  currentNodeKey?: string;
+  nodeStatuses?: Record<string, NodeExecutionStatus>;
+  completedNodeKeys?: string[];
+  activePathEdgeKeys?: string[];
 }
 
 export interface WorkflowVersionSummary {
@@ -55,4 +67,3 @@ export interface SaveWorkflowDraftDto {
   nodes: SaveWorkflowNodeDto[];
   transitions: SaveWorkflowTransitionDto[];
 }
-

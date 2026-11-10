@@ -1,9 +1,50 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Visual Workflow Studio Upgrade & v1.1.0 Enterprise Canvas Release (ALL PHASES COMPLETE & ACCEPTED)  
-**Last Updated:** 2026-11-09  
+**Current Phase:** Workflow Studio UX Upgrade & v1.1.2 Canvas Enhancement (ALL PHASES COMPLETE & ACCEPTED)  
+**Last Updated:** 2026-11-10  
 **Branch:** main  
-**Milestone:** v1.1.0 Enterprise Canvas & Visual Designer  
+**Milestone:** v1.1.2 Enterprise Workflow Studio Visual & UX Polish  
+
+---
+
+## Completed in v1.1.2 (Workflow Studio Visual Canvas & UX Upgrade)
+
+1. **Automatic Dagre Hierarchical Left-to-Right Layout ([`layoutUtils.ts`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/utils/layoutUtils.ts)):**
+   - Implemented left-to-right (`rankdir: 'LR'`) layout using Dagre (`ranksep: 100`, `nodesep: 50`, node width $270$, height $110$).
+   - Automatically positions `START` on the far left, intermediate approvals/conditions/tasks in central ranks, and `END` nodes on the far right.
+   - Detects missing or default coordinates with `hasValidSavedPositions` and auto-layouts on initial load.
+   - Added a "✨ Tidy Layout" button in the canvas floating toolbar that recalculates node positions and animates `fitView({ padding: 0.25 })`.
+
+2. **Orthogonal SmoothStep Routing & Edge Color-Coding ([`CustomEdge.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/CustomEdge.tsx)):**
+   - Upgraded edge routing to orthogonal smoothstep curves (`borderRadius: 14`) connecting strictly from `Position.Right` of source nodes to `Position.Left` of target nodes.
+   - Semantic edge color-coding:
+     - **Green (`#10b981`)**: Approved / success outcomes.
+     - **Red (`#ef4444`)**: Rejected outcomes.
+     - **Blue (`#3b82f6`)**: Conditional routing predicates.
+     - **Slate Dashed (`#94a3b8`)**: Default fallback routes.
+   - Styled edge label pill badges with colored dot indicators, white backgrounds, and plain-language formatting (e.g. `Amount ≤ $10,000`, `Amount > $10,000 & ≤ $50,000`, `Approved`, `Rejected`, `Default Route`).
+
+3. **Standardized Card Sizing & Type Accents ([`CustomNodes.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/CustomNodes.tsx)):**
+   - Uniform dimensions ($270 \times 110\text{px}$) with minimum 12px readable typography, distinct type badges, role/queue subtitles, SLA duration chips, and programmatic key tags.
+   - Distinct accent colors: Start (Emerald), Approval (Amber), Condition (Sky), Task (Purple), End (Emerald/Rose).
+   - Selected and hover states with colored focus rings and subtle elevation scaling.
+
+4. **Execution Overlay Support ([`workflowCanvas.ts`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/types/workflowCanvas.ts)):**
+   - Supports `executionOverlay` across canvas, nodes, and edges:
+     - Completed nodes displayed in emerald with checkmark.
+     - Active running node highlighted in blue with a spinner and gentle pulse.
+     - Waiting nodes displayed in amber with a clock badge.
+     - Failed nodes displayed in rose with a shield alert.
+     - Active execution pathway highlighted in blue with thickened stroke and glow.
+
+5. **Canvas Controls & Legend ([`WorkflowCanvas.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/WorkflowCanvas.tsx)):**
+   - Added a top-right floating toolbar with "Tidy Layout", "Fit View", and an interactive "Legend" popover explaining node types and edge color codes.
+   - Subtle dotted background grid (`BackgroundVariant.Dots`, 20px gap, 1.2px dot size).
+   - Integrated `MiniMap` with node type coloring and pan/zoom controls.
+
+6. **Details Panel Outgoing Transitions ([`NodeConfigSidebar.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/workflows/components/NodeConfigSidebar.tsx)):**
+   - When clicking any node, the right-side configuration panel displays an "Outgoing Transitions" section listing all downstream routes, target step names, condition labels, and priority numbers, with one-click navigation to inspect each transition.
+   - Preserved immutable read-only state for published workflow versions.
 
 ---
 

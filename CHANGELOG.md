@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.2] - 2026-11-10 - Workflow Studio Canvas UX Upgrade & Dagre Auto-Layout
+
+### Added
+- **Dagre Left-to-Right Auto-Layout (`layoutUtils.ts`):**
+  - Integrated `dagre` hierarchical graph layout algorithm (`rankdir: 'LR'`, `ranksep: 100`, `nodesep: 50`) for automated left-to-right alignment of workflow graphs.
+  - Automatically positions `START` on the far left, intermediate approvals, conditions, and tasks in central ranks, and `END` nodes on the far right.
+  - Detects if valid saved positions exist (`hasValidSavedPositions`); if not, auto-layouts on load and triggers `fitView({ padding: 0.25 })`.
+  - Added a "✨ Tidy Layout" button in the canvas toolbar to re-organize and untangle nodes at any time with smooth camera animation.
+- **Orthogonal SmoothStep Routing & Edge Color-Coding (`CustomEdge.tsx`):**
+  - Upgraded edge routing from curved beziers to orthogonal `getSmoothStepPath` with `borderRadius: 14` to prevent overlapping lines and messy diagonal crossings.
+  - Connects strictly from `Position.Right` of source nodes to `Position.Left` of target nodes.
+  - Color-coded edge pathways:
+    - **Green (`#10b981`)**: Approved / success outcomes.
+    - **Red (`#ef4444`)**: Rejected outcomes.
+    - **Blue (`#3b82f6`)**: Conditional routing predicates.
+    - **Slate Dashed (`#94a3b8`)**: Default fallback routes.
+  - Plain-language pill badges with colored dots, white backgrounds, and clean condition formatting (e.g. `Amount > $10,000 & ≤ $50,000`, `Amount ≤ $10,000`, `Approved`, `Rejected`, `Default Route`).
+- **Standardized Node Visual Design (`CustomNodes.tsx`):**
+  - Enlarged uniform cards ($270 \times 110\text{px}$) with minimum 12px readable typography, distinct type badges, role/queue subtitles, SLA duration chips, and programmatic key tags.
+  - Distinct accent colors: Start (Emerald), Approval (Amber), Condition (Sky), Task (Purple), End (Emerald/Rose).
+  - Selected and hover states with colored focus rings and subtle elevation scaling.
+- **Execution Overlay Support (`workflowCanvas.ts`):**
+  - Supported `executionOverlay` on canvas, nodes, and edges:
+    - Completed nodes displayed in emerald with checkmark.
+    - Active running node highlighted in blue with a spinner and gentle pulse.
+    - Waiting nodes displayed in amber with a clock badge.
+    - Failed nodes displayed in rose with a shield alert.
+    - Active execution pathway highlighted in blue with thickened stroke and glow.
+- **Canvas Controls & Legend (`WorkflowCanvas.tsx`):**
+  - Added a top-right floating toolbar with "Tidy Layout", "Fit View", and an interactive "Legend" popover explaining node types and edge color codes.
+  - Clean dotted background grid (`BackgroundVariant.Dots`, 20px gap, 1.2px dot size).
+  - Integrated `MiniMap` with node type coloring and pan/zoom controls.
+- **Details Panel Outgoing Transitions (`NodeConfigSidebar.tsx`):**
+  - When clicking any node, the right-side configuration panel displays an "Outgoing Transitions" section listing all downstream routes, target step names, condition labels, and priority numbers, with one-click navigation to inspect each transition.
+  - Preserved immutable read-only state for published workflow versions.
+
+---
+
+## [1.1.1] - 2026-11-10 - Bug Fixes, RBAC Hardening, AI Action Resilience & Custom Scrollbars
+
+### Fixed
+- **Nexus AI Action Confirmation & Parameter Validation:**
+  - Injected schema-compliant default parameters (`deviceModel`, `ramGb`, `urgencyReason`, `estimatedAmount`) for `DEVELOPER_LAPTOP`, `SOFTWARE_ACCESS`, and `EXPENSE_REIMBURSEMENT` proposals.
+  * Enhanced `RequestService` to assign the requester's own department before falling back to tenant defaults.
+  * Replaced native browser `alert()` dialogs in `AiAssistantDrawer.tsx` and `AiAssistantPage.tsx` with styled inline error notification cards on action proposals.
+- **Knowledge Base Role-Based UI Guarding:**
+  - Strengthened `canManageKnowledge` permission check across `KnowledgePage.tsx` to require `KNOWLEDGE_MANAGE` or administrative roles (`ORG_ADMIN`, `ROLE_ORG_ADMIN`, `ORG_ADMIN_MANAGE`).
+  - Hides the "Upload Document" button, vector re-index buttons, and document deletion (trash can) actions from standard employees, restricting them to policy search, view, and document download.
+- **Approval Concurrency & Finalized State Handling:**
+  - In `ApprovalsPage.tsx`, updated the approval detail modal to recognize finalized approvals (`APPROVED`, `REJECTED`) and replace the decision buttons and comments textarea with a "Decision Already Finalized" notice.
+  - Added support for `CONFLICT` and `APPROVAL_CONFLICT` error codes in `handleExecuteDecision` to automatically invoke `fetchApprovals()` and synchronize state.
+- **Global Themed Scrollbars & Layout Window Confinement:**
+  - In `index.css`, bound `html, body, #root` to `height: 100%; width: 100%; overflow: hidden;` and implemented global 8px thin, rounded slate pill scrollbars with transparent tracks and hover darkening.
+  - Added dark variant for sidebars and slide-over panels.
+  - Replaced `w-screen` / `h-screen` in `MainLayout.tsx` with `h-full w-full overflow-hidden`, confining vertical scrolling strictly to `<main>` beneath the fixed Topbar and eliminating duplicate outer browser scrollbars.
+
+---
+
 ## [1.1.0] - 2026-11-09 - Enterprise Visual Workflow Studio Upgrade & Knowledge Hardening
 
 ### Added

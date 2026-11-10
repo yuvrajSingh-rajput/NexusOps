@@ -8,7 +8,9 @@ import {
   ShieldCheck,
   CheckCircle,
   GitBranch,
-  Settings
+  Settings,
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react';
 import { WorkflowNodeData, WorkflowEdgeData } from '../types/workflowCanvas';
 
@@ -21,6 +23,9 @@ interface NodeConfigSidebarProps {
   onDeleteEdge: (id: string) => void;
   onClose: () => void;
   isReadOnly: boolean;
+  edges?: Edge<WorkflowEdgeData>[];
+  nodes?: Node<WorkflowNodeData>[];
+  onSelectEdge?: (id: string) => void;
 }
 
 export const NodeConfigSidebar: React.FC<NodeConfigSidebarProps> = ({
@@ -31,7 +36,10 @@ export const NodeConfigSidebar: React.FC<NodeConfigSidebarProps> = ({
   onDeleteNode,
   onDeleteEdge,
   onClose,
-  isReadOnly
+  isReadOnly,
+  edges = [],
+  nodes = [],
+  onSelectEdge
 }) => {
   if (!selectedNode && !selectedEdge) return null;
 
@@ -71,11 +79,19 @@ export const NodeConfigSidebar: React.FC<NodeConfigSidebarProps> = ({
       {/* Body Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {selectedNode && (
-          <NodeConfigForm
-            node={selectedNode}
-            onUpdate={(updates) => onUpdateNode(selectedNode.id, updates)}
-            isReadOnly={isReadOnly}
-          />
+          <>
+            <NodeConfigForm
+              node={selectedNode}
+              onUpdate={(updates) => onUpdateNode(selectedNode.id, updates)}
+              isReadOnly={isReadOnly}
+            />
+            <OutgoingTransitionsSection
+              node={selectedNode}
+              edges={edges}
+              nodes={nodes}
+              onSelectEdge={onSelectEdge}
+            />
+          </>
         )}
 
         {selectedEdge && (
@@ -484,6 +500,95 @@ const EdgeConfigForm: React.FC<EdgeConfigFormProps> = ({ edge, onUpdate, isReadO
             />
             <p className="text-[10px] text-slate-400 mt-0.5">Lower numbers are evaluated first</p>
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/* Outgoing Transitions Section                                               */
+/* -------------------------------------------------------------------------- */
+interface OutgoingTransitionsSectionProps {
+  node: Node<WorkflowNodeData>;
+  edges: Edge<WorkflowEdgeData>[];
+  nodes: Node<WorkflowNodeData>[];
+  onSelectEdge?: (id: string) => void;
+}
+
+const OutgoingTransitionsSection: React.FC<OutgoingTransitionsSectionProps> = ({
+  node,
+  edges,
+  nodes,
+  onSelectEdge
+}) => {
+  if (node.data.nodeType === 'END') return null;
+
+  const outgoing = edges.filter((e) => e.source === node.id);
+
+  return (
+    <div className="pt-4 border-t border-slate-100 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <label className="font-semibold text-slate-700 text-xs flex items-center gap-1.5">
+          <ArrowRight className="h-3.5 w-3.5 text-indigo-600" />
+          <span>Outgoing Transitions ({outgoing.length})</span>
+        </label>
+      </div>
+
+      {outgoing.length === 0 ? (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-center gap-2">
+          <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+          <span>No outgoing transitions. Connect this node to the next step.</span>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {outgoing.map((edge) => {
+            const targetNode = nodes.find((n) => n.id === edge.target);
+            const targetName = targetNode?.data.name || edge.target;
+            const targetType = targetNode?.data.nodeType || 'STEP';
+            const cond = edge.data?.conditionExpression;
+            const isDefault = edge.data?.isDefault;
+
+            let badgeLabel = 'Unconditional';
+            let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+
+            if (isDefault) {
+              badgeLabel = 'Default Route';
+              badgeColor = 'bg-slate-100 text-slate-600 border-dashed border-slate-300';
+            } else if (cond?.value === 'APPROVED' || cond?.signal === 'APPROVED') {
+              badgeLabel = 'Approved';
+              badgeColor = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+            } else if (cond?.value === 'REJECTED' || cond?.signal === 'REJECTED') {
+              badgeLabel = 'Rejected';
+              badgeColor = 'bg-rose-50 text-rose-800 border-rose-300';
+            } else if (cond?.field) {
+              const cleanField = cond.field.replace('payload.', '').replace('estimatedAmount', 'Amount');
+              badgeLabel = `${cleanField} ${cond.operator === 'LESS_THAN_OR_EQUAL' ? '≤' : cond.operator === 'GREATER_THAN' ? '>' : cond.operator || '='} ${cond.value ?? ''}`;
+              badgeColor = 'bg-blue-50 text-blue-800 border-blue-300';
+            }
+
+            return (
+              <div
+                key={edge.id}
+                onClick={() => onSelectEdge?.(edge.id)}
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all cursor-pointer group select-none"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                    {badgeLabel}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Prio: {edge.data?.priority ?? 1}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 group-hover:text-indigo-600">
+                  <span className="text-slate-400">➔</span>
+                  <span className="truncate">{targetName}</span>
+                  <span className="text-[10px] font-mono text-slate-400 uppercase">({targetType})</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
