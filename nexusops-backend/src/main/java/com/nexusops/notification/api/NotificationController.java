@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -45,7 +46,7 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success(Map.of("unreadCount", count)));
     }
 
-    @PostMapping("/{id}/read")
+    @RequestMapping(value = "/{id}/read", method = {RequestMethod.POST, RequestMethod.PATCH})
     public ResponseEntity<ApiResponse<Void>> markAsRead(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {

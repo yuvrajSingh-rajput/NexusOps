@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -23,19 +23,64 @@ export const NotificationPopover: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Poll unread count every 15s
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 15000);
-    return () => clearInterval(interval);
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await apiClient.get<any, ApiResponse<any>>('/notifications/unread-count');
+      if (res && res.data !== undefined) {
+        let count = 0;
+        if (typeof res.data === 'number') {
+          count = res.data;
+        } else if (res.data && typeof res.data.unreadCount === 'number') {
+          count = res.data.unreadCount;
+        } else if (res.data && typeof res.data.count === 'number') {
+          count = res.data.count;
+        }
+        setUnreadCount(count);
+      }
+    } catch {
+      // Silently ignore background polling errors
+    }
   }, []);
 
-  // Fetch notifications when opened
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get<any, ApiResponse<PageResponse<NotificationResponseDto>>>(
+        '/notifications/my?page=0&size=20'
+      );
+      if (res?.data?.content) {
+        setNotifications(res.data.content);
+        const unreadItems = res.data.content.filter((n) => !n.read).length;
+        setUnreadCount((prev) => Math.max(prev, unreadItems));
+      }
+    } catch (err) {
+      console.error('Failed to load notifications', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Poll unread count every 15s and fetch on window focus
+  useEffect(() => {
+    fetchUnreadCount();
+    // Also fetch initial notifications on mount to ensure instant accurate count
+    fetchNotifications();
+
+    const interval = setInterval(fetchUnreadCount, 15000);
+    const onFocus = () => fetchUnreadCount();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [fetchUnreadCount, fetchNotifications]);
+
+  // Refresh notifications list when opening popover
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchNotifications]);
 
   // Handle outside click to close
   useEffect(() => {
@@ -50,37 +95,10 @@ export const NotificationPopover: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const fetchUnreadCount = async () => {
-    try {
-      const res = await apiClient.get<any, ApiResponse<number>>('/notifications/unread-count');
-      if (res && typeof res.data === 'number') {
-        setUnreadCount(res.data);
-      }
-    } catch (err) {
-      // Silently ignore background polling errors
-    }
-  };
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get<any, ApiResponse<PageResponse<NotificationResponseDto>>>(
-        '/notifications/my?page=0&size=10'
-      );
-      if (res?.data?.content) {
-        setNotifications(res.data.content);
-      }
-    } catch (err) {
-      console.error('Failed to load notifications', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const markAsRead = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
-      await apiClient.patch(`/notifications/${id}/read`);
+      await apiClient.post(`/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
@@ -149,17 +167,17 @@ export const NotificationPopover: React.FC = () => {
 
   return (
     <div className="relative" ref={popoverRef}>
-      {/* Bell Button */}
+      {/* Bell Button with Unread Badge */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+        className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none"
         title="Notifications"
         aria-label="Open notifications"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-extrabold text-white bg-rose-500 rounded-full ring-2 ring-white shadow-sm animate-pulse">
-            {unreadCount > 9 ? '9+' : unreadCount}
+          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-extrabold text-white bg-rose-500 rounded-full ring-2 ring-white shadow-sm animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
@@ -171,16 +189,20 @@ export const NotificationPopover: React.FC = () => {
           <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-slate-800">Notifications</span>
-              {unreadCount > 0 && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                  {unreadCount} new
+              {unreadCount > 0 ? (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                  {unreadCount} unread
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                  All caught up
                 </span>
               )}
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 <span>Mark all read</span>
@@ -190,12 +212,12 @@ export const NotificationPopover: React.FC = () => {
 
           {/* List */}
           <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
-            {loading ? (
+            {loading && notifications.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">Loading notifications...</div>
             ) : notifications.length === 0 ? (
               <div className="py-10 px-4 text-center">
-                <div className="h-10 w-10 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
-                  <Check className="h-5 w-5 text-emerald-500" />
+                <div className="h-10 w-10 mx-auto rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+                  <Check className="h-5 w-5" />
                 </div>
                 <div className="text-xs font-semibold text-slate-700">All caught up!</div>
                 <div className="text-[11px] text-slate-400 mt-0.5">
@@ -208,7 +230,7 @@ export const NotificationPopover: React.FC = () => {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={`p-3.5 flex items-start gap-3 hover:bg-slate-50/80 cursor-pointer transition-colors ${
-                    !notif.read ? 'bg-indigo-50/30' : ''
+                    !notif.read ? 'bg-indigo-50/40' : ''
                   }`}
                 >
                   <div className="p-2 rounded-xl bg-slate-100 shrink-0 mt-0.5">
@@ -226,7 +248,7 @@ export const NotificationPopover: React.FC = () => {
                         </span>
                         {!notif.read && (
                           <span
-                            className="h-2 w-2 rounded-full bg-indigo-600 shrink-0"
+                            className="h-2 w-2 rounded-full bg-indigo-600 shrink-0 ring-2 ring-indigo-200"
                             title="Unread"
                           />
                         )}
@@ -254,4 +276,3 @@ export const NotificationPopover: React.FC = () => {
     </div>
   );
 };
-
