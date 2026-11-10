@@ -187,6 +187,16 @@ public class IdentityService {
                 .orElse("System Operator");
     }
 
+    @Transactional(readOnly = true)
+    public String getMemberEmail(UUID organizationId, UUID membershipId) {
+        if (membershipId == null) {
+            return "system@nexusops.local";
+        }
+        return membershipRepository.findByOrganizationIdAndId(organizationId, membershipId)
+                .map(m -> m.getUser().getEmail())
+                .orElse("system@nexusops.local");
+    }
+
     private EmployeeResponseDto toDto(OrganizationMembershipEntity entity) {
         Set<String> roleCodes = entity.getRoles().stream()
                 .map(RoleEntity::getCode)

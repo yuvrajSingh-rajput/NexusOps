@@ -57,6 +57,24 @@ const getCategoryIcon = (code?: string, size: 'sm' | 'lg' = 'sm') => {
   return <FileText className={size === 'lg' ? "h-6 w-6 text-slate-500" : "h-3.5 w-3.5 text-slate-500"} />;
 };
 
+export const parsePayloadSchema = (
+  rawSchema?: Record<string, any> | string | null
+): { properties?: Record<string, any>; required?: string[] } | null => {
+  if (!rawSchema) return null;
+  if (typeof rawSchema === 'object' && rawSchema !== null) {
+    return rawSchema as { properties?: Record<string, any>; required?: string[] };
+  }
+  if (typeof rawSchema === 'string') {
+    try {
+      const parsed = JSON.parse(rawSchema);
+      return typeof parsed === 'object' && parsed !== null ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export const RequestsPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canViewAllRequests = useMemo(() => {
@@ -89,6 +107,7 @@ export const RequestsPage: React.FC = () => {
   const [commentVisibility, setCommentVisibility] = useState<CommentVisibility>('REQUESTER_VISIBLE');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [cancellingRequest, setCancellingRequest] = useState(false);
+  const [submittingDraft, setSubmittingDraft] = useState(false);
 
   // New Request Wizard State
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -237,6 +256,26 @@ export const RequestsPage: React.FC = () => {
     }
   };
 
+  const handleSubmitDraft = async () => {
+    if (!selectedRequest) return;
+    setSubmittingDraft(true);
+    try {
+      const res = await apiClient.post<unknown, ApiResponse<RequestResponseDto>>(
+        `/requests/${selectedRequest.id}/submit`
+      );
+      if (res.data) {
+        setSelectedRequest(res.data);
+        await fetchRequests();
+        loadWorkflowInstance(res.data.id);
+      }
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      alert(errObj.message || 'Failed to submit request.');
+    } finally {
+      setSubmittingDraft(false);
+    }
+  };
+
   const handleOpenWizard = () => {
     setWizardStep(1);
     setSelectedCategory(null);
@@ -250,20 +289,34 @@ export const RequestsPage: React.FC = () => {
 
   const handleCategoryChosen = (category: RequestCategoryResponseDto) => {
     setSelectedCategory(category);
-    // Initialize default payload fields from schema
+    setWizardError(null);
+
+    // Parse payload schema safely (handles both JSON string and object)
+    const schema = parsePayloadSchema(category.payloadSchema);
     const initialPayload: Record<string, any> = {};
-    if (category.payloadSchema && category.payloadSchema.properties) {
-      Object.keys(category.payloadSchema.properties).forEach((propKey) => {
-        const prop = category.payloadSchema.properties[propKey];
-        if (prop.type === 'number' || prop.type === 'integer') {
-          initialPayload[propKey] = prop.minimum !== undefined ? prop.minimum : '';
-        } else if (prop.enum && prop.enum.length > 0) {
+
+    if (schema?.properties) {
+      const properties = schema.properties;
+      Object.keys(properties).forEach((propKey) => {
+        const prop = properties[propKey];
+        const keyLower = propKey.toLowerCase();
+        const titleLower = (prop.title || '').toLowerCase();
+
+        if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0) {
           initialPayload[propKey] = prop.enum[0];
+        } else if (prop.type === 'number' || prop.type === 'integer') {
+          initialPayload[propKey] =
+            prop.minimum !== undefined
+              ? prop.minimum
+              : (keyLower.includes('amount') || keyLower.includes('cost') ? 100 : 0);
+        } else if (prop.format === 'date' || keyLower.includes('date') || titleLower.includes('date')) {
+          initialPayload[propKey] = new Date().toISOString().split('T')[0];
         } else {
           initialPayload[propKey] = '';
         }
       });
     }
+
     setDynamicPayload(initialPayload);
     setWizardStep(2);
   };
@@ -280,29 +333,50 @@ export const RequestsPage: React.FC = () => {
     if (!selectedCategory) return;
 
     setWizardError(null);
+
+    const schema = parsePayloadSchema(selectedCategory.payloadSchema);
+    const cleanedPayload: Record<string, any> = {};
+
+    if (schema?.properties) {
+      const properties = schema.properties;
+      Object.keys(properties).forEach((k) => {
+        const schemaProp = properties[k];
+        const val = dynamicPayload[k];
+        if ((schemaProp.type === 'number' || schemaProp.type === 'integer') && val !== '' && val !== undefined) {
+          cleanedPayload[k] = Number(val);
+        } else {
+          cleanedPayload[k] = val;
+        }
+      });
+    }
+
+    // Client-side required fields validation
+    if (schema?.required) {
+      const missingLabels: string[] = [];
+      const properties = schema.properties || {};
+      for (const reqKey of schema.required) {
+        const val = cleanedPayload[reqKey];
+        if (val === undefined || val === null || val === '') {
+          const propTitle = properties[reqKey]?.title || reqKey;
+          missingLabels.push(propTitle);
+        }
+      }
+      if (missingLabels.length > 0) {
+        setWizardError(`Please provide all required specification fields: ${missingLabels.join(', ')}`);
+        return;
+      }
+    }
+
     setSubmittingRequest(true);
 
     try {
-      // Clean up dynamic payload numbers
-      const cleanedPayload: Record<string, any> = {};
-      if (selectedCategory.payloadSchema?.properties) {
-        Object.keys(selectedCategory.payloadSchema.properties).forEach((k) => {
-          const schemaProp = selectedCategory.payloadSchema.properties[k];
-          const val = dynamicPayload[k];
-          if ((schemaProp.type === 'number' || schemaProp.type === 'integer') && val !== '' && val !== undefined) {
-            cleanedPayload[k] = Number(val);
-          } else {
-            cleanedPayload[k] = val;
-          }
-        });
-      }
-
       const res = await apiClient.post<unknown, ApiResponse<RequestResponseDto>>('/requests', {
         categoryId: selectedCategory.id,
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
         payload: cleanedPayload,
+        autoSubmit: true,
       });
 
       if (res.data) {
@@ -500,6 +574,7 @@ export const RequestsPage: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-medium text-slate-600 no-scrollbar">
           {[
             { label: 'All', value: 'ALL' },
+            { label: 'Draft', value: 'DRAFT' },
             { label: 'Submitted', value: 'SUBMITTED' },
             { label: 'In Review', value: 'IN_REVIEW' },
             { label: 'Approved', value: 'APPROVED' },
@@ -776,6 +851,38 @@ export const RequestsPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Draft Submission Banner */}
+              {selectedRequest.status === 'DRAFT' && (
+                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <h4 className="text-sm font-semibold text-indigo-950 flex items-center gap-1.5">
+                      <Send className="h-4 w-4 text-indigo-600" />
+                      Draft Requisition Ready for Submission
+                    </h4>
+                    <p className="text-xs text-indigo-700 mt-0.5">
+                      Submit this request to initiate automated workflow orchestration and approver routing.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSubmitDraft}
+                    disabled={submittingDraft}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 shrink-0 disabled:opacity-50"
+                  >
+                    {submittingDraft ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5" />
+                        <span>Submit for Approval</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
               {/* Cancellation Option */}
               {['DRAFT', 'SUBMITTED', 'IN_REVIEW'].includes(selectedRequest.status) && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
@@ -987,78 +1094,149 @@ export const RequestsPage: React.FC = () => {
                 </div>
 
                 {/* Dynamic JSON Schema Fields */}
-                {selectedCategory?.payloadSchema?.properties && (
-                  <div className="p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 sm:space-y-4">
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Layers className="h-4 w-4 text-indigo-600" />
-                      {selectedCategory.name} Specifications
-                    </h4>
+                {(() => {
+                  const schema = parsePayloadSchema(selectedCategory?.payloadSchema);
+                  if (!schema?.properties || Object.keys(schema.properties).length === 0) {
+                    return null;
+                  }
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      {Object.keys(selectedCategory.payloadSchema.properties).map((key) => {
-                        const prop = selectedCategory.payloadSchema.properties[key];
-                        const isRequired = selectedCategory.payloadSchema.required?.includes(key);
+                  const properties = schema.properties;
 
-                        if (prop.enum && Array.isArray(prop.enum)) {
+                  return (
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 sm:space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <Layers className="h-4 w-4 text-indigo-600" />
+                          {selectedCategory?.name || 'Category'} Specifications
+                        </h4>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Fill required specification fields
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        {Object.keys(properties).map((key) => {
+                          const prop = properties[key];
+                          const isRequired = schema.required?.includes(key);
+                          const keyLower = key.toLowerCase();
+                          const titleLower = (prop.title || '').toLowerCase();
+                          const displayLabel = prop.title || key.replace(/([A-Z])/g, ' $1');
+
+                          // Enum dropdown (handles both numeric and string options)
+                          if (prop.enum && Array.isArray(prop.enum)) {
+                            return (
+                              <div key={key}>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1 capitalize">
+                                  {displayLabel} {isRequired && <span className="text-rose-500">*</span>}
+                                </label>
+                                <select
+                                  required={isRequired}
+                                  value={dynamicPayload[key] ?? ''}
+                                  onChange={(e) => {
+                                    const raw = e.target.value;
+                                    const val = (prop.type === 'number' || prop.type === 'integer') ? Number(raw) : raw;
+                                    handlePayloadFieldChange(key, val);
+                                  }}
+                                  className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
+                                >
+                                  {prop.enum.map((opt: any) => (
+                                    <option key={String(opt)} value={opt}>
+                                      {String(opt)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          }
+
+                          // Number / Currency input
+                          if (prop.type === 'number' || prop.type === 'integer') {
+                            const isCurrency = keyLower.includes('amount') || keyLower.includes('cost') || keyLower.includes('price');
+                            return (
+                              <div key={key}>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1 capitalize">
+                                  {displayLabel} {isCurrency ? '($)' : ''} {isRequired && <span className="text-rose-500">*</span>}
+                                </label>
+                                <div className="relative">
+                                  {isCurrency && (
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                                  )}
+                                  <input
+                                    type="number"
+                                    required={isRequired}
+                                    min={prop.minimum ?? 0}
+                                    max={prop.maximum}
+                                    step={prop.type === 'integer' ? '1' : 'any'}
+                                    value={dynamicPayload[key] ?? ''}
+                                    onChange={(e) => handlePayloadFieldChange(key, e.target.value === '' ? '' : Number(e.target.value))}
+                                    className={`w-full text-xs py-2 pr-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800 ${
+                                      isCurrency ? 'pl-7' : 'px-3'
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          // Date picker input
+                          if (prop.format === 'date' || keyLower.includes('date') || titleLower.includes('date')) {
+                            return (
+                              <div key={key}>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1 capitalize">
+                                  {displayLabel} {isRequired && <span className="text-rose-500">*</span>}
+                                </label>
+                                <input
+                                  type="date"
+                                  required={isRequired}
+                                  value={dynamicPayload[key] ?? ''}
+                                  onChange={(e) => handlePayloadFieldChange(key, e.target.value)}
+                                  className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
+                                />
+                              </div>
+                            );
+                          }
+
+                          // Multi-line text for details, justification, notes
+                          const isMultiline = keyLower.includes('reason') || keyLower.includes('justification') || keyLower.includes('details') || keyLower.includes('notes');
+                          if (isMultiline) {
+                            return (
+                              <div key={key} className="sm:col-span-2">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1 capitalize">
+                                  {displayLabel} {isRequired && <span className="text-rose-500">*</span>}
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  required={isRequired}
+                                  placeholder={`Provide ${displayLabel.toLowerCase()}...`}
+                                  value={dynamicPayload[key] ?? ''}
+                                  onChange={(e) => handlePayloadFieldChange(key, e.target.value)}
+                                  className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
+                                />
+                              </div>
+                            );
+                          }
+
+                          // Default string input
                           return (
                             <div key={key}>
-                              <label className="block text-xs font-medium text-slate-700 mb-1 capitalize">
-                                {key.replace(/([A-Z])/g, ' $1')} {isRequired && '*'}
-                              </label>
-                              <select
-                                required={isRequired}
-                                value={dynamicPayload[key] || ''}
-                                onChange={(e) => handlePayloadFieldChange(key, e.target.value)}
-                                className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                              >
-                                {prop.enum.map((opt: string) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          );
-                        }
-
-                        if (prop.type === 'number' || prop.type === 'integer') {
-                          return (
-                            <div key={key}>
-                              <label className="block text-xs font-medium text-slate-700 mb-1 capitalize">
-                                {key.replace(/([A-Z])/g, ' $1')}{' '}
-                                {key.toLowerCase().includes('amount') ? '($)' : ''} {isRequired && '*'}
+                              <label className="block text-xs font-semibold text-slate-700 mb-1 capitalize">
+                                {displayLabel} {isRequired && <span className="text-rose-500">*</span>}
                               </label>
                               <input
-                                type="number"
+                                type="text"
                                 required={isRequired}
-                                min={prop.minimum}
-                                max={prop.maximum}
+                                placeholder={`Enter ${displayLabel.toLowerCase()}...`}
                                 value={dynamicPayload[key] ?? ''}
                                 onChange={(e) => handlePayloadFieldChange(key, e.target.value)}
-                                className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
                               />
                             </div>
                           );
-                        }
-
-                        return (
-                          <div key={key} className={prop.type === 'string' && key.toLowerCase().includes('reason') ? 'sm:col-span-2' : ''}>
-                            <label className="block text-xs font-medium text-slate-700 mb-1 capitalize">
-                              {key.replace(/([A-Z])/g, ' $1')} {isRequired && '*'}
-                            </label>
-                            <input
-                              type="text"
-                              required={isRequired}
-                              value={dynamicPayload[key] ?? ''}
-                              onChange={(e) => handlePayloadFieldChange(key, e.target.value)}
-                              className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                            />
-                          </div>
-                        );
-                      })}
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Footer Controls */}
                 <div className="pt-4 border-t border-slate-200 flex items-center justify-between">

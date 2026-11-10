@@ -1,5 +1,7 @@
 package com.nexusops.workflow.application;
 
+import com.nexusops.request.application.RequestCategoryService;
+import com.nexusops.request.application.dto.RequestCategoryResponseDto;
 import com.nexusops.shared.exception.ResourceNotFoundException;
 import com.nexusops.shared.exception.ValidationException;
 import com.nexusops.workflow.application.dto.*;
@@ -8,6 +10,7 @@ import com.nexusops.workflow.domain.*;
 import com.nexusops.workflow.infrastructure.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +27,20 @@ public class WorkflowDefinitionService {
     private final WorkflowNodeRepository nodeRepository;
     private final WorkflowTransitionRepository transitionRepository;
     private final WorkflowGraphValidator graphValidator;
+    private final RequestCategoryService categoryService;
 
     public WorkflowDefinitionService(WorkflowDefinitionRepository definitionRepository,
                                      WorkflowVersionRepository versionRepository,
                                      WorkflowNodeRepository nodeRepository,
                                      WorkflowTransitionRepository transitionRepository,
-                                     WorkflowGraphValidator graphValidator) {
+                                     WorkflowGraphValidator graphValidator,
+                                     @Lazy RequestCategoryService categoryService) {
         this.definitionRepository = definitionRepository;
         this.versionRepository = versionRepository;
         this.nodeRepository = nodeRepository;
         this.transitionRepository = transitionRepository;
         this.graphValidator = graphValidator;
+        this.categoryService = categoryService;
     }
 
     @Transactional(readOnly = true)
@@ -461,6 +467,215 @@ public class WorkflowDefinitionService {
 
         // Publish v1
         publishVersion(organizationId, def.getId(), 1);
+    }
+
+    @Transactional
+    public void seedSoftwareAccessWorkflow(UUID organizationId, UUID categoryId) {
+        if (definitionRepository.findByOrganizationIdAndCode(organizationId, "WF_SOFTWARE_ACCESS").isPresent()) {
+            return;
+        }
+
+        log.info("Bootstrapping reference Software Access workflow for organization {}", organizationId);
+
+        WorkflowDefinitionEntity def = new WorkflowDefinitionEntity(
+                organizationId,
+                categoryId,
+                "WF_SOFTWARE_ACCESS",
+                "Software & Cloud Licenses Workflow",
+                "Streamlined manager approval and automated IT SaaS seat provisioning"
+        );
+        def = definitionRepository.save(def);
+
+        WorkflowVersionEntity ver = new WorkflowVersionEntity(def.getId(), 1);
+        ver = versionRepository.save(ver);
+
+        WorkflowNodeEntity nStart = new WorkflowNodeEntity(
+                ver.getId(), "START", NodeType.START, "License Requisition Submitted", Map.of()
+        );
+        nStart.setPositionX(80);
+        nStart.setPositionY(220);
+        nStart = nodeRepository.save(nStart);
+
+        WorkflowNodeEntity nManager = new WorkflowNodeEntity(
+                ver.getId(), "MGR_APPROVAL", NodeType.APPROVAL, "Direct Manager Authorization",
+                Map.of("approverType", "MANAGER", "timeoutHours", 48)
+        );
+        nManager.setPositionX(360);
+        nManager.setPositionY(220);
+        nManager = nodeRepository.save(nManager);
+
+        WorkflowNodeEntity nTask = new WorkflowNodeEntity(
+                ver.getId(), "TASK_PROVISION", NodeType.TASK, "IT SaaS & License Provisioning",
+                Map.of("taskQueue", "IT_OPERATIONS", "slaHours", 48, "priority", "MEDIUM")
+        );
+        nTask.setPositionX(720);
+        nTask.setPositionY(220);
+        nTask = nodeRepository.save(nTask);
+
+        WorkflowNodeEntity nEndCompleted = new WorkflowNodeEntity(
+                ver.getId(), "END_COMPLETED", NodeType.END, "Access Granted & Active",
+                Map.of("outcome", "COMPLETED")
+        );
+        nEndCompleted.setPositionX(1080);
+        nEndCompleted.setPositionY(220);
+        nEndCompleted = nodeRepository.save(nEndCompleted);
+
+        WorkflowNodeEntity nEndRejected = new WorkflowNodeEntity(
+                ver.getId(), "END_REJECTED", NodeType.END, "Access Requisition Rejected",
+                Map.of("outcome", "REJECTED")
+        );
+        nEndRejected.setPositionX(1080);
+        nEndRejected.setPositionY(380);
+        nEndRejected = nodeRepository.save(nEndRejected);
+
+        // START -> MGR_APPROVAL
+        transitionRepository.save(new WorkflowTransitionEntity(ver.getId(), nStart.getId(), nManager.getId(), null, 0, true));
+
+        // MGR_APPROVAL -> TASK_PROVISION (on approve)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nManager.getId(), nTask.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "APPROVED"),
+                1, true
+        ));
+        // MGR_APPROVAL -> END_REJECTED (on reject)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nManager.getId(), nEndRejected.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "REJECTED"),
+                2, false
+        ));
+
+        // TASK_PROVISION -> END_COMPLETED
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nTask.getId(), nEndCompleted.getId(), null, 0, true
+        ));
+
+        // Publish v1
+        publishVersion(organizationId, def.getId(), 1);
+    }
+
+    @Transactional
+    public void seedExpenseReimbursementWorkflow(UUID organizationId, UUID categoryId) {
+        if (definitionRepository.findByOrganizationIdAndCode(organizationId, "WF_EXPENSE_REIMBURSEMENT").isPresent()) {
+            return;
+        }
+
+        log.info("Bootstrapping reference Expense Reimbursement workflow for organization {}", organizationId);
+
+        WorkflowDefinitionEntity def = new WorkflowDefinitionEntity(
+                organizationId,
+                categoryId,
+                "WF_EXPENSE_REIMBURSEMENT",
+                "Travel & Expense Reimbursement Workflow",
+                "Automated multi-tier manager and finance controller audit for employee travel & corporate expenses"
+        );
+        def = definitionRepository.save(def);
+
+        WorkflowVersionEntity ver = new WorkflowVersionEntity(def.getId(), 1);
+        ver = versionRepository.save(ver);
+
+        WorkflowNodeEntity nStart = new WorkflowNodeEntity(
+                ver.getId(), "START", NodeType.START, "Expense Claim Submitted", Map.of()
+        );
+        nStart.setPositionX(80);
+        nStart.setPositionY(220);
+        nStart = nodeRepository.save(nStart);
+
+        WorkflowNodeEntity nManager = new WorkflowNodeEntity(
+                ver.getId(), "MGR_APPROVAL", NodeType.APPROVAL, "Direct Manager Approval",
+                Map.of("approverType", "MANAGER", "timeoutHours", 48)
+        );
+        nManager.setPositionX(340);
+        nManager.setPositionY(220);
+        nManager = nodeRepository.save(nManager);
+
+        WorkflowNodeEntity nFinance = new WorkflowNodeEntity(
+                ver.getId(), "FIN_APPROVAL", NodeType.APPROVAL, "Finance Controller Audit",
+                Map.of("approverRole", "FINANCE", "timeoutHours", 72)
+        );
+        nFinance.setPositionX(620);
+        nFinance.setPositionY(220);
+        nFinance = nodeRepository.save(nFinance);
+
+        WorkflowNodeEntity nTask = new WorkflowNodeEntity(
+                ver.getId(), "TASK_REIMBURSEMENT", NodeType.TASK, "Accounts Payable Disbursement",
+                Map.of("taskQueue", "FINANCE", "slaHours", 72, "priority", "HIGH")
+        );
+        nTask.setPositionX(900);
+        nTask.setPositionY(220);
+        nTask = nodeRepository.save(nTask);
+
+        WorkflowNodeEntity nEndCompleted = new WorkflowNodeEntity(
+                ver.getId(), "END_COMPLETED", NodeType.END, "Reimbursement Disbursed",
+                Map.of("outcome", "COMPLETED")
+        );
+        nEndCompleted.setPositionX(1160);
+        nEndCompleted.setPositionY(220);
+        nEndCompleted = nodeRepository.save(nEndCompleted);
+
+        WorkflowNodeEntity nEndRejected = new WorkflowNodeEntity(
+                ver.getId(), "END_REJECTED", NodeType.END, "Expense Rejected",
+                Map.of("outcome", "REJECTED")
+        );
+        nEndRejected.setPositionX(1160);
+        nEndRejected.setPositionY(380);
+        nEndRejected = nodeRepository.save(nEndRejected);
+
+        // Transitions:
+        // START -> MGR_APPROVAL
+        transitionRepository.save(new WorkflowTransitionEntity(ver.getId(), nStart.getId(), nManager.getId(), null, 0, true));
+
+        // MGR_APPROVAL -> FIN_APPROVAL (on approve)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nManager.getId(), nFinance.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "APPROVED"),
+                1, true
+        ));
+        // MGR_APPROVAL -> END_REJECTED (on reject)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nManager.getId(), nEndRejected.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "REJECTED"),
+                2, false
+        ));
+
+        // FIN_APPROVAL -> TASK_REIMBURSEMENT (on approve)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nFinance.getId(), nTask.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "APPROVED"),
+                1, true
+        ));
+        // FIN_APPROVAL -> END_REJECTED (on reject)
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nFinance.getId(), nEndRejected.getId(),
+                Map.of("field", "context.signal", "operator", "EQUALS", "value", "REJECTED"),
+                2, false
+        ));
+
+        // TASK_REIMBURSEMENT -> END_COMPLETED
+        transitionRepository.save(new WorkflowTransitionEntity(
+                ver.getId(), nTask.getId(), nEndCompleted.getId(), null, 0, true
+        ));
+
+        // Publish v1
+        publishVersion(organizationId, def.getId(), 1);
+    }
+
+    @Transactional
+    public void seedWorkflowForCategory(UUID organizationId, UUID categoryId) {
+        String code = "";
+        if (categoryService != null) {
+            try {
+                RequestCategoryResponseDto cat = categoryService.getCategoryById(categoryId);
+                code = cat != null ? cat.code() : "";
+            } catch (Exception ignored) {}
+        }
+
+        if ("EXPENSE_REIMBURSEMENT".equalsIgnoreCase(code)) {
+            seedExpenseReimbursementWorkflow(organizationId, categoryId);
+        } else if ("SOFTWARE_ACCESS".equalsIgnoreCase(code)) {
+            seedSoftwareAccessWorkflow(organizationId, categoryId);
+        } else {
+            seedReferenceLaptopWorkflow(organizationId, categoryId);
+        }
     }
 
     private WorkflowDefinitionResponseDto mapDefinitionToDto(WorkflowDefinitionEntity def) {

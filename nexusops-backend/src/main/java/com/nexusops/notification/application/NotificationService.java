@@ -120,25 +120,31 @@ public class NotificationService {
     }
 
     private String generateTitle(String eventType, JsonNode payload) {
-        String num = payload.has("requestNumber") ? payload.get("requestNumber").asText()
-                : (payload.has("taskNumber") ? payload.get("taskNumber").asText() : "");
+        String num = payload.has("requestNumber") && !payload.get("requestNumber").asText().isBlank()
+                ? payload.get("requestNumber").asText()
+                : (payload.has("taskNumber") && !payload.get("taskNumber").asText().isBlank()
+                    ? payload.get("taskNumber").asText() : "");
+
+        String suffix = num.isBlank() ? "" : " (" + num + ")";
 
         return switch (eventType) {
-            case "REQUEST_SUBMITTED" -> "Request Submitted (" + num + ")";
-            case "REQUEST_CANCELLED" -> "Request Cancelled (" + num + ")";
-            case "APPROVAL_CREATED" -> "Approval Required for " + num;
-            case "APPROVAL_COMPLETED" -> "Request Approved (" + num + ")";
-            case "APPROVAL_REJECTED" -> "Request Rejected (" + num + ")";
-            case "TASK_CREATED" -> "New Task Assigned (" + num + ")";
-            case "TASK_COMPLETED" -> "Fulfillment Completed (" + num + ")";
+            case "REQUEST_SUBMITTED" -> "Request Submitted" + suffix;
+            case "REQUEST_CANCELLED" -> "Request Cancelled" + suffix;
+            case "APPROVAL_CREATED" -> "Approval Required" + suffix;
+            case "APPROVAL_COMPLETED" -> "Request Approved" + suffix;
+            case "APPROVAL_REJECTED" -> "Request Rejected" + suffix;
+            case "TASK_CREATED" -> "New Task Assigned" + suffix;
+            case "TASK_COMPLETED" -> "Fulfillment Completed" + suffix;
             case "DOCUMENT_INDEXED" -> "Document Indexing Completed";
-            case "WORKFLOW_COMPLETED" -> "Workflow Completed (" + num + ")";
+            case "WORKFLOW_COMPLETED" -> "Workflow Completed" + suffix;
             default -> "System Notification: " + eventType;
         };
     }
 
     private String generateMessage(String eventType, JsonNode payload) {
-        String title = payload.has("title") ? payload.get("title").asText() : "Operation";
+        String title = payload.has("title") && !payload.get("title").asText().isBlank()
+                ? payload.get("title").asText()
+                : "your request";
         return switch (eventType) {
             case "REQUEST_SUBMITTED" -> "Your request \"" + title + "\" was successfully submitted and routed to workflow.";
             case "REQUEST_CANCELLED" -> "Your request \"" + title + "\" has been cancelled.";

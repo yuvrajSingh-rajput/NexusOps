@@ -3,6 +3,7 @@ package com.nexusops.request.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexusops.identity.application.IdentityService;
 import com.nexusops.organization.application.DepartmentService;
 import com.nexusops.organization.application.dto.DepartmentResponseDto;
 import com.nexusops.request.application.dto.*;
@@ -21,6 +22,7 @@ import com.nexusops.shared.tenant.TenantContextHolder;
 import com.nexusops.workflow.application.WorkflowEngineService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class RequestService {
     private final WorkflowEngineService workflowEngineService;
     private final OutboxService outboxService;
     private final ObjectMapper objectMapper;
+    private final IdentityService identityService;
 
     public RequestService(RequestRepository requestRepository,
                           RequestCategoryRepository categoryRepository,
@@ -51,7 +54,8 @@ public class RequestService {
                           DepartmentService departmentService,
                           WorkflowEngineService workflowEngineService,
                           OutboxService outboxService,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          @Lazy IdentityService identityService) {
         this.requestRepository = requestRepository;
         this.categoryRepository = categoryRepository;
         this.commentRepository = commentRepository;
@@ -61,6 +65,7 @@ public class RequestService {
         this.workflowEngineService = workflowEngineService;
         this.outboxService = outboxService;
         this.objectMapper = objectMapper;
+        this.identityService = identityService;
     }
 
     @Transactional
@@ -253,7 +258,7 @@ public class RequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: " + id));
 
         RequestCategoryEntity cat = categoryRepository.findByOrganizationIdAndId(organizationId, entity.getCategoryId()).orElse(null);
-        return toDto(entity, cat != null ? cat.getCode() : "", cat != null ? cat.getName() : "", "system");
+        return toDto(entity, cat != null ? cat.getCode() : "", cat != null ? cat.getName() : "", null);
     }
 
     @Transactional
@@ -395,8 +400,22 @@ public class RequestService {
         }
     }
 
-    private RequestResponseDto toDto(RequestEntity r, String categoryCode, String categoryName, String requesterEmail) {
+    private RequestResponseDto toDto(RequestEntity r, String categoryCode, String categoryName, String fallbackEmail) {
         Map<String, Object> payloadMap = parsePayloadJson(r.getPayload());
+
+        String requesterName = "Employee";
+        String email = fallbackEmail;
+        if (r.getRequesterMembershipId() != null && identityService != null) {
+            try {
+                requesterName = identityService.getMemberName(r.getOrganizationId(), r.getRequesterMembershipId());
+                if (email == null || email.isBlank() || email.equalsIgnoreCase("system")) {
+                    email = identityService.getMemberEmail(r.getOrganizationId(), r.getRequesterMembershipId());
+                }
+            } catch (Exception ignored) {}
+        }
+        if ("Employee".equals(requesterName) && fallbackEmail != null && !fallbackEmail.isBlank() && !fallbackEmail.equalsIgnoreCase("system")) {
+            requesterName = fallbackEmail;
+        }
 
         String deptName = "Default Department";
         if (r.getDepartmentId() != null) {
@@ -415,8 +434,8 @@ public class RequestService {
                 categoryCode,
                 categoryName,
                 r.getRequesterMembershipId(),
-                requesterEmail,
-                requesterEmail,
+                requesterName,
+                email,
                 r.getDepartmentId(),
                 deptName,
                 r.getTitle(),

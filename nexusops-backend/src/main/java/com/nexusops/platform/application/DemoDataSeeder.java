@@ -176,8 +176,10 @@ public class DemoDataSeeder implements ApplicationRunner {
         RequestCategoryResponseDto expenseCat = requestCategoryService.getCategoryByCode(acmeOrgId, "EXPENSE_REIMBURSEMENT")
                 .orElseThrow(() -> new IllegalStateException("EXPENSE_REIMBURSEMENT category missing"));
 
-        // 5. Seed & Publish Reference Laptop Workflow (v1)
+        // 5. Seed & Publish Reference Workflows for All Categories (v1)
         workflowDefinitionService.seedReferenceLaptopWorkflow(acmeOrgId, laptopCat.id());
+        workflowDefinitionService.seedSoftwareAccessWorkflow(acmeOrgId, softwareCat.id());
+        workflowDefinitionService.seedExpenseReimbursementWorkflow(acmeOrgId, expenseCat.id());
 
         // 6. Seed Policy Document for Nexus AI (RAG)
         seedAcmeHardwarePolicy(acmeOrgId, eveMembershipId);

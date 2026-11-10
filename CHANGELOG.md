@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.4] - 2026-11-10 - Request Dynamic Schema Intake, Multi-Category Workflows & Approvals Fixes
+
+### Fixed
+- **Dynamic JSON Schema Field Rendering ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
+  - Added `parsePayloadSchema` utility to safely parse category `payloadSchema` whether returned as JSON strings or parsed objects from the API.
+  - Resolved issue where dynamic form fields in Step 2 failed to render for *Travel & Expense Reimbursement*, *Software & Cloud Licenses*, and *Developer Workstation & Laptop*, which previously resulted in validation errors ("Required form fields are missing: expenseType, estimatedAmount, expenseDate").
+  - Added dedicated input controls for all schema types:
+    - Enum dropdowns (`<select>`) supporting string and numeric choices.
+    - Numbers and currency (`<input type="number">`) with min/max, step, and `$` currency prefix indicators.
+    - Dates (`<input type="date">`) defaulting to current date in `YYYY-MM-DD` format.
+    - Multiline text (`<textarea>`) for justifications, reasons, and receipt notes.
+  - Pre-populated required fields with sensible defaults upon category selection.
+  - Added client-side required field validation before network dispatch to provide clear, immediate UI feedback.
+
+- **Auto-Submit & Draft Lifecycle:**
+  - Added `autoSubmit: true` flag to `POST /api/v1/requests` payload in the intake modal so requests immediately transition to `IN_REVIEW` and route to workflow execution instead of remaining stuck in `DRAFT`.
+  - Added a "Submit for Approval" action banner in the request detail drawer for existing `DRAFT` requisitions (e.g. `REQ-1004`), allowing users to submit drafts directly.
+  - Added a "Draft" status filter tab to the requests table.
+
+- **Multi-Category Reference Workflows ([`WorkflowDefinitionService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/WorkflowDefinitionService.java)):**
+  - Added automated reference workflow seeders for `WF_SOFTWARE_ACCESS` (Manager Approval $\rightarrow$ IT Provisioning Task $\rightarrow$ End) and `WF_EXPENSE_REIMBURSEMENT` (Manager Approval $\rightarrow$ Finance Audit $\rightarrow$ Accounts Payable Disbursement $\rightarrow$ End).
+  - Integrated `seedWorkflowForCategory` dispatcher in `WorkflowEngineService.java` to dynamically bootstrap workflows for any category on-demand.
+  - Updated `DemoDataSeeder.java` to seed and publish all 3 category workflows on initialization.
+
+- **Requester Identity Resolution & Approvals Inbox Polish ([`RequestService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/application/RequestService.java), [`ApprovalsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/approvals/ApprovalsPage.tsx)):**
+  - Injected `IdentityService` into `RequestService` to resolve requester full names and emails instead of `"system"` placeholder strings.
+  - Restricted action decision buttons in `ApprovalsPage.tsx` strictly to `PENDING` approvals, displaying semantic status badges for resolved steps.
+  - Fixed approval notification payload formatting in `ApprovalService.java` and `NotificationService.java`.
+
+---
+
 ## [1.1.3] - 2026-11-10 - Public SEO, Search Engine Privacy & Header Notification Badge
 
 ### Added

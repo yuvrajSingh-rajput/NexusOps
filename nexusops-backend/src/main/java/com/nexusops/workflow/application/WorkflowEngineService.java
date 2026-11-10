@@ -63,7 +63,7 @@ public class WorkflowEngineService {
 
         WorkflowDefinitionEntity def = definitionRepository.findByOrganizationIdAndCategoryIdAndActiveTrue(organizationId, categoryId)
                 .orElseGet(() -> {
-                    definitionService.seedReferenceLaptopWorkflow(organizationId, categoryId);
+                    definitionService.seedWorkflowForCategory(organizationId, categoryId);
                     return definitionRepository.findByOrganizationIdAndCategoryIdAndActiveTrue(organizationId, categoryId)
                             .orElseThrow(() -> new ValidationException("No active workflow definition configured for category: " + categoryId));
                 });

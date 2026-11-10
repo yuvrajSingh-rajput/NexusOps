@@ -109,6 +109,18 @@ public class ApprovalService {
         if (resolved.assignedMembershipId() != null) {
             eventPayload.put("assigneeMembershipId", resolved.assignedMembershipId().toString());
         }
+        try {
+            RequestResponseDto req = requestService.getRequest(organizationId, requestId);
+            if (req != null) {
+                eventPayload.put("requestNumber", req.requestNumber());
+                eventPayload.put("title", req.title());
+                if (req.requesterMembershipId() != null) {
+                    eventPayload.put("requesterMembershipId", req.requesterMembershipId().toString());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load request info for approval event: {}", e.getMessage());
+        }
         outboxService.publish(organizationId, "APPROVAL_CREATED", "APPROVAL", entity.getId(), eventPayload);
 
         return entity;
@@ -212,6 +224,18 @@ public class ApprovalService {
         eventPayload.put("requestId", instance.getRequestId().toString());
         eventPayload.put("actorMembershipId", principal.getMembershipId().toString());
         eventPayload.put("action", dto.action().name());
+        try {
+            RequestResponseDto req = requestService.getRequest(organizationId, instance.getRequestId());
+            if (req != null) {
+                eventPayload.put("requestNumber", req.requestNumber());
+                eventPayload.put("title", req.title());
+                if (req.requesterMembershipId() != null) {
+                    eventPayload.put("requesterMembershipId", req.requesterMembershipId().toString());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load request info for approval decision event: {}", e.getMessage());
+        }
         outboxService.publish(organizationId, eventType, "APPROVAL", instance.getId(), eventPayload);
 
         return toDto(organizationId, instance);

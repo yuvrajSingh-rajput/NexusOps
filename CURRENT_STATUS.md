@@ -1,9 +1,41 @@
 # NexusOps – Current Project Status
 
-**Current Phase:** Workflow Studio UX Upgrade & v1.1.2 Canvas Enhancement (ALL PHASES COMPLETE & ACCEPTED)  
+**Current Phase:** Request Intake, Dynamic Schema Rendering & Approvals Robustness (ALL PHASES COMPLETE & ACCEPTED)  
 **Last Updated:** 2026-11-10  
 **Branch:** main  
-**Milestone:** v1.1.2 Enterprise Workflow Studio Visual & UX Polish  
+**Milestone:** v1.1.3 Dynamic Schema Intake, Multi-Category Workflows & Approvals Fixes  
+
+---
+
+## Completed in v1.1.3 (Request Intake, Dynamic Schemas & Approvals Robustness)
+
+1. **Dynamic JSON Schema Parsing & Rendering ([`RequestsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/requests/RequestsPage.tsx)):**
+   - Added `parsePayloadSchema` utility to safely parse category `payloadSchema` whether delivered as raw JSON strings or serialized objects.
+   - Fixed missing form specification fields in Step 2 across all categories (*Travel & Expense Reimbursement*, *Software & Cloud Licenses*, *Developer Workstation & Laptop*).
+   - Enhanced dynamic field renderers:
+     - Enums: Dropdown selectors with typed numeric/string support.
+     - Numbers / Currency: Numeric inputs with min/max, step, and currency (`$`) prefix indicators.
+     - Dates: Native date pickers (`<input type="date">`) defaulting to current day in `YYYY-MM-DD` format.
+     - Text / Multiline: Textareas for justifications, reasons, and receipt details.
+   - Initialized required fields with sensible defaults upon category selection so inputs are never left unpopulated.
+   - Added client-side required field validation with user-friendly alerts before submission.
+
+2. **Auto-Submit & Draft Requisition Lifecycle:**
+   - Fixed `autoSubmit: true` flag in `RequestsPage.tsx` modal submission so requests immediately transition to `IN_REVIEW` and begin workflow execution.
+   - Added a "Submit for Approval" action banner in the request detail drawer for existing `DRAFT` requisitions (e.g. `REQ-1004`), allowing users to submit drafts at any time.
+   - Added a dedicated "Draft" status filter tab in the requests table.
+
+3. **Multi-Category Reference Workflows & Orchestration ([`WorkflowDefinitionService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/workflow/application/WorkflowDefinitionService.java)):**
+   - Added reference workflow seeders for:
+     - `WF_SOFTWARE_ACCESS`: Manager Approval $\rightarrow$ IT SaaS Provisioning Task $\rightarrow$ Completed.
+     - `WF_EXPENSE_REIMBURSEMENT`: Manager Approval $\rightarrow$ Finance Controller Audit $\rightarrow$ Accounts Payable Reimbursement Task $\rightarrow$ Completed.
+   - Integrated `seedWorkflowForCategory` dispatcher in `WorkflowEngineService.java` to ensure any category request starts its respective workflow cleanly.
+   - Updated `DemoDataSeeder.java` to seed all 3 reference workflows on tenant bootstrap.
+
+4. **Requester Identity Resolution & Approvals UI Polish ([`RequestService.java`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-backend/src/main/java/com/nexusops/request/application/RequestService.java), [`ApprovalsPage.tsx`](file:///c:/Users/yuvra/Desktop/NexusOps/nexusops-frontend/src/features/approvals/ApprovalsPage.tsx)):**
+   - Resolved requester display names and emails via `IdentityService` instead of fallback `"system"` strings.
+   - In `ApprovalsPage.tsx`, restricted active decision buttons strictly to `PENDING` approvals; already decided or completed steps now display semantic status badges ("Approved", "Rejected", "Info Requested").
+   - Fixed approval event notification payload formatting in `ApprovalService.java` and `NotificationService.java`.
 
 ---
 
